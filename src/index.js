@@ -292,9 +292,8 @@ function addTinyHeadTop(pixels, rng, center) {
 
 function addTinyFace(pixels, rng, center, halfWidths) {
   const eyeSpacing = halfWidths[1] >= 3 && rng() > 0.45 ? 2 : 1;
-  const eyeValue = rng() > 0.35 ? DARK_NARROW : DARK;
-  pixels[2][center - eyeSpacing] = eyeValue;
-  pixels[2][center + eyeSpacing] = eyeValue;
+  pixels[2][center - eyeSpacing] = DARK;
+  pixels[2][center + eyeSpacing] = DARK;
 
   if (rng() > 0.5 && halfWidths[2] >= 2) {
     pixels[3][center - 1] = rng() > 0.5 ? ACCENT_NARROW : ACCENT;
@@ -366,9 +365,8 @@ function addSmallHeadTop(pixels, rng, center) {
 function addSmallEyes(pixels, rng, center, halfWidths) {
   const y = halfWidths[1] >= 2 ? 2 : 3;
   const spacing = halfWidths[y - 1] >= 3 && rng() > 0.35 ? 2 : 1;
-  const value = rng() > 0.35 ? DARK_NARROW : DARK;
-  pixels[y][center - spacing] = value;
-  pixels[y][center + spacing] = value;
+  pixels[y][center - spacing] = DARK;
+  pixels[y][center + spacing] = DARK;
 }
 
 function addSmallMouth(pixels, rng, center, halfWidths) {
@@ -424,9 +422,8 @@ function addEyes(pixels, rng, center, y, halfWidth) {
   const inset = int(rng, 1, 2);
   const left = Math.max(1, center - halfWidth + inset);
   const right = Math.min(pixels[y].length - 2, center + halfWidth - inset);
-  const value = rng() > 0.35 ? DARK_NARROW : DARK;
-  pixels[y][left] = value;
-  pixels[y][right] = value;
+  pixels[y][left] = DARK;
+  pixels[y][right] = DARK;
 }
 
 function addMouth(pixels, rng, center, y) {

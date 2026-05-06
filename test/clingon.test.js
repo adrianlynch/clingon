@@ -109,7 +109,7 @@ test('tiny clingons vary shape between seeds', () => {
   assert.ok(shapes.size > 2);
 });
 
-test('compact clingons can render one-character details in text mode', () => {
+test('compact clingons can render one-character non-eye details in text mode', () => {
   const details = [
     generateClingon({ code: 'orlando-reginald-morris-junior', color: false }).text,
     generateClingon({ code: 'orlando-reginald-morris-junior', size: 'small', color: false }).text,
@@ -118,6 +118,16 @@ test('compact clingons can render one-character details in text mode', () => {
   ].join('\n');
 
   assert.match(details, /[#.] /);
+});
+
+test('eyes render as full-width paired cells', () => {
+  const normal = generateClingon({ code: 'orlando-reginald-morris-junior', color: false });
+  const small = generateClingon({ code: 'orlando-reginald-morris-junior', size: 'small', color: false });
+  const tiny = generateClingon({ code: 'mabel-waffles-wigglesworth-tiny', size: 'tiny', color: false });
+
+  assert.ok(normal.pixels.some((row) => row.filter((cell) => cell === 3).length >= 2));
+  assert.ok(small.pixels.some((row) => row.filter((cell) => cell === 3).length >= 2));
+  assert.ok(tiny.pixels.some((row) => row.filter((cell) => cell === 3).length >= 2));
 });
 
 test('narrow details render as one visible block in ansi mode', () => {
