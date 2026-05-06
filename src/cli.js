@@ -6,7 +6,7 @@ Usage:
   clingon [options]
 
 Options:
-  -c, --code <code>   Regenerate a specific clingon code
+  -c, --code <code>   Regenerate a specific clingon name/code
   -r, --recolor       Keep the shape from --code but choose new colors
       --small         Render a smaller clingon
       --size <size>   Render size: small or normal

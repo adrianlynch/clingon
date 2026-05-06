@@ -24,8 +24,38 @@ test('recolor keeps shape and changes the code palette segment', () => {
 test('parses prefixed code variants', () => {
   assert.deepEqual(parseCode('clg_00000rs.00000rt'), {
     shapeSeed: 1000,
-    paletteSeed: 1001
+    paletteSeed: 1001,
+    format: 'classic'
   });
+});
+
+test('generates deterministic named clingons by default', () => {
+  const clingon = generateClingon({ color: false });
+  const regenerated = generateClingon({ code: clingon.code, color: false });
+
+  assert.match(clingon.code, /^[a-z]+-[a-z]+-[a-z]+-[a-z]+$/);
+  assert.equal(regenerated.text, clingon.text);
+  assert.equal(regenerated.code, clingon.code);
+});
+
+test('parses readable names as clingon codes', () => {
+  const first = generateClingon({ code: 'orlando-reginald-morris-junior', color: false });
+  const second = generateClingon({ code: first.code, color: false });
+
+  assert.equal(first.code, 'orlando-reginald-morris-junior');
+  assert.equal(second.text, first.text);
+});
+
+test('recoloring a named clingon preserves shape words', () => {
+  const original = generateClingon({ code: 'orlando-reginald-morris-junior', color: false });
+  const recolored = generateClingon({ code: original.code, recolor: true, color: false });
+  const originalWords = original.code.split('-');
+  const recoloredWords = recolored.code.split('-');
+
+  assert.equal(recoloredWords[0], originalWords[0]);
+  assert.equal(recoloredWords[2], originalWords[2]);
+  assert.equal(recolored.text, original.text);
+  assert.notEqual(recolored.code, original.code);
 });
 
 test('renderClingon returns ansi output for import convenience', () => {

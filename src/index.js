@@ -11,6 +11,38 @@ const BODY = 1;
 const ACCENT = 2;
 const DARK = 3;
 
+const FIRST_NAMES = [
+  'orlando', 'mabel', 'winston', 'poppy', 'felix', 'juniper', 'otto', 'nora',
+  'barnaby', 'luna', 'milo', 'olive', 'rupert', 'daisy', 'archie', 'cleo',
+  'gus', 'pearl', 'hugo', 'beatrix', 'alfie', 'flora', 'cosmo', 'tilly',
+  'basil', 'hazel', 'leonard', 'mimi', 'oscar', 'birdie', 'walter', 'ziggy'
+];
+
+const MIDDLE_NAMES = [
+  'reginald', 'pickle', 'waffles', 'button', 'magnus', 'beans', 'nimbus',
+  'truffle', 'cedric', 'biscuit', 'quincy', 'noodle', 'pudding', 'toast',
+  'snacks', 'waffleton', 'fig', 'sprout', 'banjo', 'crumpet', 'marmalade',
+  'taco', 'fizz', 'doodle', 'pepper', 'mittens', 'radish', 'wafer',
+  'gumdrop', 'scooter', 'plum', 'boop'
+];
+
+const FAMILY_NAMES = [
+  'morris', 'wigglesworth', 'pawsley', 'bumble', 'fuzzwick', 'moonbeam',
+  'tumbles', 'pickering', 'muffington', 'socksworth', 'teacup', 'noodleston',
+  'higgle', 'sprinkles', 'whiskerton', 'flufford', 'danderby', 'puddle',
+  'waffleman', 'toebean', 'snuggleton', 'brisket', 'boopington', 'crumb',
+  'fidget', 'marshmallow', 'jellybean', 'pipsqueak', 'mopbucket',
+  'twinkle', 'pancake', 'wobble'
+];
+
+const SUFFIX_NAMES = [
+  'junior', 'senior', 'third', 'fourth', 'tiny', 'great', 'small', 'bold',
+  'sleepy', 'jolly', 'fancy', 'brave', 'wobbly', 'cosmic', 'royal', 'noisy',
+  'shiny', 'spicy', 'mighty', 'little', 'grand', 'wild', 'polite', 'silly',
+  'gentle', 'chaotic', 'secret', 'golden', 'curious', 'dramatic', 'excellent',
+  'deluxe'
+];
+
 const PALETTES = [
   ['#0891b2', '#c026d3', '#155e75'],
   ['#f97316', '#22c55e', '#7c2d12'],
@@ -26,8 +58,10 @@ export function generateClingon(options = {}) {
   const requested = options.code ? parseCode(options.code) : randomCode();
   const size = normalizeSize(options.size);
   const shapeSeed = requested.shapeSeed;
-  const paletteSeed = options.recolor ? randomSeed() : requested.paletteSeed;
-  const code = formatCode(shapeSeed, paletteSeed);
+  const paletteSeed = options.recolor ? randomPaletteSeed(requested.format) : requested.paletteSeed;
+  const code = requested.format === 'classic'
+    ? formatClassicCode(shapeSeed, paletteSeed)
+    : formatCode(shapeSeed, paletteSeed);
   const shape = createShape(shapeSeed, size);
   const palette = createPalette(paletteSeed);
 
@@ -50,20 +84,43 @@ export function renderClingon(codeOrOptions) {
 
 export function parseCode(code) {
   const value = String(code).trim().toLowerCase();
-  const match = value.match(/^clg[-_]?([0-9a-z]+)[-.]([0-9a-z]+)$/);
+  const classicMatch = value.match(/^clg[-_]?([0-9a-z]+)[-.]([0-9a-z]+)$/);
 
-  if (!match) {
-    throw new Error(`Invalid clingon code "${code}". Expected something like clg-a1b2-c3d4.`);
+  if (classicMatch) {
+    return {
+      shapeSeed: parseSeed(classicMatch[1]),
+      paletteSeed: parseSeed(classicMatch[2]),
+      format: 'classic'
+    };
   }
 
+  const nameMatch = value.match(/^([a-z]+)-([a-z]+)-([a-z]+)-([a-z]+)$/);
+
+  if (!nameMatch) {
+    throw new Error(`Invalid clingon code "${code}". Expected a name like orlando-reginald-morris-junior.`);
+  }
+
+  const firstIndex = wordIndex(FIRST_NAMES, nameMatch[1], 'first name');
+  const middleIndex = wordIndex(MIDDLE_NAMES, nameMatch[2], 'middle name');
+  const familyIndex = wordIndex(FAMILY_NAMES, nameMatch[3], 'family name');
+  const suffixIndex = wordIndex(SUFFIX_NAMES, nameMatch[4], 'suffix');
+
   return {
-    shapeSeed: parseSeed(match[1]),
-    paletteSeed: parseSeed(match[2])
+    shapeSeed: firstIndex + familyIndex * FIRST_NAMES.length,
+    paletteSeed: middleIndex + suffixIndex * MIDDLE_NAMES.length,
+    format: 'name'
   };
 }
 
 export function formatCode(shapeSeed, paletteSeed) {
-  return `${CODE_PREFIX}-${encodeSeed(shapeSeed)}-${encodeSeed(paletteSeed)}`;
+  const shapeIndex = shapeSeed % (FIRST_NAMES.length * FAMILY_NAMES.length);
+  const paletteIndex = paletteSeed % (MIDDLE_NAMES.length * SUFFIX_NAMES.length);
+  const first = FIRST_NAMES[shapeIndex % FIRST_NAMES.length];
+  const family = FAMILY_NAMES[Math.floor(shapeIndex / FIRST_NAMES.length)];
+  const middle = MIDDLE_NAMES[paletteIndex % MIDDLE_NAMES.length];
+  const suffix = SUFFIX_NAMES[Math.floor(paletteIndex / MIDDLE_NAMES.length)];
+
+  return `${first}-${middle}-${family}-${suffix}`;
 }
 
 export function snippetFor(code, options = {}) {
@@ -84,13 +141,26 @@ export function snippetFor(code, options = {}) {
 
 function randomCode() {
   return {
-    shapeSeed: randomSeed(),
-    paletteSeed: randomSeed()
+    shapeSeed: randomShapeSeed(),
+    paletteSeed: randomPaletteSeed('name'),
+    format: 'name'
   };
 }
 
 function randomSeed() {
   return randomBytes(4).readUInt32BE(0);
+}
+
+function randomShapeSeed() {
+  return randomSeed() % (FIRST_NAMES.length * FAMILY_NAMES.length);
+}
+
+function randomPaletteSeed(format) {
+  if (format === 'classic') {
+    return randomSeed();
+  }
+
+  return randomSeed() % (MIDDLE_NAMES.length * SUFFIX_NAMES.length);
 }
 
 function parseSeed(value) {
@@ -101,6 +171,20 @@ function parseSeed(value) {
   }
 
   return seed >>> 0;
+}
+
+function wordIndex(words, word, label) {
+  const index = words.indexOf(word);
+
+  if (index === -1) {
+    throw new Error(`Unknown ${label} "${word}" in clingon name.`);
+  }
+
+  return index;
+}
+
+function formatClassicCode(shapeSeed, paletteSeed) {
+  return `${CODE_PREFIX}-${encodeSeed(shapeSeed)}-${encodeSeed(paletteSeed)}`;
 }
 
 function encodeSeed(seed) {

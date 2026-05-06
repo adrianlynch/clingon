@@ -2,17 +2,17 @@
 
 Generate tiny deterministic terminal characters.
 
-Each clingon is created from a short code. Save the code and you can render the same character again later, or keep the same shape and generate a new set of colors.
+Each clingon is created from a readable name. Save the name and you can render the same character again later, or keep the same shape and generate a new set of colors.
 
 ```txt
-              
+      ##      
     [][][]    
-  []..[]..[]  
-[][][]..[][][]
-    [][][]    
-    ..  ..    
+[][]..[]..[][]
+[][][][][][][]
+  [][]##[][]  
+  ....  ....  
 
-code: clg-00000rs-00000rt
+code: orlando-reginald-morris-junior
 ```
 
 ## Install
@@ -44,19 +44,19 @@ clingon --small
 Regenerate a specific clingon:
 
 ```sh
-clingon --code clg-00000rs-00000rt
+clingon --code orlando-reginald-morris-junior
 ```
 
 Keep the same shape, but choose a new random palette:
 
 ```sh
-clingon --code clg-00000rs-00000rt --recolor
+clingon --code orlando-reginald-morris-junior --recolor
 ```
 
 Print the JavaScript needed to recreate the same clingon:
 
 ```sh
-clingon --code clg-00000rs-00000rt --small --script
+clingon --code orlando-reginald-morris-junior --small --script
 ```
 
 Print structured output:
@@ -71,7 +71,7 @@ clingon --small --json
 clingon [options]
 
 Options:
-  -c, --code <code>   Regenerate a specific clingon code
+  -c, --code <code>   Regenerate a specific clingon name/code
   -r, --recolor       Keep the shape from --code but choose new colors
       --small         Render a smaller clingon
       --size <size>   Render size: small or normal
@@ -88,7 +88,7 @@ Options:
 import { generateClingon } from '@adrianlynch/clingon';
 
 const clingon = generateClingon({
-  code: 'clg-00000rs-00000rt',
+  code: 'orlando-reginald-morris-junior',
   size: 'small'
 });
 
@@ -111,7 +111,7 @@ Render-only helper:
 import { renderClingon } from '@adrianlynch/clingon';
 
 console.log(renderClingon({
-  code: 'clg-00000rs-00000rt',
+  code: 'orlando-reginald-morris-junior',
   size: 'small'
 }));
 ```
@@ -122,10 +122,10 @@ console.log(renderClingon({
 
 ```js
 {
-  code: 'clg-00000rs-00000rt',
+  code: 'orlando-reginald-morris-junior',
   size: 'small',
-  shapeSeed: 1000,
-  paletteSeed: 1001,
+  shapeSeed: 0,
+  paletteSeed: 0,
   palette: {
     body: '#f06a0d',
     accent: '#2bce67',
@@ -137,7 +137,13 @@ console.log(renderClingon({
 }
 ```
 
-The first seed in the code controls the shape. The second seed controls the palette.
+The first and third words control the shape. The second and fourth words control the palette.
+
+Older `clg-...` seed codes are still accepted:
+
+```sh
+clingon --code clg-00000rs-00000rt
+```
 
 ## Development
 
