@@ -108,3 +108,14 @@ test('tiny clingons vary shape between seeds', () => {
 
   assert.ok(shapes.size > 2);
 });
+
+test('compact clingons can render one-character details in text mode', () => {
+  const details = [
+    generateClingon({ code: 'orlando-reginald-morris-junior', color: false }).text,
+    generateClingon({ code: 'orlando-reginald-morris-junior', size: 'small', color: false }).text,
+    generateClingon({ code: 'mabel-waffles-wigglesworth-tiny', size: 'tiny', color: false }).text,
+    generateClingon({ code: 'cosmo-pickle-toebean-cosmic', size: 'tiny', color: false }).text
+  ].join('\n');
+
+  assert.match(details, /[#.] /);
+});

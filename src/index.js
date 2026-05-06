@@ -12,6 +12,8 @@ const EMPTY = 0;
 const BODY = 1;
 const ACCENT = 2;
 const DARK = 3;
+const ACCENT_NARROW = 4;
+const DARK_NARROW = 5;
 
 const FIRST_NAMES = [
   'orlando', 'mabel', 'winston', 'poppy', 'felix', 'juniper', 'otto', 'nora',
@@ -276,38 +278,41 @@ function createTinyShape(seed) {
 
 function addTinyHeadTop(pixels, rng, center) {
   const style = int(rng, 0, 3);
+  const value = rng() > 0.45 ? ACCENT_NARROW : ACCENT;
 
   if (style === 0) {
-    pixels[0][center] = ACCENT;
+    pixels[0][center] = value;
   } else if (style === 1) {
-    pixels[0][center - 1] = ACCENT;
-    pixels[0][center + 1] = ACCENT;
+    pixels[0][center - 1] = value;
+    pixels[0][center + 1] = value;
   } else if (style === 2) {
-    pixels[0][center + int(rng, -1, 1)] = ACCENT;
+    pixels[0][center + int(rng, -1, 1)] = value;
   }
 }
 
 function addTinyFace(pixels, rng, center, halfWidths) {
   const eyeSpacing = halfWidths[1] >= 3 && rng() > 0.45 ? 2 : 1;
-  pixels[2][center - eyeSpacing] = DARK;
-  pixels[2][center + eyeSpacing] = DARK;
+  const eyeValue = rng() > 0.35 ? DARK_NARROW : DARK;
+  pixels[2][center - eyeSpacing] = eyeValue;
+  pixels[2][center + eyeSpacing] = eyeValue;
 
   if (rng() > 0.5 && halfWidths[2] >= 2) {
-    pixels[3][center - 1] = ACCENT;
-    pixels[3][center + 1] = ACCENT;
+    pixels[3][center - 1] = rng() > 0.5 ? ACCENT_NARROW : ACCENT;
+    pixels[3][center + 1] = rng() > 0.5 ? ACCENT_NARROW : ACCENT;
   } else {
-    pixels[3][center] = ACCENT;
+    pixels[3][center] = rng() > 0.5 ? ACCENT_NARROW : ACCENT;
   }
 }
 
 function addTinyFeet(pixels, rng, center, halfWidths) {
   const spread = Math.min(2, Math.max(1, halfWidths[2]));
-  pixels[4][center - spread] = DARK;
-  pixels[4][center + spread] = DARK;
+  const value = rng() > 0.35 ? DARK_NARROW : DARK;
+  pixels[4][center - spread] = value;
+  pixels[4][center + spread] = value;
 
   if (spread === 1 && rng() > 0.6) {
-    pixels[4][center - 2] = DARK;
-    pixels[4][center + 2] = DARK;
+    pixels[4][center - 2] = value;
+    pixels[4][center + 2] = value;
   }
 }
 
@@ -343,25 +348,27 @@ function createSmallShape(seed) {
 
 function addSmallHeadTop(pixels, rng, center) {
   const style = int(rng, 0, 4);
+  const value = rng() > 0.45 ? ACCENT_NARROW : ACCENT;
 
   if (style === 0) {
-    pixels[0][center] = ACCENT;
+    pixels[0][center] = value;
   } else if (style === 1) {
-    pixels[0][center - 1] = ACCENT;
-    pixels[0][center + 1] = ACCENT;
+    pixels[0][center - 1] = value;
+    pixels[0][center + 1] = value;
   } else if (style === 2) {
-    pixels[0][center + int(rng, -1, 1)] = ACCENT;
+    pixels[0][center + int(rng, -1, 1)] = value;
   } else if (style === 3) {
-    pixels[0][center - 2] = ACCENT;
-    pixels[0][center + 2] = ACCENT;
+    pixels[0][center - 2] = value;
+    pixels[0][center + 2] = value;
   }
 }
 
 function addSmallEyes(pixels, rng, center, halfWidths) {
   const y = halfWidths[1] >= 2 ? 2 : 3;
   const spacing = halfWidths[y - 1] >= 3 && rng() > 0.35 ? 2 : 1;
-  pixels[y][center - spacing] = DARK;
-  pixels[y][center + spacing] = DARK;
+  const value = rng() > 0.35 ? DARK_NARROW : DARK;
+  pixels[y][center - spacing] = value;
+  pixels[y][center + spacing] = value;
 }
 
 function addSmallMouth(pixels, rng, center, halfWidths) {
@@ -369,12 +376,12 @@ function addSmallMouth(pixels, rng, center, halfWidths) {
   const style = int(rng, 0, 2);
 
   if (style === 0) {
-    pixels[y][center] = ACCENT;
+    pixels[y][center] = rng() > 0.5 ? ACCENT_NARROW : ACCENT;
   } else if (style === 1) {
-    pixels[y][center - 1] = ACCENT;
-    pixels[y][center + 1] = ACCENT;
+    pixels[y][center - 1] = rng() > 0.5 ? ACCENT_NARROW : ACCENT;
+    pixels[y][center + 1] = rng() > 0.5 ? ACCENT_NARROW : ACCENT;
   } else {
-    pixels[y][center] = DARK;
+    pixels[y][center] = rng() > 0.5 ? DARK_NARROW : DARK;
   }
 }
 
@@ -383,7 +390,7 @@ function addSmallArms(pixels, rng, center, halfWidths) {
   const reach = halfWidths[y - 1] + 1;
 
   if (reach < center + 1 && rng() > 0.2) {
-    const value = rng() > 0.5 ? BODY : DARK;
+    const value = rng() > 0.5 ? BODY : rng() > 0.45 ? DARK_NARROW : DARK;
     pixels[y][center - reach] = value;
     pixels[y][center + reach] = value;
   }
@@ -391,12 +398,13 @@ function addSmallArms(pixels, rng, center, halfWidths) {
 
 function addSmallFeet(pixels, rng, center, halfWidths) {
   const spread = Math.min(center, Math.max(1, halfWidths[3] - int(rng, 0, 1)));
-  pixels[5][center - spread] = DARK;
-  pixels[5][center + spread] = DARK;
+  const value = rng() > 0.35 ? DARK_NARROW : DARK;
+  pixels[5][center - spread] = value;
+  pixels[5][center + spread] = value;
 
   if (spread < 2 && rng() > 0.5) {
-    pixels[5][center - spread - 1] = DARK;
-    pixels[5][center + spread + 1] = DARK;
+    pixels[5][center - spread - 1] = value;
+    pixels[5][center + spread + 1] = value;
   }
 }
 
@@ -416,42 +424,44 @@ function addEyes(pixels, rng, center, y, halfWidth) {
   const inset = int(rng, 1, 2);
   const left = Math.max(1, center - halfWidth + inset);
   const right = Math.min(pixels[y].length - 2, center + halfWidth - inset);
-  pixels[y][left] = DARK;
-  pixels[y][right] = DARK;
+  const value = rng() > 0.35 ? DARK_NARROW : DARK;
+  pixels[y][left] = value;
+  pixels[y][right] = value;
 }
 
 function addMouth(pixels, rng, center, y) {
   const style = int(rng, 0, 2);
 
   if (style === 0) {
-    pixels[y][center] = DARK;
+    pixels[y][center] = rng() > 0.5 ? DARK_NARROW : DARK;
   } else if (style === 1) {
-    pixels[y][center - 1] = DARK;
-    pixels[y][center + 1] = DARK;
+    pixels[y][center - 1] = rng() > 0.5 ? DARK_NARROW : DARK;
+    pixels[y][center + 1] = rng() > 0.5 ? DARK_NARROW : DARK;
   } else {
-    pixels[y][center - 1] = ACCENT;
-    pixels[y][center] = ACCENT;
-    pixels[y][center + 1] = ACCENT;
+    pixels[y][center - 1] = rng() > 0.5 ? ACCENT_NARROW : ACCENT;
+    pixels[y][center] = rng() > 0.5 ? ACCENT_NARROW : ACCENT;
+    pixels[y][center + 1] = rng() > 0.5 ? ACCENT_NARROW : ACCENT;
   }
 }
 
 function addHeadTop(pixels, rng, center, bodyTop) {
   const antenna = int(rng, 0, 3);
+  const value = rng() > 0.45 ? ACCENT_NARROW : ACCENT;
 
   if (antenna === 0) {
-    pixels[0][center] = ACCENT;
-    pixels[1][center] = ACCENT;
+    pixels[0][center] = value;
+    pixels[1][center] = value;
   } else if (antenna === 1) {
-    pixels[1][center - 2] = ACCENT;
-    pixels[1][center + 2] = ACCENT;
+    pixels[1][center - 2] = value;
+    pixels[1][center + 2] = value;
   } else if (antenna === 2) {
-    pixels[0][center - 1] = ACCENT;
-    pixels[0][center + 1] = ACCENT;
-    pixels[1][center] = ACCENT;
+    pixels[0][center - 1] = value;
+    pixels[0][center + 1] = value;
+    pixels[1][center] = value;
   }
 
   if (bodyTop > 2 && antenna === 3) {
-    fillSymmetric(pixels, 1, center, 1, ACCENT);
+    fillSymmetric(pixels, 1, center, 1, value);
   }
 }
 
@@ -461,8 +471,9 @@ function addArms(pixels, rng, center, y) {
   pixels[y][center + reach] = BODY;
 
   if (rng() > 0.45) {
-    pixels[y + 1][center - reach] = DARK;
-    pixels[y + 1][center + reach] = DARK;
+    const value = rng() > 0.45 ? DARK_NARROW : DARK;
+    pixels[y + 1][center - reach] = value;
+    pixels[y + 1][center + reach] = value;
   }
 }
 
@@ -472,12 +483,13 @@ function addFeet(pixels, rng, center, y) {
   }
 
   const spread = int(rng, 2, 3);
-  pixels[y][center - spread] = DARK;
-  pixels[y][center + spread] = DARK;
+  const value = rng() > 0.35 ? DARK_NARROW : DARK;
+  pixels[y][center - spread] = value;
+  pixels[y][center + spread] = value;
 
   if (rng() > 0.55) {
-    pixels[y][center - spread - 1] = DARK;
-    pixels[y][center + spread + 1] = DARK;
+    pixels[y][center - spread - 1] = value;
+    pixels[y][center + spread + 1] = value;
   }
 }
 
@@ -508,13 +520,25 @@ function renderCell(cell, palette, useColor) {
     return renderTextCell(cell);
   }
 
-  const color = cell === BODY ? palette.body : cell === ACCENT ? palette.accent : palette.dark;
+  const color = cell === BODY
+    ? palette.body
+    : cell === ACCENT || cell === ACCENT_NARROW
+      ? palette.accent
+      : palette.dark;
   return `${ansiColor(color)}██\u001b[0m`;
 }
 
 function renderTextCell(cell) {
   if (cell === EMPTY) {
     return '  ';
+  }
+
+  if (cell === ACCENT_NARROW) {
+    return '# ';
+  }
+
+  if (cell === DARK_NARROW) {
+    return '. ';
   }
 
   if (cell === ACCENT) {

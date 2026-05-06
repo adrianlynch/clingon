@@ -7,10 +7,10 @@ Each clingon is created from a readable name. Save the name and you can render t
 ```txt
       ##      
     [][][]    
-[][]..[]..[][]
+[][]. []. [][]
 [][][][][][][]
-  [][]##[][]  
-  ....  ....  
+  []# []# []  
+    ..  ..    
 
 code: orlando-reginald-morris-junior
 ```
