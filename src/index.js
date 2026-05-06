@@ -16,6 +16,10 @@ const ACCENT_NARROW = 4;
 const DARK_NARROW = 5;
 const ACCENT_NARROW_RIGHT = 6;
 const DARK_NARROW_RIGHT = 7;
+const EYE_DARK_LEFT = 8;
+const EYE_DARK_RIGHT = 9;
+const EYE_LIGHT_LEFT = 10;
+const EYE_LIGHT_RIGHT = 11;
 
 const FIRST_NAMES = [
   'orlando', 'mabel', 'winston', 'poppy', 'felix', 'juniper', 'otto', 'nora',
@@ -293,8 +297,7 @@ function addTinyHeadTop(pixels, rng, center) {
 
 function addTinyFace(pixels, rng, center, halfWidths) {
   const eyeSpacing = halfWidths[1] >= 3 && rng() > 0.45 ? 2 : 1;
-  pixels[2][center - eyeSpacing] = DARK;
-  pixels[2][center + eyeSpacing] = DARK;
+  setEyes(pixels, rng, 2, center - eyeSpacing, center + eyeSpacing);
 
   if (rng() > 0.5 && halfWidths[2] >= 2) {
     setMirrored(pixels, 3, center - 1, center + 1, rng() > 0.5 ? ACCENT_NARROW : ACCENT);
@@ -361,8 +364,7 @@ function addSmallHeadTop(pixels, rng, center) {
 function addSmallEyes(pixels, rng, center, halfWidths) {
   const y = halfWidths[1] >= 2 ? 2 : 3;
   const spacing = halfWidths[y - 1] >= 3 && rng() > 0.35 ? 2 : 1;
-  pixels[y][center - spacing] = DARK;
-  pixels[y][center + spacing] = DARK;
+  setEyes(pixels, rng, y, center - spacing, center + spacing);
 }
 
 function addSmallMouth(pixels, rng, center, halfWidths) {
@@ -414,8 +416,7 @@ function addEyes(pixels, rng, center, y, halfWidth) {
   const inset = int(rng, 1, 2);
   const left = Math.max(1, center - halfWidth + inset);
   const right = Math.min(pixels[y].length - 2, center + halfWidth - inset);
-  pixels[y][left] = DARK;
-  pixels[y][right] = DARK;
+  setEyes(pixels, rng, y, left, right);
 }
 
 function addMouth(pixels, rng, center, y) {
@@ -481,6 +482,24 @@ function setMirrored(pixels, y, left, right, value) {
   pixels[y][right] = mirrorNarrow(value);
 }
 
+function setEyes(pixels, rng, y, left, right) {
+  const style = int(rng, 0, 3);
+
+  if (style === 0) {
+    pixels[y][left] = DARK;
+    pixels[y][right] = DARK;
+  } else if (style === 1) {
+    pixels[y][left] = ACCENT;
+    pixels[y][right] = ACCENT;
+  } else if (style === 2) {
+    pixels[y][left] = EYE_DARK_RIGHT;
+    pixels[y][right] = EYE_DARK_LEFT;
+  } else {
+    pixels[y][left] = EYE_LIGHT_RIGHT;
+    pixels[y][right] = EYE_LIGHT_LEFT;
+  }
+}
+
 function mirrorNarrow(value) {
   if (value === ACCENT_NARROW) {
     return ACCENT_NARROW_RIGHT;
@@ -525,6 +544,10 @@ function renderCell(cell, palette, useColor) {
     : cell === ACCENT || cell === ACCENT_NARROW || cell === ACCENT_NARROW_RIGHT
       ? palette.accent
       : palette.dark;
+  if (isCompositeEye(cell)) {
+    return renderCompositeEye(cell, palette);
+  }
+
   const glyph = isNarrowRight(cell) ? ' █' : isNarrowLeft(cell) ? '█ ' : '██';
   return `${ansiColor(color)}${glyph}\u001b[0m`;
 }
@@ -550,6 +573,22 @@ function renderTextCell(cell) {
     return ' .';
   }
 
+  if (cell === EYE_DARK_RIGHT) {
+    return '[.';
+  }
+
+  if (cell === EYE_DARK_LEFT) {
+    return '.]';
+  }
+
+  if (cell === EYE_LIGHT_RIGHT) {
+    return '[#';
+  }
+
+  if (cell === EYE_LIGHT_LEFT) {
+    return '#]';
+  }
+
   if (cell === ACCENT) {
     return '##';
   }
@@ -567,6 +606,25 @@ function isNarrowLeft(cell) {
 
 function isNarrowRight(cell) {
   return cell === ACCENT_NARROW_RIGHT || cell === DARK_NARROW_RIGHT;
+}
+
+function isCompositeEye(cell) {
+  return cell === EYE_DARK_LEFT
+    || cell === EYE_DARK_RIGHT
+    || cell === EYE_LIGHT_LEFT
+    || cell === EYE_LIGHT_RIGHT;
+}
+
+function renderCompositeEye(cell, palette) {
+  const detail = cell === EYE_LIGHT_LEFT || cell === EYE_LIGHT_RIGHT
+    ? palette.accent
+    : palette.dark;
+
+  if (cell === EYE_DARK_LEFT || cell === EYE_LIGHT_LEFT) {
+    return `${ansiColor(detail)}█${ansiColor(palette.body)}█\u001b[0m`;
+  }
+
+  return `${ansiColor(palette.body)}█${ansiColor(detail)}█\u001b[0m`;
 }
 
 function ansiColor(hex) {

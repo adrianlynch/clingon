@@ -121,14 +121,16 @@ test('compact clingons can render one-character non-eye details in text mode', (
   assert.match(details, /[#.] /);
 });
 
-test('eyes render as full-width paired cells', () => {
+test('eyes can render as mirrored composite paired cells', () => {
   const normal = generateClingon({ code: 'orlando-reginald-morris-junior', color: false });
   const small = generateClingon({ code: 'orlando-reginald-morris-junior', size: 'small', color: false });
   const tiny = generateClingon({ code: 'mabel-waffles-wigglesworth-tiny', size: 'tiny', color: false });
+  const text = [normal.text, small.text, tiny.text].join('\n');
 
-  assert.ok(normal.pixels.some((row) => row.filter((cell) => cell === 3).length >= 2));
-  assert.ok(small.pixels.some((row) => row.filter((cell) => cell === 3).length >= 2));
-  assert.ok(tiny.pixels.some((row) => row.filter((cell) => cell === 3).length >= 2));
+  assert.ok([normal, small, tiny].some((clingon) => clingon.pixels.some((row) => (
+    (row.includes(8) && row.includes(9)) || (row.includes(10) && row.includes(11))
+  ))));
+  assert.match(text, /(\[\.|\.]|\[#|#])/);
 });
 
 test('narrow details render as one visible block in ansi mode', () => {
