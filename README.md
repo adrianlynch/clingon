@@ -50,6 +50,32 @@ Run it without installing:
 npx @adrianlynch/clingon --small
 ```
 
+## Use In zsh
+
+Install it globally so shell startup does not need to run `npx`:
+
+```sh
+npm install -g @adrianlynch/clingon
+```
+
+Add this to `~/.zshrc` to show a random tiny clingon in each interactive terminal:
+
+```sh
+if [[ $- == *i* ]]; then
+  clingon --tiny --quiet
+fi
+```
+
+Use a saved name for the same startup clingon every time:
+
+```sh
+if [[ $- == *i* ]]; then
+  clingon --code orlando-reginald-morris-junior --tiny --quiet
+fi
+```
+
+`--quiet` hides the emitted `code:` line, which keeps startup output clean.
+
 ## CLI
 
 Generate a random clingon:
