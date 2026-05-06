@@ -4,7 +4,7 @@
   "description": "Generate tiny deterministic terminal characters.",
   "type": "module",
   "bin": {
-    "clingon": "./bin/clingon.js"
+    "clingon": "bin/clingon.js"
   },
   "exports": {
     ".": "./src/index.js"
