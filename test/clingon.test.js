@@ -138,3 +138,14 @@ test('narrow details render as one visible block in ansi mode', () => {
 
   assert.match(tiny.ansi, /█ \u001b\[0m/);
 });
+
+test('narrow feet mirror left and right alignment', () => {
+  const tiny = generateClingon({
+    code: 'barnaby-fig-danderby-little',
+    size: 'tiny',
+    color: false
+  });
+  const footRow = tiny.text.split('\n').at(-1);
+
+  assert.match(footRow, /\.    \./);
+});

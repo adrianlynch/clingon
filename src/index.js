@@ -14,6 +14,8 @@ const ACCENT = 2;
 const DARK = 3;
 const ACCENT_NARROW = 4;
 const DARK_NARROW = 5;
+const ACCENT_NARROW_RIGHT = 6;
+const DARK_NARROW_RIGHT = 7;
 
 const FIRST_NAMES = [
   'orlando', 'mabel', 'winston', 'poppy', 'felix', 'juniper', 'otto', 'nora',
@@ -283,8 +285,7 @@ function addTinyHeadTop(pixels, rng, center) {
   if (style === 0) {
     pixels[0][center] = value;
   } else if (style === 1) {
-    pixels[0][center - 1] = value;
-    pixels[0][center + 1] = value;
+    setMirrored(pixels, 0, center - 1, center + 1, value);
   } else if (style === 2) {
     pixels[0][center + int(rng, -1, 1)] = value;
   }
@@ -296,8 +297,7 @@ function addTinyFace(pixels, rng, center, halfWidths) {
   pixels[2][center + eyeSpacing] = DARK;
 
   if (rng() > 0.5 && halfWidths[2] >= 2) {
-    pixels[3][center - 1] = rng() > 0.5 ? ACCENT_NARROW : ACCENT;
-    pixels[3][center + 1] = rng() > 0.5 ? ACCENT_NARROW : ACCENT;
+    setMirrored(pixels, 3, center - 1, center + 1, rng() > 0.5 ? ACCENT_NARROW : ACCENT);
   } else {
     pixels[3][center] = rng() > 0.5 ? ACCENT_NARROW : ACCENT;
   }
@@ -306,12 +306,10 @@ function addTinyFace(pixels, rng, center, halfWidths) {
 function addTinyFeet(pixels, rng, center, halfWidths) {
   const spread = Math.min(2, Math.max(1, halfWidths[2]));
   const value = rng() > 0.35 ? DARK_NARROW : DARK;
-  pixels[4][center - spread] = value;
-  pixels[4][center + spread] = value;
+  setMirrored(pixels, 4, center - spread, center + spread, value);
 
   if (spread === 1 && rng() > 0.6) {
-    pixels[4][center - 2] = value;
-    pixels[4][center + 2] = value;
+    setMirrored(pixels, 4, center - 2, center + 2, value);
   }
 }
 
@@ -352,13 +350,11 @@ function addSmallHeadTop(pixels, rng, center) {
   if (style === 0) {
     pixels[0][center] = value;
   } else if (style === 1) {
-    pixels[0][center - 1] = value;
-    pixels[0][center + 1] = value;
+    setMirrored(pixels, 0, center - 1, center + 1, value);
   } else if (style === 2) {
     pixels[0][center + int(rng, -1, 1)] = value;
   } else if (style === 3) {
-    pixels[0][center - 2] = value;
-    pixels[0][center + 2] = value;
+    setMirrored(pixels, 0, center - 2, center + 2, value);
   }
 }
 
@@ -376,8 +372,7 @@ function addSmallMouth(pixels, rng, center, halfWidths) {
   if (style === 0) {
     pixels[y][center] = rng() > 0.5 ? ACCENT_NARROW : ACCENT;
   } else if (style === 1) {
-    pixels[y][center - 1] = rng() > 0.5 ? ACCENT_NARROW : ACCENT;
-    pixels[y][center + 1] = rng() > 0.5 ? ACCENT_NARROW : ACCENT;
+    setMirrored(pixels, y, center - 1, center + 1, rng() > 0.5 ? ACCENT_NARROW : ACCENT);
   } else {
     pixels[y][center] = rng() > 0.5 ? DARK_NARROW : DARK;
   }
@@ -389,20 +384,17 @@ function addSmallArms(pixels, rng, center, halfWidths) {
 
   if (reach < center + 1 && rng() > 0.2) {
     const value = rng() > 0.5 ? BODY : rng() > 0.45 ? DARK_NARROW : DARK;
-    pixels[y][center - reach] = value;
-    pixels[y][center + reach] = value;
+    setMirrored(pixels, y, center - reach, center + reach, value);
   }
 }
 
 function addSmallFeet(pixels, rng, center, halfWidths) {
   const spread = Math.min(center, Math.max(1, halfWidths[3] - int(rng, 0, 1)));
   const value = rng() > 0.35 ? DARK_NARROW : DARK;
-  pixels[5][center - spread] = value;
-  pixels[5][center + spread] = value;
+  setMirrored(pixels, 5, center - spread, center + spread, value);
 
   if (spread < 2 && rng() > 0.5) {
-    pixels[5][center - spread - 1] = value;
-    pixels[5][center + spread + 1] = value;
+    setMirrored(pixels, 5, center - spread - 1, center + spread + 1, value);
   }
 }
 
@@ -432,12 +424,11 @@ function addMouth(pixels, rng, center, y) {
   if (style === 0) {
     pixels[y][center] = rng() > 0.5 ? DARK_NARROW : DARK;
   } else if (style === 1) {
-    pixels[y][center - 1] = rng() > 0.5 ? DARK_NARROW : DARK;
-    pixels[y][center + 1] = rng() > 0.5 ? DARK_NARROW : DARK;
+    setMirrored(pixels, y, center - 1, center + 1, rng() > 0.5 ? DARK_NARROW : DARK);
   } else {
-    pixels[y][center - 1] = rng() > 0.5 ? ACCENT_NARROW : ACCENT;
+    const value = rng() > 0.5 ? ACCENT_NARROW : ACCENT;
+    setMirrored(pixels, y, center - 1, center + 1, value);
     pixels[y][center] = rng() > 0.5 ? ACCENT_NARROW : ACCENT;
-    pixels[y][center + 1] = rng() > 0.5 ? ACCENT_NARROW : ACCENT;
   }
 }
 
@@ -449,11 +440,9 @@ function addHeadTop(pixels, rng, center, bodyTop) {
     pixels[0][center] = value;
     pixels[1][center] = value;
   } else if (antenna === 1) {
-    pixels[1][center - 2] = value;
-    pixels[1][center + 2] = value;
+    setMirrored(pixels, 1, center - 2, center + 2, value);
   } else if (antenna === 2) {
-    pixels[0][center - 1] = value;
-    pixels[0][center + 1] = value;
+    setMirrored(pixels, 0, center - 1, center + 1, value);
     pixels[1][center] = value;
   }
 
@@ -469,8 +458,7 @@ function addArms(pixels, rng, center, y) {
 
   if (rng() > 0.45) {
     const value = rng() > 0.45 ? DARK_NARROW : DARK;
-    pixels[y + 1][center - reach] = value;
-    pixels[y + 1][center + reach] = value;
+    setMirrored(pixels, y + 1, center - reach, center + reach, value);
   }
 }
 
@@ -481,13 +469,28 @@ function addFeet(pixels, rng, center, y) {
 
   const spread = int(rng, 2, 3);
   const value = rng() > 0.35 ? DARK_NARROW : DARK;
-  pixels[y][center - spread] = value;
-  pixels[y][center + spread] = value;
+  setMirrored(pixels, y, center - spread, center + spread, value);
 
   if (rng() > 0.55) {
-    pixels[y][center - spread - 1] = value;
-    pixels[y][center + spread + 1] = value;
+    setMirrored(pixels, y, center - spread - 1, center + spread + 1, value);
   }
+}
+
+function setMirrored(pixels, y, left, right, value) {
+  pixels[y][left] = value;
+  pixels[y][right] = mirrorNarrow(value);
+}
+
+function mirrorNarrow(value) {
+  if (value === ACCENT_NARROW) {
+    return ACCENT_NARROW_RIGHT;
+  }
+
+  if (value === DARK_NARROW) {
+    return DARK_NARROW_RIGHT;
+  }
+
+  return value;
 }
 
 function fillSymmetric(pixels, y, center, halfWidth, value) {
@@ -519,10 +522,10 @@ function renderCell(cell, palette, useColor) {
 
   const color = cell === BODY
     ? palette.body
-    : cell === ACCENT || cell === ACCENT_NARROW
+    : cell === ACCENT || cell === ACCENT_NARROW || cell === ACCENT_NARROW_RIGHT
       ? palette.accent
       : palette.dark;
-  const glyph = cell === ACCENT_NARROW || cell === DARK_NARROW ? '█ ' : '██';
+  const glyph = isNarrowRight(cell) ? ' █' : isNarrowLeft(cell) ? '█ ' : '██';
   return `${ansiColor(color)}${glyph}\u001b[0m`;
 }
 
@@ -535,8 +538,16 @@ function renderTextCell(cell) {
     return '# ';
   }
 
+  if (cell === ACCENT_NARROW_RIGHT) {
+    return ' #';
+  }
+
   if (cell === DARK_NARROW) {
     return '. ';
+  }
+
+  if (cell === DARK_NARROW_RIGHT) {
+    return ' .';
   }
 
   if (cell === ACCENT) {
@@ -548,6 +559,14 @@ function renderTextCell(cell) {
   }
 
   return '[]';
+}
+
+function isNarrowLeft(cell) {
+  return cell === ACCENT_NARROW || cell === DARK_NARROW;
+}
+
+function isNarrowRight(cell) {
+  return cell === ACCENT_NARROW_RIGHT || cell === DARK_NARROW_RIGHT;
 }
 
 function ansiColor(hex) {
