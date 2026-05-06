@@ -14,7 +14,7 @@ Each clingon is created from a readable name. Save the name and you can render t
   []# [] #[]  
   . .    . .  
 
-code: orlando-reginald-morris-junior
+name: orlando-reginald-morris-junior
 ```
 
 ## Screenshots
@@ -67,10 +67,10 @@ clingon --tiny --quiet --pad=1
 Use a saved name for the same startup clingon every time:
 
 ```sh
-clingon --code orlando-reginald-morris-junior --tiny --quiet --pad=1
+clingon --name orlando-reginald-morris-junior --tiny --quiet --pad=1
 ```
 
-`--quiet` hides the emitted `code:` line, which keeps startup output clean.
+`--quiet` hides the emitted `name:` line, which keeps startup output clean.
 `--pad=1` adds a blank line above and below the character plus one space of left padding.
 
 ## CLI
@@ -96,19 +96,19 @@ clingon --tiny
 Regenerate a specific clingon:
 
 ```sh
-clingon --code orlando-reginald-morris-junior
+clingon --name orlando-reginald-morris-junior
 ```
 
 Keep the same shape, but choose a new random palette:
 
 ```sh
-clingon --code orlando-reginald-morris-junior --recolor
+clingon --name orlando-reginald-morris-junior --recolor
 ```
 
 Print the JavaScript needed to recreate the same clingon:
 
 ```sh
-clingon --code orlando-reginald-morris-junior --small --script
+clingon --name orlando-reginald-morris-junior --small --script
 ```
 
 Print structured output:
@@ -136,8 +136,8 @@ clingon --tiny --quiet --pad-h=2 --pad-v=1
 clingon [options]
 
 Options:
-  -c, --code <code>   Regenerate a specific clingon name/code
-  -r, --recolor       Keep the shape from --code but choose new colors
+  -n, --name <name>   Regenerate a specific clingon name
+  -r, --recolor       Keep the shape from --name but choose new colors
       --small         Render a smaller clingon
       --tiny          Render the tiniest clingon
       --size <size>   Render size: tiny, small, or normal
@@ -147,7 +147,7 @@ Options:
       --pad <n>       Add padding around terminal output
       --pad-h <n>     Add spaces before each terminal output line
       --pad-v <n>     Add blank lines before and after terminal output
-      --no-code       Alias for --quiet
+      --no-name       Alias for --quiet
       --no-color      Render without ANSI color
   -h, --help          Show help
   -v, --version       Show version
@@ -159,12 +159,12 @@ Options:
 import { generateClingon } from '@adrianlynch/clingon';
 
 const clingon = generateClingon({
-  code: 'orlando-reginald-morris-junior',
+  name: 'orlando-reginald-morris-junior',
   size: 'tiny'
 });
 
 console.log(clingon.ansi);
-console.log(clingon.code);
+console.log(clingon.name);
 ```
 
 Random clingon:
@@ -182,7 +182,7 @@ Render-only helper:
 import { renderClingon } from '@adrianlynch/clingon';
 
 console.log(renderClingon({
-  code: 'orlando-reginald-morris-junior',
+  name: 'orlando-reginald-morris-junior',
   size: 'tiny'
 }));
 ```
@@ -193,6 +193,7 @@ console.log(renderClingon({
 
 ```js
 {
+  name: 'orlando-reginald-morris-junior',
   code: 'orlando-reginald-morris-junior',
   size: 'tiny',
   shapeSeed: 0,
@@ -210,10 +211,10 @@ console.log(renderClingon({
 
 The first and third words control the shape. The second and fourth words control the palette.
 
-Older `clg-...` seed codes are still accepted:
+Older `clg-...` seed codes are still accepted through `--name`:
 
 ```sh
-clingon --code clg-00000rs-00000rt
+clingon --name clg-00000rs-00000rt
 ```
 
 ## Development

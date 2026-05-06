@@ -32,18 +32,20 @@ test('parses prefixed code variants', () => {
 
 test('generates deterministic named clingons by default', () => {
   const clingon = generateClingon({ color: false });
-  const regenerated = generateClingon({ code: clingon.code, color: false });
+  const regenerated = generateClingon({ name: clingon.name, color: false });
 
   assert.match(clingon.code, /^[a-z]+-[a-z]+-[a-z]+-[a-z]+$/);
+  assert.equal(clingon.name, clingon.code);
   assert.equal(regenerated.text, clingon.text);
   assert.equal(regenerated.code, clingon.code);
 });
 
-test('parses readable names as clingon codes', () => {
-  const first = generateClingon({ code: 'orlando-reginald-morris-junior', color: false });
-  const second = generateClingon({ code: first.code, color: false });
+test('parses readable names as clingon names', () => {
+  const first = generateClingon({ name: 'orlando-reginald-morris-junior', color: false });
+  const second = generateClingon({ name: first.name, color: false });
 
   assert.equal(first.code, 'orlando-reginald-morris-junior');
+  assert.equal(first.name, 'orlando-reginald-morris-junior');
   assert.equal(second.text, first.text);
 });
 
@@ -60,7 +62,7 @@ test('recoloring a named clingon preserves shape words', () => {
 });
 
 test('renderClingon returns ansi output for import convenience', () => {
-  assert.match(renderClingon({ code: 'clg-00000rs-00000rt', color: false }), /\[\]/);
+  assert.match(renderClingon({ name: 'clg-00000rs-00000rt', color: false }), /\[\]/);
 });
 
 test('generates a smaller deterministic clingon', () => {
@@ -153,18 +155,18 @@ test('narrow feet mirror left and right alignment', () => {
   assert.match(footRow, /\.    \./);
 });
 
-test('cli quiet mode hides the emitted code', () => {
+test('cli quiet mode hides the emitted name', () => {
   const stdout = createWritable();
   const stderr = createWritable();
 
-  runCli(['--code', 'orlando-reginald-morris-junior', '--tiny', '--quiet', '--no-color'], {
+  runCli(['--name', 'orlando-reginald-morris-junior', '--tiny', '--quiet', '--no-color'], {
     stdout,
     stderr,
     env: {}
   });
 
   assert.match(stdout.output, /\[\]/);
-  assert.doesNotMatch(stdout.output, /code:/);
+  assert.doesNotMatch(stdout.output, /name:/);
   assert.equal(stderr.output, '');
 });
 
@@ -173,13 +175,13 @@ test('cli padding adds horizontal and vertical spacing', () => {
   const stderr = createWritable();
   const baseline = createWritable();
 
-  runCli(['--code', 'orlando-reginald-morris-junior', '--tiny', '--quiet', '--no-color'], {
+  runCli(['--name', 'orlando-reginald-morris-junior', '--tiny', '--quiet', '--no-color'], {
     stdout: baseline,
     stderr: createWritable(),
     env: {}
   });
 
-  runCli(['--code', 'orlando-reginald-morris-junior', '--tiny', '--quiet', '--no-color', '--pad=1'], {
+  runCli(['--name', 'orlando-reginald-morris-junior', '--tiny', '--quiet', '--no-color', '--pad=1'], {
     stdout,
     stderr,
     env: {}
@@ -198,14 +200,14 @@ test('cli directional padding can differ', () => {
   const stderr = createWritable();
   const baseline = createWritable();
 
-  runCli(['--code', 'orlando-reginald-morris-junior', '--tiny', '--quiet', '--no-color'], {
+  runCli(['--name', 'orlando-reginald-morris-junior', '--tiny', '--quiet', '--no-color'], {
     stdout: baseline,
     stderr: createWritable(),
     env: {}
   });
 
   runCli([
-    '--code',
+    '--name',
     'orlando-reginald-morris-junior',
     '--tiny',
     '--quiet',

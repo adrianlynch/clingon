@@ -6,8 +6,8 @@ Usage:
   clingon [options]
 
 Options:
-  -c, --code <code>   Regenerate a specific clingon name/code
-  -r, --recolor       Keep the shape from --code but choose new colors
+  -n, --name <name>   Regenerate a specific clingon name
+  -r, --recolor       Keep the shape from --name but choose new colors
       --small         Render a smaller clingon
       --tiny          Render the tiniest clingon
       --size <size>   Render size: tiny, small, or normal
@@ -17,7 +17,7 @@ Options:
       --pad <n>       Add padding around terminal output
       --pad-h <n>     Add spaces before each terminal output line
       --pad-v <n>     Add blank lines before and after terminal output
-      --no-code       Alias for --quiet
+      --no-name       Alias for --quiet
       --no-color      Render without ANSI color
   -h, --help          Show help
   -v, --version       Show version
@@ -38,7 +38,7 @@ export function runCli(args, io) {
     }
 
     const clingon = generateClingon({
-      code: options.code,
+      name: options.name,
       recolor: options.recolor,
       size: options.size,
       color: options.color && shouldUseColor(io)
@@ -61,11 +61,11 @@ function formatTerminalOutput(clingon, options) {
   const lines = clingon.ansi.split('\n');
 
   if (!options.quiet) {
-    lines.push('', `code: ${clingon.code}`);
+    lines.push('', `name: ${clingon.name}`);
   }
 
   if (options.script) {
-    lines.push('', ...snippetFor(clingon.code, { size: clingon.size }).split('\n'));
+    lines.push('', ...snippetFor(clingon.name, { size: clingon.size }).split('\n'));
   }
 
   const paddedLines = options.padH > 0
@@ -97,7 +97,7 @@ function parseCount(value, option) {
 function parseArgs(args) {
   const options = {
     color: true,
-    code: undefined,
+    name: undefined,
     help: false,
     json: false,
     padH: 0,
@@ -122,7 +122,7 @@ function parseArgs(args) {
       options.script = true;
     } else if (arg === '-j' || arg === '--json') {
       options.json = true;
-    } else if (arg === '-q' || arg === '--quiet' || arg === '--no-code') {
+    } else if (arg === '-q' || arg === '--quiet' || arg === '--no-name' || arg === '--no-code') {
       options.quiet = true;
     } else if (arg === '--pad') {
       index += 1;
@@ -154,18 +154,20 @@ function parseArgs(args) {
       options.size = requireValue(arg.slice('--size='.length), '--size');
     } else if (arg === '--no-color') {
       options.color = false;
-    } else if (arg === '-c' || arg === '--code') {
+    } else if (arg === '-n' || arg === '--name' || arg === '-c' || arg === '--code') {
       index += 1;
-      options.code = requireValue(args[index], arg);
+      options.name = requireValue(args[index], arg);
+    } else if (arg.startsWith('--name=')) {
+      options.name = requireValue(arg.slice('--name='.length), '--name');
     } else if (arg.startsWith('--code=')) {
-      options.code = requireValue(arg.slice('--code='.length), '--code');
+      options.name = requireValue(arg.slice('--code='.length), '--code');
     } else {
       throw new Error(`Unknown option "${arg}".`);
     }
   }
 
-  if (options.recolor && !options.code) {
-    throw new Error('--recolor requires --code so the shape can be preserved.');
+  if (options.recolor && !options.name) {
+    throw new Error('--recolor requires --name so the shape can be preserved.');
   }
 
   return options;
@@ -185,6 +187,7 @@ function shouldUseColor(io) {
 
 function toJson(clingon) {
   return {
+    name: clingon.name,
     code: clingon.code,
     size: clingon.size,
     palette: clingon.palette,

@@ -65,7 +65,8 @@ const PALETTES = [
 ];
 
 export function generateClingon(options = {}) {
-  const requested = options.code ? parseCode(options.code) : randomCode();
+  const requestedName = options.name ?? options.code;
+  const requested = requestedName ? parseCode(requestedName) : randomCode();
   const size = normalizeSize(options.size);
   const shapeSeed = requested.shapeSeed;
   const paletteSeed = options.recolor ? randomPaletteSeed(requested.format) : requested.paletteSeed;
@@ -76,6 +77,7 @@ export function generateClingon(options = {}) {
   const palette = createPalette(paletteSeed);
 
   return {
+    name: code,
     code,
     size,
     shapeSeed,
@@ -88,7 +90,7 @@ export function generateClingon(options = {}) {
 }
 
 export function renderClingon(codeOrOptions) {
-  const options = typeof codeOrOptions === 'string' ? { code: codeOrOptions } : codeOrOptions;
+  const options = typeof codeOrOptions === 'string' ? { name: codeOrOptions } : codeOrOptions;
   return generateClingon(options).ansi;
 }
 
@@ -135,7 +137,7 @@ export function formatCode(shapeSeed, paletteSeed) {
 
 export function snippetFor(code, options = {}) {
   const size = normalizeSize(options.size);
-  const optionEntries = [`code: '${code}'`];
+  const optionEntries = [`name: '${code}'`];
 
   if (size !== DEFAULT_SIZE) {
     optionEntries.push(`size: '${size}'`);
