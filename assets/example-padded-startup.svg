@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="430" height="190" viewBox="0 0 430 190" role="img" aria-label="--pad=1 clingon option example">
+  <rect width="430" height="190" rx="8" fill="#f6f8fa"/>
+  <rect x="20" y="18" width="390" height="132" rx="6" fill="#ffffff" stroke="#d0d7de"/>
+  <rect x="110" y="44" width="8" height="16" fill="#16b952"/>
+  <rect x="94" y="60" width="16" height="16" fill="#ff7f22"/>
+  <rect x="110" y="60" width="16" height="16" fill="#ff7f22"/>
+  <rect x="126" y="60" width="16" height="16" fill="#ff7f22"/>
+  <rect x="62" y="76" width="16" height="16" fill="#ff7f22"/>
+  <rect x="78" y="76" width="16" height="16" fill="#ff7f22"/>
+  <rect x="94" y="76" width="8" height="16" fill="#ff7f22"/>
+  <rect x="102" y="76" width="8" height="16" fill="#16b952"/>
+  <rect x="110" y="76" width="16" height="16" fill="#ff7f22"/>
+  <rect x="126" y="76" width="8" height="16" fill="#16b952"/>
+  <rect x="134" y="76" width="8" height="16" fill="#ff7f22"/>
+  <rect x="142" y="76" width="16" height="16" fill="#ff7f22"/>
+  <rect x="158" y="76" width="16" height="16" fill="#ff7f22"/>
+  <rect x="94" y="92" width="16" height="16" fill="#ff7f22"/>
+  <rect x="110" y="92" width="16" height="16" fill="#16b952"/>
+  <rect x="126" y="92" width="16" height="16" fill="#ff7f22"/>
+  <rect x="94" y="108" width="8" height="16" fill="#7c2d12"/>
+  <rect x="134" y="108" width="8" height="16" fill="#7c2d12"/>
+  <text x="208" y="78" text-anchor="start" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" font-weight="700" fill="#ff7f22">Konbanwa</text>
+  <text x="208" y="98" text-anchor="start" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" font-weight="400" fill="#24292f">~ clingon</text>
+  <text x="215" y="174" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" font-weight="400" fill="#24292f">--pad=1</text>
+</svg>

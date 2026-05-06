@@ -38,6 +38,16 @@ name: orlando-reginald-morris-junior
   <img src="./assets/orlando-reginald-morris-junior-tiny.svg" width="260" alt="tiny orlando-reginald-morris-junior clingon">
 </p>
 
+## Option Examples
+
+<p>
+  <img src="./assets/example-welcome-context.svg" width="360" alt="clingon with welcome, date, cwd, and git branch">
+</p>
+<p>
+  <img src="./assets/example-message.svg" width="360" alt="clingon with custom message">
+  <img src="./assets/example-padded-startup.svg" width="360" alt="clingon with padded startup output">
+</p>
+
 ## Install
 
 ```sh
@@ -244,5 +254,6 @@ clingon --name clg-00000rs-00000rt
 ```sh
 npm test
 npm start -- --small
+npm run docs:assets
 npm pack --dry-run
 ```

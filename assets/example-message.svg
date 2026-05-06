@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="430" height="190" viewBox="0 0 430 190" role="img" aria-label="--message &quot;Ready&quot; clingon option example">
+  <rect width="430" height="190" rx="8" fill="#f6f8fa"/>
+  <rect x="20" y="18" width="390" height="132" rx="6" fill="#ffffff" stroke="#d0d7de"/>
+  <rect x="82" y="44" width="8" height="16" fill="#10b34c"/>
+  <rect x="66" y="60" width="16" height="16" fill="#ff8528"/>
+  <rect x="82" y="60" width="16" height="16" fill="#ff8528"/>
+  <rect x="98" y="60" width="16" height="16" fill="#ff8528"/>
+  <rect x="114" y="60" width="16" height="16" fill="#ff8528"/>
+  <rect x="130" y="60" width="16" height="16" fill="#ff8528"/>
+  <rect x="50" y="76" width="16" height="16" fill="#ff8528"/>
+  <rect x="66" y="76" width="16" height="16" fill="#ff8528"/>
+  <rect x="82" y="76" width="8" height="16" fill="#ff8528"/>
+  <rect x="90" y="76" width="8" height="16" fill="#10b34c"/>
+  <rect x="98" y="76" width="16" height="16" fill="#ff8528"/>
+  <rect x="114" y="76" width="8" height="16" fill="#10b34c"/>
+  <rect x="122" y="76" width="8" height="16" fill="#ff8528"/>
+  <rect x="130" y="76" width="16" height="16" fill="#ff8528"/>
+  <rect x="146" y="76" width="16" height="16" fill="#ff8528"/>
+  <rect x="66" y="92" width="16" height="16" fill="#ff8528"/>
+  <rect x="82" y="92" width="16" height="16" fill="#ff8528"/>
+  <rect x="98" y="92" width="8" height="16" fill="#10b34c"/>
+  <rect x="114" y="92" width="16" height="16" fill="#ff8528"/>
+  <rect x="130" y="92" width="16" height="16" fill="#ff8528"/>
+  <rect x="66" y="108" width="8" height="16" fill="#7c2d12"/>
+  <rect x="138" y="108" width="8" height="16" fill="#7c2d12"/>
+  <text x="196" y="88" text-anchor="start" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" font-weight="400" fill="#24292f">Ready</text>
+  <text x="215" y="174" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" font-weight="400" fill="#24292f">--message &quot;Ready&quot;</text>
+</svg>

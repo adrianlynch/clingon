@@ -12,10 +12,12 @@
   "files": [
     "assets",
     "bin",
+    "scripts",
     "src",
     "README.md"
   ],
   "scripts": {
+    "docs:assets": "node scripts/generate-doc-assets.js",
     "start": "node ./bin/clingon.js",
     "test": "node --test"
   },
