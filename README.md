@@ -2,6 +2,8 @@
 
 Generate tiny deterministic terminal characters.
 
+100% created by AI. Use at your own risk. Obviously.
+
 Each clingon is created from a readable name. Save the name and you can render the same character again later, or keep the same shape and generate a new set of colors.
 
 ```txt
