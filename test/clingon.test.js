@@ -83,3 +83,28 @@ test('small clingons vary shape between seeds', () => {
 
   assert.ok(shapes.size > 2);
 });
+
+test('generates a tiny five-line clingon', () => {
+  const tiny = generateClingon({
+    code: 'orlando-reginald-morris-junior',
+    size: 'tiny',
+    color: false
+  });
+
+  assert.equal(tiny.size, 'tiny');
+  assert.equal(tiny.pixels.length, 5);
+  assert.equal(tiny.pixels[0].length, 7);
+  assert.equal(tiny.text.split('\n').length, 5);
+  assert.equal(generateClingon({ code: tiny.code, size: 'tiny', color: false }).text, tiny.text);
+});
+
+test('tiny clingons vary shape between seeds', () => {
+  const shapes = new Set([
+    'orlando-reginald-morris-junior',
+    'mabel-waffles-wigglesworth-tiny',
+    'otto-beans-moonbeam-excellent',
+    'cosmo-pickle-toebean-cosmic'
+  ].map((code) => generateClingon({ code, size: 'tiny', color: false }).text));
+
+  assert.ok(shapes.size > 2);
+});

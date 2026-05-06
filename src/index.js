@@ -5,6 +5,8 @@ const DEFAULT_WIDTH = 11;
 const DEFAULT_HEIGHT = 9;
 const SMALL_WIDTH = 7;
 const SMALL_HEIGHT = 6;
+const TINY_WIDTH = 7;
+const TINY_HEIGHT = 5;
 const DEFAULT_SIZE = 'normal';
 const EMPTY = 0;
 const BODY = 1;
@@ -196,14 +198,18 @@ function normalizeSize(size = DEFAULT_SIZE) {
     return DEFAULT_SIZE;
   }
 
-  if (size !== DEFAULT_SIZE && size !== 'small') {
-    throw new Error(`Invalid size "${size}". Expected "small" or "normal".`);
+  if (size !== DEFAULT_SIZE && size !== 'small' && size !== 'tiny') {
+    throw new Error(`Invalid size "${size}". Expected "tiny", "small", or "normal".`);
   }
 
   return size;
 }
 
 function createShape(seed, size) {
+  if (size === 'tiny') {
+    return createTinyShape(seed);
+  }
+
   if (size === 'small') {
     return createSmallShape(seed);
   }
@@ -239,6 +245,70 @@ function createNormalShape(seed) {
   addFeet(pixels, rng, center, bodyBottom + 1);
 
   return pixels;
+}
+
+function createTinyShape(seed) {
+  const rng = mulberry32(seed);
+  const width = TINY_WIDTH;
+  const height = TINY_HEIGHT;
+  const pixels = Array.from({ length: height }, () => Array(width).fill(EMPTY));
+  const center = Math.floor(width / 2);
+  const bodyStyles = [
+    [1, 2, 1],
+    [2, 2, 1],
+    [2, 3, 2],
+    [1, 3, 1],
+    [2, 3, 1]
+  ];
+  const halfWidths = bodyStyles[int(rng, 0, bodyStyles.length - 1)];
+
+  addTinyHeadTop(pixels, rng, center);
+
+  for (let index = 0; index < halfWidths.length; index += 1) {
+    fillSymmetric(pixels, index + 1, center, halfWidths[index], BODY);
+  }
+
+  addTinyFace(pixels, rng, center, halfWidths);
+  addTinyFeet(pixels, rng, center, halfWidths);
+
+  return pixels;
+}
+
+function addTinyHeadTop(pixels, rng, center) {
+  const style = int(rng, 0, 3);
+
+  if (style === 0) {
+    pixels[0][center] = ACCENT;
+  } else if (style === 1) {
+    pixels[0][center - 1] = ACCENT;
+    pixels[0][center + 1] = ACCENT;
+  } else if (style === 2) {
+    pixels[0][center + int(rng, -1, 1)] = ACCENT;
+  }
+}
+
+function addTinyFace(pixels, rng, center, halfWidths) {
+  const eyeSpacing = halfWidths[1] >= 3 && rng() > 0.45 ? 2 : 1;
+  pixels[2][center - eyeSpacing] = DARK;
+  pixels[2][center + eyeSpacing] = DARK;
+
+  if (rng() > 0.5 && halfWidths[2] >= 2) {
+    pixels[3][center - 1] = ACCENT;
+    pixels[3][center + 1] = ACCENT;
+  } else {
+    pixels[3][center] = ACCENT;
+  }
+}
+
+function addTinyFeet(pixels, rng, center, halfWidths) {
+  const spread = Math.min(2, Math.max(1, halfWidths[2]));
+  pixels[4][center - spread] = DARK;
+  pixels[4][center + spread] = DARK;
+
+  if (spread === 1 && rng() > 0.6) {
+    pixels[4][center - 2] = DARK;
+    pixels[4][center + 2] = DARK;
+  }
 }
 
 function createSmallShape(seed) {

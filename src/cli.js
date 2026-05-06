@@ -9,7 +9,8 @@ Options:
   -c, --code <code>   Regenerate a specific clingon name/code
   -r, --recolor       Keep the shape from --code but choose new colors
       --small         Render a smaller clingon
-      --size <size>   Render size: small or normal
+      --tiny          Render the tiniest clingon
+      --size <size>   Render size: tiny, small, or normal
   -s, --script        Print the JavaScript needed to recreate the clingon
   -j, --json          Print JSON data instead of terminal art
       --no-color      Render without ANSI color
@@ -84,6 +85,8 @@ function parseArgs(args) {
       options.json = true;
     } else if (arg === '--small') {
       options.size = 'small';
+    } else if (arg === '--tiny') {
+      options.size = 'tiny';
     } else if (arg === '--size') {
       index += 1;
       options.size = requireValue(args[index], arg);

@@ -52,6 +52,12 @@ Generate a compact clingon:
 clingon --small
 ```
 
+Generate a tiny five-line clingon:
+
+```sh
+clingon --tiny
+```
+
 Regenerate a specific clingon:
 
 ```sh
@@ -85,7 +91,8 @@ Options:
   -c, --code <code>   Regenerate a specific clingon name/code
   -r, --recolor       Keep the shape from --code but choose new colors
       --small         Render a smaller clingon
-      --size <size>   Render size: small or normal
+      --tiny          Render the tiniest clingon
+      --size <size>   Render size: tiny, small, or normal
   -s, --script        Print the JavaScript needed to recreate the clingon
   -j, --json          Print JSON data instead of terminal art
       --no-color      Render without ANSI color
@@ -100,7 +107,7 @@ import { generateClingon } from '@adrianlynch/clingon';
 
 const clingon = generateClingon({
   code: 'orlando-reginald-morris-junior',
-  size: 'small'
+  size: 'tiny'
 });
 
 console.log(clingon.ansi);
@@ -123,7 +130,7 @@ import { renderClingon } from '@adrianlynch/clingon';
 
 console.log(renderClingon({
   code: 'orlando-reginald-morris-junior',
-  size: 'small'
+  size: 'tiny'
 }));
 ```
 
@@ -134,7 +141,7 @@ console.log(renderClingon({
 ```js
 {
   code: 'orlando-reginald-morris-junior',
-  size: 'small',
+  size: 'tiny',
   shapeSeed: 0,
   paletteSeed: 0,
   palette: {
