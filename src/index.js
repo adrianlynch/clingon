@@ -1,0 +1,415 @@
+import { randomBytes } from 'node:crypto';
+
+const CODE_PREFIX = 'clg';
+const DEFAULT_WIDTH = 11;
+const DEFAULT_HEIGHT = 9;
+const SMALL_WIDTH = 7;
+const SMALL_HEIGHT = 6;
+const DEFAULT_SIZE = 'normal';
+const EMPTY = 0;
+const BODY = 1;
+const ACCENT = 2;
+const DARK = 3;
+
+const PALETTES = [
+  ['#0891b2', '#c026d3', '#155e75'],
+  ['#f97316', '#22c55e', '#7c2d12'],
+  ['#8b5cf6', '#facc15', '#3730a3'],
+  ['#ef4444', '#14b8a6', '#7f1d1d'],
+  ['#0ea5e9', '#eab308', '#0f172a'],
+  ['#84cc16', '#ec4899', '#365314'],
+  ['#f43f5e', '#38bdf8', '#881337'],
+  ['#10b981', '#a855f7', '#064e3b']
+];
+
+export function generateClingon(options = {}) {
+  const requested = options.code ? parseCode(options.code) : randomCode();
+  const size = normalizeSize(options.size);
+  const shapeSeed = requested.shapeSeed;
+  const paletteSeed = options.recolor ? randomSeed() : requested.paletteSeed;
+  const code = formatCode(shapeSeed, paletteSeed);
+  const shape = createShape(shapeSeed, size);
+  const palette = createPalette(paletteSeed);
+
+  return {
+    code,
+    size,
+    shapeSeed,
+    paletteSeed,
+    palette,
+    pixels: shape,
+    ansi: renderAnsi(shape, palette, options),
+    text: renderText(shape)
+  };
+}
+
+export function renderClingon(codeOrOptions) {
+  const options = typeof codeOrOptions === 'string' ? { code: codeOrOptions } : codeOrOptions;
+  return generateClingon(options).ansi;
+}
+
+export function parseCode(code) {
+  const value = String(code).trim().toLowerCase();
+  const match = value.match(/^clg[-_]?([0-9a-z]+)[-.]([0-9a-z]+)$/);
+
+  if (!match) {
+    throw new Error(`Invalid clingon code "${code}". Expected something like clg-a1b2-c3d4.`);
+  }
+
+  return {
+    shapeSeed: parseSeed(match[1]),
+    paletteSeed: parseSeed(match[2])
+  };
+}
+
+export function formatCode(shapeSeed, paletteSeed) {
+  return `${CODE_PREFIX}-${encodeSeed(shapeSeed)}-${encodeSeed(paletteSeed)}`;
+}
+
+export function snippetFor(code, options = {}) {
+  const size = normalizeSize(options.size);
+  const optionEntries = [`code: '${code}'`];
+
+  if (size !== DEFAULT_SIZE) {
+    optionEntries.push(`size: '${size}'`);
+  }
+
+  return [
+    "import { generateClingon } from '@adrianlynch/clingon';",
+    '',
+    `const clingon = generateClingon({ ${optionEntries.join(', ')} });`,
+    'console.log(clingon.ansi);'
+  ].join('\n');
+}
+
+function randomCode() {
+  return {
+    shapeSeed: randomSeed(),
+    paletteSeed: randomSeed()
+  };
+}
+
+function randomSeed() {
+  return randomBytes(4).readUInt32BE(0);
+}
+
+function parseSeed(value) {
+  const seed = Number.parseInt(value, 36);
+
+  if (!Number.isSafeInteger(seed) || seed < 0 || seed > 0xffffffff) {
+    throw new Error(`Invalid seed segment "${value}".`);
+  }
+
+  return seed >>> 0;
+}
+
+function encodeSeed(seed) {
+  return (seed >>> 0).toString(36).padStart(7, '0');
+}
+
+function normalizeSize(size = DEFAULT_SIZE) {
+  if (size === 'medium') {
+    return DEFAULT_SIZE;
+  }
+
+  if (size !== DEFAULT_SIZE && size !== 'small') {
+    throw new Error(`Invalid size "${size}". Expected "small" or "normal".`);
+  }
+
+  return size;
+}
+
+function createShape(seed, size) {
+  if (size === 'small') {
+    return createSmallShape(seed);
+  }
+
+  return createNormalShape(seed);
+}
+
+function createNormalShape(seed) {
+  const rng = mulberry32(seed);
+  const width = DEFAULT_WIDTH;
+  const height = DEFAULT_HEIGHT;
+  const pixels = Array.from({ length: height }, () => Array(width).fill(EMPTY));
+  const center = Math.floor(width / 2);
+  const bodyTop = 2 + int(rng, 0, 1);
+  const bodyBottom = 6 + int(rng, 0, 1);
+  const halfWidths = [];
+
+  for (let y = bodyTop; y <= bodyBottom; y += 1) {
+    const progress = (y - bodyTop) / Math.max(1, bodyBottom - bodyTop);
+    const taper = Math.abs(progress - 0.55);
+    halfWidths[y] = 3 + (taper < 0.35 ? 1 : 0) + int(rng, 0, 1);
+    fillSymmetric(pixels, y, center, halfWidths[y], BODY);
+  }
+
+  if (bodyTop > 1) {
+    fillSymmetric(pixels, bodyTop - 1, center, 2 + int(rng, 0, 1), BODY);
+  }
+
+  addEyes(pixels, rng, center, bodyTop + 2, halfWidths[bodyTop + 2] ?? 4);
+  addMouth(pixels, rng, center, bodyBottom - 1);
+  addHeadTop(pixels, rng, center, bodyTop);
+  addArms(pixels, rng, center, bodyTop + 2);
+  addFeet(pixels, rng, center, bodyBottom + 1);
+
+  return pixels;
+}
+
+function createSmallShape(seed) {
+  const rng = mulberry32(seed);
+  const width = SMALL_WIDTH;
+  const height = SMALL_HEIGHT;
+  const pixels = Array.from({ length: height }, () => Array(width).fill(EMPTY));
+  const center = Math.floor(width / 2);
+  const bodyStyles = [
+    [2, 3, 3, 2],
+    [1, 3, 3, 2],
+    [2, 2, 3, 2],
+    [2, 3, 2, 1],
+    [1, 2, 3, 1],
+    [2, 3, 3, 3]
+  ];
+  const halfWidths = bodyStyles[int(rng, 0, bodyStyles.length - 1)];
+
+  addSmallHeadTop(pixels, rng, center);
+
+  for (let index = 0; index < halfWidths.length; index += 1) {
+    fillSymmetric(pixels, index + 1, center, halfWidths[index], BODY);
+  }
+
+  addSmallEyes(pixels, rng, center, halfWidths);
+  addSmallMouth(pixels, rng, center, halfWidths);
+  addSmallArms(pixels, rng, center, halfWidths);
+  addSmallFeet(pixels, rng, center, halfWidths);
+
+  return pixels;
+}
+
+function addSmallHeadTop(pixels, rng, center) {
+  const style = int(rng, 0, 4);
+
+  if (style === 0) {
+    pixels[0][center] = ACCENT;
+  } else if (style === 1) {
+    pixels[0][center - 1] = ACCENT;
+    pixels[0][center + 1] = ACCENT;
+  } else if (style === 2) {
+    pixels[0][center + int(rng, -1, 1)] = ACCENT;
+  } else if (style === 3) {
+    pixels[0][center - 2] = ACCENT;
+    pixels[0][center + 2] = ACCENT;
+  }
+}
+
+function addSmallEyes(pixels, rng, center, halfWidths) {
+  const y = halfWidths[1] >= 2 ? 2 : 3;
+  const spacing = halfWidths[y - 1] >= 3 && rng() > 0.35 ? 2 : 1;
+  pixels[y][center - spacing] = DARK;
+  pixels[y][center + spacing] = DARK;
+}
+
+function addSmallMouth(pixels, rng, center, halfWidths) {
+  const y = halfWidths[3] >= 2 ? 4 : 3;
+  const style = int(rng, 0, 2);
+
+  if (style === 0) {
+    pixels[y][center] = ACCENT;
+  } else if (style === 1) {
+    pixels[y][center - 1] = ACCENT;
+    pixels[y][center + 1] = ACCENT;
+  } else {
+    pixels[y][center] = DARK;
+  }
+}
+
+function addSmallArms(pixels, rng, center, halfWidths) {
+  const y = int(rng, 2, 3);
+  const reach = halfWidths[y - 1] + 1;
+
+  if (reach < center + 1 && rng() > 0.2) {
+    const value = rng() > 0.5 ? BODY : DARK;
+    pixels[y][center - reach] = value;
+    pixels[y][center + reach] = value;
+  }
+}
+
+function addSmallFeet(pixels, rng, center, halfWidths) {
+  const spread = Math.min(center, Math.max(1, halfWidths[3] - int(rng, 0, 1)));
+  pixels[5][center - spread] = DARK;
+  pixels[5][center + spread] = DARK;
+
+  if (spread < 2 && rng() > 0.5) {
+    pixels[5][center - spread - 1] = DARK;
+    pixels[5][center + spread + 1] = DARK;
+  }
+}
+
+function createPalette(seed) {
+  const rng = mulberry32(seed);
+  const base = PALETTES[int(rng, 0, PALETTES.length - 1)];
+  const hueShift = int(rng, -18, 18);
+
+  return {
+    body: shiftHex(base[0], hueShift),
+    accent: shiftHex(base[1], -hueShift),
+    dark: base[2]
+  };
+}
+
+function addEyes(pixels, rng, center, y, halfWidth) {
+  const inset = int(rng, 1, 2);
+  const left = Math.max(1, center - halfWidth + inset);
+  const right = Math.min(pixels[y].length - 2, center + halfWidth - inset);
+  pixels[y][left] = DARK;
+  pixels[y][right] = DARK;
+}
+
+function addMouth(pixels, rng, center, y) {
+  const style = int(rng, 0, 2);
+
+  if (style === 0) {
+    pixels[y][center] = DARK;
+  } else if (style === 1) {
+    pixels[y][center - 1] = DARK;
+    pixels[y][center + 1] = DARK;
+  } else {
+    pixels[y][center - 1] = ACCENT;
+    pixels[y][center] = ACCENT;
+    pixels[y][center + 1] = ACCENT;
+  }
+}
+
+function addHeadTop(pixels, rng, center, bodyTop) {
+  const antenna = int(rng, 0, 3);
+
+  if (antenna === 0) {
+    pixels[0][center] = ACCENT;
+    pixels[1][center] = ACCENT;
+  } else if (antenna === 1) {
+    pixels[1][center - 2] = ACCENT;
+    pixels[1][center + 2] = ACCENT;
+  } else if (antenna === 2) {
+    pixels[0][center - 1] = ACCENT;
+    pixels[0][center + 1] = ACCENT;
+    pixels[1][center] = ACCENT;
+  }
+
+  if (bodyTop > 2 && antenna === 3) {
+    fillSymmetric(pixels, 1, center, 1, ACCENT);
+  }
+}
+
+function addArms(pixels, rng, center, y) {
+  const reach = int(rng, 4, 5);
+  pixels[y][center - reach] = BODY;
+  pixels[y][center + reach] = BODY;
+
+  if (rng() > 0.45) {
+    pixels[y + 1][center - reach] = DARK;
+    pixels[y + 1][center + reach] = DARK;
+  }
+}
+
+function addFeet(pixels, rng, center, y) {
+  if (y >= pixels.length) {
+    return;
+  }
+
+  const spread = int(rng, 2, 3);
+  pixels[y][center - spread] = DARK;
+  pixels[y][center + spread] = DARK;
+
+  if (rng() > 0.55) {
+    pixels[y][center - spread - 1] = DARK;
+    pixels[y][center + spread + 1] = DARK;
+  }
+}
+
+function fillSymmetric(pixels, y, center, halfWidth, value) {
+  for (let x = center - halfWidth; x <= center + halfWidth; x += 1) {
+    if (x >= 0 && y >= 0 && y < pixels.length && x < pixels[y].length) {
+      pixels[y][x] = value;
+    }
+  }
+}
+
+function renderAnsi(shape, palette, options = {}) {
+  const useColor = options.color !== false;
+  const rows = shape.map((row) => row.map((cell) => renderCell(cell, palette, useColor)).join(''));
+  return rows.join('\n');
+}
+
+function renderText(shape) {
+  return shape.map((row) => row.map(renderTextCell).join('')).join('\n');
+}
+
+function renderCell(cell, palette, useColor) {
+  if (cell === EMPTY) {
+    return '  ';
+  }
+
+  if (!useColor) {
+    return renderTextCell(cell);
+  }
+
+  const color = cell === BODY ? palette.body : cell === ACCENT ? palette.accent : palette.dark;
+  return `${ansiColor(color)}██\u001b[0m`;
+}
+
+function renderTextCell(cell) {
+  if (cell === EMPTY) {
+    return '  ';
+  }
+
+  if (cell === ACCENT) {
+    return '##';
+  }
+
+  if (cell === DARK) {
+    return '..';
+  }
+
+  return '[]';
+}
+
+function ansiColor(hex) {
+  const [r, g, b] = hexToRgb(hex);
+  return `\u001b[38;2;${r};${g};${b}m`;
+}
+
+function hexToRgb(hex) {
+  const clean = hex.replace('#', '');
+  return [
+    Number.parseInt(clean.slice(0, 2), 16),
+    Number.parseInt(clean.slice(2, 4), 16),
+    Number.parseInt(clean.slice(4, 6), 16)
+  ];
+}
+
+function shiftHex(hex, amount) {
+  const [r, g, b] = hexToRgb(hex);
+  return rgbToHex(clamp(r + amount), clamp(g + amount), clamp(b + amount));
+}
+
+function rgbToHex(r, g, b) {
+  return `#${[r, g, b].map((value) => value.toString(16).padStart(2, '0')).join('')}`;
+}
+
+function clamp(value) {
+  return Math.max(0, Math.min(255, value));
+}
+
+function int(rng, min, max) {
+  return Math.floor(rng() * (max - min + 1)) + min;
+}
+
+function mulberry32(seed) {
+  return function next() {
+    let t = seed += 0x6d2b79f5;
+    t = Math.imul(t ^ t >>> 15, t | 1);
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
