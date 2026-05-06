@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="260" height="180" viewBox="0 0 260 180" role="img" aria-label="mabel-waffles-wigglesworth-tiny clingon">
+  <rect width="260" height="180" rx="8" fill="#f6f8fa"/>
+  <rect x="20" y="18" width="220" height="128" rx="6" fill="#ffffff" stroke="#d0d7de"/>
+  <rect x="80" y="30" width="20" height="20" fill="#10b34c"/>
+  <rect x="160" y="30" width="20" height="20" fill="#10b34c"/>
+  <rect x="80" y="50" width="20" height="20" fill="#ff8528"/>
+  <rect x="100" y="50" width="20" height="20" fill="#ff8528"/>
+  <rect x="120" y="50" width="20" height="20" fill="#ff8528"/>
+  <rect x="140" y="50" width="20" height="20" fill="#ff8528"/>
+  <rect x="160" y="50" width="20" height="20" fill="#ff8528"/>
+  <rect x="60" y="70" width="20" height="20" fill="#ff8528"/>
+  <rect x="80" y="70" width="20" height="20" fill="#7c2d12"/>
+  <rect x="100" y="70" width="20" height="20" fill="#ff8528"/>
+  <rect x="120" y="70" width="20" height="20" fill="#ff8528"/>
+  <rect x="140" y="70" width="20" height="20" fill="#ff8528"/>
+  <rect x="160" y="70" width="20" height="20" fill="#7c2d12"/>
+  <rect x="180" y="70" width="20" height="20" fill="#ff8528"/>
+  <rect x="80" y="90" width="20" height="20" fill="#ff8528"/>
+  <rect x="100" y="90" width="20" height="20" fill="#ff8528"/>
+  <rect x="120" y="90" width="20" height="20" fill="#10b34c"/>
+  <rect x="140" y="90" width="20" height="20" fill="#ff8528"/>
+  <rect x="160" y="90" width="20" height="20" fill="#ff8528"/>
+  <rect x="100" y="110" width="20" height="20" fill="#ff8528"/>
+  <rect x="120" y="110" width="20" height="20" fill="#ff8528"/>
+  <rect x="140" y="110" width="20" height="20" fill="#ff8528"/>
+  <rect x="100" y="130" width="20" height="10" fill="#7c2d12"/>
+  <rect x="140" y="130" width="20" height="10" fill="#7c2d12"/>
+  <text x="130" y="166" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#57606a">mabel-waffles-wigglesworth-tiny</text>
+</svg>

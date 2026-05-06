@@ -15,6 +15,17 @@ Each clingon is created from a readable name. Save the name and you can render t
 code: orlando-reginald-morris-junior
 ```
 
+## Screenshots
+
+<p>
+  <img src="./assets/orlando-reginald-morris-junior.svg" width="260" alt="orlando-reginald-morris-junior clingon">
+  <img src="./assets/otto-beans-moonbeam-excellent.svg" width="260" alt="otto-beans-moonbeam-excellent clingon">
+</p>
+<p>
+  <img src="./assets/mabel-waffles-wigglesworth-tiny.svg" width="260" alt="mabel-waffles-wigglesworth-tiny clingon">
+  <img src="./assets/cosmo-pickle-toebean-cosmic.svg" width="260" alt="cosmo-pickle-toebean-cosmic clingon">
+</p>
+
 ## Install
 
 ```sh
