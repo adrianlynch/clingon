@@ -9,8 +9,8 @@ Each clingon is created from a readable name. Save the name and you can render t
     [][][]    
 [][]. []. [][]
 [][][][][][][]
-  []# []# []  
-    ..  ..    
+  []# [] #[]  
+  . .    . .  
 
 code: orlando-reginald-morris-junior
 ```
@@ -24,6 +24,16 @@ code: orlando-reginald-morris-junior
 <p>
   <img src="./assets/mabel-waffles-wigglesworth-tiny.svg" width="260" alt="mabel-waffles-wigglesworth-tiny clingon">
   <img src="./assets/cosmo-pickle-toebean-cosmic.svg" width="260" alt="cosmo-pickle-toebean-cosmic clingon">
+</p>
+
+## Sizes
+
+<p>
+  <img src="./assets/orlando-reginald-morris-junior-normal.svg" width="260" alt="normal orlando-reginald-morris-junior clingon">
+  <img src="./assets/orlando-reginald-morris-junior-small.svg" width="260" alt="small orlando-reginald-morris-junior clingon">
+</p>
+<p>
+  <img src="./assets/orlando-reginald-morris-junior-tiny.svg" width="260" alt="tiny orlando-reginald-morris-junior clingon">
 </p>
 
 ## Install
