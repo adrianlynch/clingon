@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { runCli } from '../src/cli.js';
 import { generateClingon, parseCode, renderClingon } from '../src/index.js';
 
 test('generates deterministic clingons from a code', () => {
@@ -149,3 +150,27 @@ test('narrow feet mirror left and right alignment', () => {
 
   assert.match(footRow, /\.    \./);
 });
+
+test('cli quiet mode hides the emitted code', () => {
+  const stdout = createWritable();
+  const stderr = createWritable();
+
+  runCli(['--code', 'orlando-reginald-morris-junior', '--tiny', '--quiet', '--no-color'], {
+    stdout,
+    stderr,
+    env: {}
+  });
+
+  assert.match(stdout.output, /\[\]/);
+  assert.doesNotMatch(stdout.output, /code:/);
+  assert.equal(stderr.output, '');
+});
+
+function createWritable() {
+  return {
+    output: '',
+    write(chunk) {
+      this.output += chunk;
+    }
+  };
+}

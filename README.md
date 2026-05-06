@@ -94,6 +94,12 @@ Print structured output:
 clingon --small --json
 ```
 
+Print only the character art, useful in shell startup files:
+
+```sh
+clingon --tiny --quiet
+```
+
 ## Options
 
 ```txt
@@ -107,6 +113,8 @@ Options:
       --size <size>   Render size: tiny, small, or normal
   -s, --script        Print the JavaScript needed to recreate the clingon
   -j, --json          Print JSON data instead of terminal art
+  -q, --quiet         Print only the clingon art
+      --no-code       Alias for --quiet
       --no-color      Render without ANSI color
   -h, --help          Show help
   -v, --version       Show version

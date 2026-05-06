@@ -13,6 +13,8 @@ Options:
       --size <size>   Render size: tiny, small, or normal
   -s, --script        Print the JavaScript needed to recreate the clingon
   -j, --json          Print JSON data instead of terminal art
+  -q, --quiet         Print only the clingon art
+      --no-code       Alias for --quiet
       --no-color      Render without ANSI color
   -h, --help          Show help
   -v, --version       Show version
@@ -45,7 +47,9 @@ export function runCli(args, io) {
     }
 
     io.stdout.write(`${clingon.ansi}\n\n`);
-    io.stdout.write(`code: ${clingon.code}\n`);
+    if (!options.quiet) {
+      io.stdout.write(`code: ${clingon.code}\n`);
+    }
 
     if (options.script) {
       io.stdout.write('\n');
@@ -64,6 +68,7 @@ function parseArgs(args) {
     code: undefined,
     help: false,
     json: false,
+    quiet: false,
     recolor: false,
     script: false,
     size: 'normal',
@@ -83,6 +88,8 @@ function parseArgs(args) {
       options.script = true;
     } else if (arg === '-j' || arg === '--json') {
       options.json = true;
+    } else if (arg === '-q' || arg === '--quiet' || arg === '--no-code') {
+      options.quiet = true;
     } else if (arg === '--small') {
       options.size = 'small';
     } else if (arg === '--tiny') {
