@@ -58,23 +58,20 @@ Install it globally so shell startup does not need to run `npx`:
 npm install -g @adrianlynch/clingon
 ```
 
-Add this to `~/.zshrc` to show a random tiny clingon in each interactive terminal:
+Add this to `~/.zshrc` to show a random tiny clingon in each terminal:
 
 ```sh
-if [[ $- == *i* ]]; then
-  clingon --tiny --quiet
-fi
+clingon --tiny --quiet --pad=1
 ```
 
 Use a saved name for the same startup clingon every time:
 
 ```sh
-if [[ $- == *i* ]]; then
-  clingon --code orlando-reginald-morris-junior --tiny --quiet
-fi
+clingon --code orlando-reginald-morris-junior --tiny --quiet --pad=1
 ```
 
 `--quiet` hides the emitted `code:` line, which keeps startup output clean.
+`--pad=1` adds a blank line above and below the character plus one space of left padding.
 
 ## CLI
 
