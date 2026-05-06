@@ -166,6 +166,64 @@ test('cli quiet mode hides the emitted code', () => {
   assert.equal(stderr.output, '');
 });
 
+test('cli padding adds horizontal and vertical spacing', () => {
+  const stdout = createWritable();
+  const stderr = createWritable();
+  const baseline = createWritable();
+
+  runCli(['--code', 'orlando-reginald-morris-junior', '--tiny', '--quiet', '--no-color'], {
+    stdout: baseline,
+    stderr: createWritable(),
+    env: {}
+  });
+
+  runCli(['--code', 'orlando-reginald-morris-junior', '--tiny', '--quiet', '--no-color', '--pad=1'], {
+    stdout,
+    stderr,
+    env: {}
+  });
+
+  const lines = stdout.output.split('\n');
+
+  assert.equal(lines[0], '');
+  assert.equal(lines[1], ` ${baseline.output.split('\n')[0]}`);
+  assert.equal(lines.at(-2), '');
+  assert.equal(stderr.output, '');
+});
+
+test('cli directional padding can differ', () => {
+  const stdout = createWritable();
+  const stderr = createWritable();
+  const baseline = createWritable();
+
+  runCli(['--code', 'orlando-reginald-morris-junior', '--tiny', '--quiet', '--no-color'], {
+    stdout: baseline,
+    stderr: createWritable(),
+    env: {}
+  });
+
+  runCli([
+    '--code',
+    'orlando-reginald-morris-junior',
+    '--tiny',
+    '--quiet',
+    '--no-color',
+    '--pad-h=2',
+    '--pad-v=1'
+  ], {
+    stdout,
+    stderr,
+    env: {}
+  });
+
+  const lines = stdout.output.split('\n');
+
+  assert.equal(lines[0], '');
+  assert.equal(lines[1], `  ${baseline.output.split('\n')[0]}`);
+  assert.equal(lines.at(-2), '');
+  assert.equal(stderr.output, '');
+});
+
 function createWritable() {
   return {
     output: '',

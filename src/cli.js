@@ -14,6 +14,9 @@ Options:
   -s, --script        Print the JavaScript needed to recreate the clingon
   -j, --json          Print JSON data instead of terminal art
   -q, --quiet         Print only the clingon art
+      --pad <n>       Add padding around terminal output
+      --pad-h <n>     Add spaces before each terminal output line
+      --pad-v <n>     Add blank lines before and after terminal output
       --no-code       Alias for --quiet
       --no-color      Render without ANSI color
   -h, --help          Show help
@@ -46,20 +49,49 @@ export function runCli(args, io) {
       return;
     }
 
-    io.stdout.write(`${clingon.ansi}\n\n`);
-    if (!options.quiet) {
-      io.stdout.write(`code: ${clingon.code}\n`);
-    }
-
-    if (options.script) {
-      io.stdout.write('\n');
-      io.stdout.write(`${snippetFor(clingon.code, { size: clingon.size })}\n`);
-    }
+    writeTerminalOutput(io.stdout, formatTerminalOutput(clingon, options));
   } catch (error) {
     io.stderr.write(`clingon: ${error.message}\n`);
     io.stderr.write('Run `clingon --help` for usage.\n');
     process.exitCode = 1;
   }
+}
+
+function formatTerminalOutput(clingon, options) {
+  const lines = clingon.ansi.split('\n');
+
+  if (!options.quiet) {
+    lines.push('', `code: ${clingon.code}`);
+  }
+
+  if (options.script) {
+    lines.push('', ...snippetFor(clingon.code, { size: clingon.size }).split('\n'));
+  }
+
+  const paddedLines = options.padH > 0
+    ? lines.map((line) => `${' '.repeat(options.padH)}${line}`)
+    : lines;
+  const verticalPadding = Array(options.padV).fill('');
+
+  return [
+    ...verticalPadding,
+    ...paddedLines,
+    ...verticalPadding
+  ].join('\n');
+}
+
+function writeTerminalOutput(stdout, output) {
+  stdout.write(`${output}\n`);
+}
+
+function parseCount(value, option) {
+  const count = Number.parseInt(requireValue(value, option), 10);
+
+  if (!Number.isSafeInteger(count) || count < 0 || String(count) !== String(value)) {
+    throw new Error(`${option} requires a non-negative integer.`);
+  }
+
+  return count;
 }
 
 function parseArgs(args) {
@@ -68,6 +100,8 @@ function parseArgs(args) {
     code: undefined,
     help: false,
     json: false,
+    padH: 0,
+    padV: 0,
     quiet: false,
     recolor: false,
     script: false,
@@ -90,6 +124,25 @@ function parseArgs(args) {
       options.json = true;
     } else if (arg === '-q' || arg === '--quiet' || arg === '--no-code') {
       options.quiet = true;
+    } else if (arg === '--pad') {
+      index += 1;
+      const padding = parseCount(args[index], arg);
+      options.padH = padding;
+      options.padV = padding;
+    } else if (arg.startsWith('--pad=')) {
+      const padding = parseCount(arg.slice('--pad='.length), '--pad');
+      options.padH = padding;
+      options.padV = padding;
+    } else if (arg === '--pad-h') {
+      index += 1;
+      options.padH = parseCount(args[index], arg);
+    } else if (arg.startsWith('--pad-h=')) {
+      options.padH = parseCount(arg.slice('--pad-h='.length), '--pad-h');
+    } else if (arg === '--pad-v') {
+      index += 1;
+      options.padV = parseCount(args[index], arg);
+    } else if (arg.startsWith('--pad-v=')) {
+      options.padV = parseCount(arg.slice('--pad-v='.length), '--pad-v');
     } else if (arg === '--small') {
       options.size = 'small';
     } else if (arg === '--tiny') {

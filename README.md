@@ -126,6 +126,13 @@ Print only the character art, useful in shell startup files:
 clingon --tiny --quiet
 ```
 
+Add space around terminal output:
+
+```sh
+clingon --tiny --quiet --pad=1
+clingon --tiny --quiet --pad-h=2 --pad-v=1
+```
+
 ## Options
 
 ```txt
@@ -140,6 +147,9 @@ Options:
   -s, --script        Print the JavaScript needed to recreate the clingon
   -j, --json          Print JSON data instead of terminal art
   -q, --quiet         Print only the clingon art
+      --pad <n>       Add padding around terminal output
+      --pad-h <n>     Add spaces before each terminal output line
+      --pad-v <n>     Add blank lines before and after terminal output
       --no-code       Alias for --quiet
       --no-color      Render without ANSI color
   -h, --help          Show help
