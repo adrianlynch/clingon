@@ -119,3 +119,12 @@ test('compact clingons can render one-character details in text mode', () => {
 
   assert.match(details, /[#.] /);
 });
+
+test('narrow details render as one visible block in ansi mode', () => {
+  const tiny = generateClingon({
+    code: 'mabel-waffles-wigglesworth-tiny',
+    size: 'tiny'
+  });
+
+  assert.match(tiny.ansi, /█ \u001b\[0m/);
+});

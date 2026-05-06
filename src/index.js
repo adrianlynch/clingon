@@ -525,7 +525,8 @@ function renderCell(cell, palette, useColor) {
     : cell === ACCENT || cell === ACCENT_NARROW
       ? palette.accent
       : palette.dark;
-  return `${ansiColor(color)}██\u001b[0m`;
+  const glyph = cell === ACCENT_NARROW || cell === DARK_NARROW ? '█ ' : '██';
+  return `${ansiColor(color)}${glyph}\u001b[0m`;
 }
 
 function renderTextCell(cell) {
