@@ -228,6 +228,153 @@ test('cli directional padding can differ', () => {
   assert.equal(stderr.output, '');
 });
 
+test('cli message renders beside the art and is vertically centered', () => {
+  const stdout = createWritable();
+  const stderr = createWritable();
+
+  runCli([
+    '--name',
+    'orlando-reginald-morris-junior',
+    '--tiny',
+    '--quiet',
+    '--no-color',
+    '--message',
+    'Hello there'
+  ], {
+    stdout,
+    stderr,
+    env: {}
+  });
+
+  const lines = stdout.output.trimEnd().split('\n');
+
+  assert.equal(lines.length, 5);
+  assert.doesNotMatch(lines[0], /Hello there/);
+  assert.match(lines[2], /  Hello there$/);
+  assert.doesNotMatch(lines[4], /Hello there/);
+  assert.equal(stderr.output, '');
+});
+
+test('cli info lines are capped at five', () => {
+  const stdout = createWritable();
+  const stderr = createWritable();
+
+  runCli([
+    '--name',
+    'orlando-reginald-morris-junior',
+    '--tiny',
+    '--quiet',
+    '--no-color',
+    '--message',
+    'one',
+    '--message',
+    'two',
+    '--message',
+    'three',
+    '--message',
+    'four',
+    '--message',
+    'five',
+    '--message',
+    'six'
+  ], {
+    stdout,
+    stderr,
+    env: {}
+  });
+
+  const lines = stdout.output.trimEnd().split('\n');
+  const info = lines.map((line) => line.match(/  (\w+)$/)?.[1]).filter(Boolean);
+
+  assert.deepEqual(info, ['one', 'two', 'three', 'four', 'five']);
+  assert.doesNotMatch(stdout.output, /six/);
+  assert.equal(stderr.output, '');
+});
+
+test('cli info lines respect output padding', () => {
+  const stdout = createWritable();
+  const stderr = createWritable();
+
+  runCli([
+    '--name',
+    'orlando-reginald-morris-junior',
+    '--tiny',
+    '--quiet',
+    '--no-color',
+    '--message',
+    'Hello',
+    '--pad-h=2',
+    '--pad-v=1'
+  ], {
+    stdout,
+    stderr,
+    env: {}
+  });
+
+  const lines = stdout.output.split('\n');
+
+  assert.equal(lines[0], '');
+  assert.match(lines[3], /^  .*  Hello$/);
+  assert.equal(lines.at(-2), '');
+  assert.equal(stderr.output, '');
+});
+
+test('cli optional info sources render beside the art', () => {
+  const stdout = createWritable();
+  const stderr = createWritable();
+
+  runCli([
+    '--name',
+    'orlando-reginald-morris-junior',
+    '--tiny',
+    '--quiet',
+    '--no-color',
+    '--message',
+    'Hi',
+    '--date',
+    '--cwd',
+    '--git'
+  ], {
+    stdout,
+    stderr,
+    env: {}
+  });
+
+  assert.match(stdout.output, /  Hi/);
+  assert.match(stdout.output, /\d{4}|,\s\d{1,2}/);
+  assert.match(stdout.output, /  ~ clingon/);
+  assert.match(stdout.output, /  \* main/);
+  assert.equal(stderr.output, '');
+});
+
+test('cli welcome and date info are styled when color is enabled', () => {
+  const stdout = createWritable();
+  const stderr = createWritable();
+  const clingon = generateClingon({
+    name: 'orlando-reginald-morris-junior',
+    size: 'tiny',
+    color: false
+  });
+  const [r, g, b] = hexToRgb(clingon.palette.body);
+
+  runCli([
+    '--name',
+    'orlando-reginald-morris-junior',
+    '--tiny',
+    '--quiet',
+    '--welcome',
+    '--date'
+  ], {
+    stdout,
+    stderr,
+    env: {}
+  });
+
+  assert.match(stdout.output, new RegExp(`\\u001b\\[1m\\u001b\\[38;2;${r};${g};${b}m(?:Good|Buen|Ohayo|Konnichiwa|Konbanwa)`));
+  assert.match(stdout.output, /\u001b\[90m.*\u001b\[0m/);
+  assert.equal(stderr.output, '');
+});
+
 function createWritable() {
   return {
     output: '',
@@ -235,4 +382,14 @@ function createWritable() {
       this.output += chunk;
     }
   };
+}
+
+function hexToRgb(hex) {
+  const clean = hex.replace('#', '');
+
+  return [
+    Number.parseInt(clean.slice(0, 2), 16),
+    Number.parseInt(clean.slice(2, 4), 16),
+    Number.parseInt(clean.slice(4, 6), 16)
+  ];
 }

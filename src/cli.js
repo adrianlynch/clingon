@@ -1,4 +1,8 @@
+import { execFileSync } from 'node:child_process';
+import { basename } from 'node:path';
 import { generateClingon, snippetFor } from './index.js';
+
+const MAX_INFO_LINES = 5;
 
 const HELP = `clingon
 
@@ -14,6 +18,11 @@ Options:
   -s, --script        Print the JavaScript needed to recreate the clingon
   -j, --json          Print JSON data instead of terminal art
   -q, --quiet         Print only the clingon art
+      --welcome       Show a time-aware greeting beside the clingon
+      --message <msg> Show a custom message beside the clingon
+      --date          Show today's date beside the clingon
+      --cwd           Show the current directory beside the clingon
+      --git           Show the current git branch beside the clingon
       --pad <n>       Add padding around terminal output
       --pad-h <n>     Add spaces before each terminal output line
       --pad-v <n>     Add blank lines before and after terminal output
@@ -37,12 +46,14 @@ export function runCli(args, io) {
       return;
     }
 
+    const useColor = options.color && shouldUseColor(io);
     const clingon = generateClingon({
       name: options.name,
       recolor: options.recolor,
       size: options.size,
-      color: options.color && shouldUseColor(io)
+      color: useColor
     });
+    options.useColor = useColor;
 
     if (options.json) {
       io.stdout.write(`${JSON.stringify(toJson(clingon), null, 2)}\n`);
@@ -58,7 +69,7 @@ export function runCli(args, io) {
 }
 
 function formatTerminalOutput(clingon, options) {
-  const lines = clingon.ansi.split('\n');
+  const lines = formatInfoBlock(clingon.ansi.split('\n'), infoLines(options, clingon));
 
   if (!options.quiet) {
     lines.push('', `name: ${clingon.name}`);
@@ -97,16 +108,21 @@ function parseCount(value, option) {
 function parseArgs(args) {
   const options = {
     color: true,
+    cwd: false,
+    date: false,
+    git: false,
     name: undefined,
     help: false,
     json: false,
+    messages: [],
     padH: 0,
     padV: 0,
     quiet: false,
     recolor: false,
     script: false,
     size: 'normal',
-    version: false
+    version: false,
+    welcome: false
   };
 
   for (let index = 0; index < args.length; index += 1) {
@@ -124,6 +140,19 @@ function parseArgs(args) {
       options.json = true;
     } else if (arg === '-q' || arg === '--quiet' || arg === '--no-name' || arg === '--no-code') {
       options.quiet = true;
+    } else if (arg === '--welcome') {
+      options.welcome = true;
+    } else if (arg === '--message') {
+      index += 1;
+      options.messages.push(requireValue(args[index], arg));
+    } else if (arg.startsWith('--message=')) {
+      options.messages.push(requireValue(arg.slice('--message='.length), '--message'));
+    } else if (arg === '--date') {
+      options.date = true;
+    } else if (arg === '--cwd') {
+      options.cwd = true;
+    } else if (arg === '--git') {
+      options.git = true;
     } else if (arg === '--pad') {
       index += 1;
       const padding = parseCount(args[index], arg);
@@ -171,6 +200,135 @@ function parseArgs(args) {
   }
 
   return options;
+}
+
+function infoLines(options, clingon) {
+  const lines = [];
+
+  if (options.welcome) {
+    lines.push(styleWelcome(randomGreeting(new Date()), clingon, options));
+  }
+
+  for (const message of options.messages) {
+    lines.push(...message.split(/\r?\n/u));
+  }
+
+  if (options.date) {
+    lines.push(styleDate(formatDate(new Date()), options));
+  }
+
+  if (options.cwd) {
+    lines.push(`~ ${basename(process.cwd()) || process.cwd()}`);
+  }
+
+  if (options.git) {
+    const branch = gitBranch();
+
+    if (branch) {
+      lines.push(`* ${branch}`);
+    }
+  }
+
+  return lines
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, MAX_INFO_LINES);
+}
+
+function formatInfoBlock(artLines, details) {
+  if (details.length === 0) {
+    return artLines;
+  }
+
+  const artWidth = Math.max(...artLines.map((line) => visibleLength(line)));
+  const firstDetailRow = Math.max(0, Math.floor((artLines.length - details.length) / 2));
+
+  return artLines.map((line, index) => {
+    const detail = details[index - firstDetailRow];
+
+    if (!detail) {
+      return line;
+    }
+
+    return `${padVisibleEnd(line, artWidth)}  ${detail}`;
+  });
+}
+
+function padVisibleEnd(value, width) {
+  return `${value}${' '.repeat(Math.max(0, width - visibleLength(value)))}`;
+}
+
+function visibleLength(value) {
+  return value.replace(/\u001b\[[0-9;]*m/g, '').length;
+}
+
+function randomGreeting(date) {
+  const greetings = greetingSet(date.getHours());
+  const index = Math.floor(Math.random() * greetings.length);
+
+  return greetings[index];
+}
+
+function greetingSet(hour) {
+  if (hour < 12) {
+    return ['Good morning', 'Buenos dias', 'Ohayo'];
+  }
+
+  if (hour < 18) {
+    return ['Good afternoon', 'Buenas tardes', 'Konnichiwa'];
+  }
+
+  return ['Good evening', 'Buenas noches', 'Konbanwa'];
+}
+
+function formatDate(date) {
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  }).format(date);
+}
+
+function styleWelcome(value, clingon, options) {
+  if (!options.useColor) {
+    return value;
+  }
+
+  return `\u001b[1m${ansiColor(clingon.palette.body)}${value}\u001b[0m`;
+}
+
+function styleDate(value, options) {
+  if (!options.useColor) {
+    return value;
+  }
+
+  return `\u001b[90m${value}\u001b[0m`;
+}
+
+function ansiColor(hex) {
+  const [r, g, b] = hexToRgb(hex);
+  return `\u001b[38;2;${r};${g};${b}m`;
+}
+
+function hexToRgb(hex) {
+  const clean = hex.replace('#', '');
+  return [
+    Number.parseInt(clean.slice(0, 2), 16),
+    Number.parseInt(clean.slice(2, 4), 16),
+    Number.parseInt(clean.slice(4, 6), 16)
+  ];
+}
+
+function gitBranch() {
+  try {
+    return execFileSync('git', ['branch', '--show-current'], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore']
+    }).trim();
+  } catch {
+    return '';
+  }
 }
 
 function requireValue(value, option) {

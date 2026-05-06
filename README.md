@@ -70,6 +70,13 @@ Use a saved name for the same startup clingon every time:
 clingon --name orlando-reginald-morris-junior --tiny --quiet --pad=1
 ```
 
+Show welcome text and local context beside it:
+
+```sh
+clingon --name orlando-reginald-morris-junior --tiny --quiet --welcome --date --cwd --git --pad=1
+```
+
+`--welcome` picks a time-aware greeting from English, Spanish, or romanized Japanese.
 `--quiet` hides the emitted `name:` line, which keeps startup output clean.
 `--pad=1` adds a blank line above and below the character plus one space of left padding.
 
@@ -123,6 +130,16 @@ Print only the character art, useful in shell startup files:
 clingon --tiny --quiet
 ```
 
+Show up to five lines of text beside the clingon:
+
+```sh
+clingon --tiny --quiet --welcome
+clingon --tiny --quiet --message "Ready"
+clingon --tiny --quiet --date --cwd --git
+```
+
+`--cwd` is shown as `~ directory-name`, and `--git` is shown as `* branch-name`.
+
 Add space around terminal output:
 
 ```sh
@@ -144,6 +161,11 @@ Options:
   -s, --script        Print the JavaScript needed to recreate the clingon
   -j, --json          Print JSON data instead of terminal art
   -q, --quiet         Print only the clingon art
+      --welcome       Show a time-aware greeting beside the clingon
+      --message <msg> Show a custom message beside the clingon
+      --date          Show today's date beside the clingon
+      --cwd           Show the current directory beside the clingon
+      --git           Show the current git branch beside the clingon
       --pad <n>       Add padding around terminal output
       --pad-h <n>     Add spaces before each terminal output line
       --pad-v <n>     Add blank lines before and after terminal output
