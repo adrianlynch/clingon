@@ -61,6 +61,14 @@ const SUFFIX_NAMES = [
   'deluxe'
 ];
 
+const RHYTHM_NAMES = [
+  'bouncy', 'dreamy', 'mellow', 'jumpy', 'snoozy', 'zippy', 'serene', 'jittery',
+  'breezy', 'wired', 'springy', 'antsy', 'groovy', 'spry', 'placid', 'fidgety',
+  'languid', 'spunky', 'tranquil', 'frenetic', 'spirited', 'sluggish', 'twitchy',
+  'lively', 'easygoing', 'perky', 'dapper', 'restless', 'peppy', 'lazy',
+  'frisky', 'calm'
+];
+
 const PALETTES = [
   ['#0891b2', '#c026d3', '#155e75'],
   ['#f97316', '#22c55e', '#7c2d12'],
@@ -77,7 +85,8 @@ export function nameLists() {
     first: [...FIRST_NAMES],
     middle: [...MIDDLE_NAMES],
     family: [...FAMILY_NAMES],
-    suffix: [...SUFFIX_NAMES]
+    suffix: [...SUFFIX_NAMES],
+    rhythm: [...RHYTHM_NAMES]
   };
 }
 
@@ -87,9 +96,10 @@ export function generateClingon(options = {}) {
   const size = normalizeSize(options.size);
   const shapeSeed = requested.shapeSeed;
   const paletteSeed = options.recolor ? randomPaletteSeed(requested.format) : requested.paletteSeed;
+  const rhythmSeed = requested.rhythmSeed ?? null;
   const code = requested.format === 'classic'
     ? formatClassicCode(shapeSeed, paletteSeed)
-    : formatCode(shapeSeed, paletteSeed);
+    : formatCode(shapeSeed, paletteSeed, rhythmSeed);
   const shape = createShape(shapeSeed, size);
   const palette = createPalette(paletteSeed);
 
@@ -99,6 +109,7 @@ export function generateClingon(options = {}) {
     size,
     shapeSeed,
     paletteSeed,
+    rhythmSeed,
     palette,
     pixels: shape,
     ansi: renderAnsi(shape, palette, options),
@@ -124,33 +135,40 @@ export function parseCode(code) {
     };
   }
 
-  const nameMatch = value.match(/^([a-z]+)-([a-z]+)-([a-z]+)-([a-z]+)$/);
+  const nameMatch = value.match(/^([a-z]+)-([a-z]+)-([a-z]+)-([a-z]+)(?:-([a-z]+))?$/);
 
   if (!nameMatch) {
-    throw new Error(`Invalid clingon code "${code}". Expected a name like orlando-reginald-morris-junior.`);
+    throw new Error(`Invalid clingon code "${code}". Expected a name like orlando-reginald-morris-junior-bouncy.`);
   }
 
   const firstIndex = wordIndex(FIRST_NAMES, nameMatch[1], 'first name');
   const middleIndex = wordIndex(MIDDLE_NAMES, nameMatch[2], 'middle name');
   const familyIndex = wordIndex(FAMILY_NAMES, nameMatch[3], 'family name');
   const suffixIndex = wordIndex(SUFFIX_NAMES, nameMatch[4], 'suffix');
+  const rhythmWord = nameMatch[5];
+  const rhythmSeed = rhythmWord != null
+    ? wordIndex(RHYTHM_NAMES, rhythmWord, 'rhythm')
+    : null;
 
   return {
     shapeSeed: firstIndex + familyIndex * FIRST_NAMES.length,
     paletteSeed: middleIndex + suffixIndex * MIDDLE_NAMES.length,
+    rhythmSeed,
     format: 'name'
   };
 }
 
-export function formatCode(shapeSeed, paletteSeed) {
+export function formatCode(shapeSeed, paletteSeed, rhythmSeed = null) {
   const shapeIndex = shapeSeed % (FIRST_NAMES.length * FAMILY_NAMES.length);
   const paletteIndex = paletteSeed % (MIDDLE_NAMES.length * SUFFIX_NAMES.length);
   const first = FIRST_NAMES[shapeIndex % FIRST_NAMES.length];
   const family = FAMILY_NAMES[Math.floor(shapeIndex / FIRST_NAMES.length)];
   const middle = MIDDLE_NAMES[paletteIndex % MIDDLE_NAMES.length];
   const suffix = SUFFIX_NAMES[Math.floor(paletteIndex / MIDDLE_NAMES.length)];
-
-  return `${first}-${middle}-${family}-${suffix}`;
+  const base = `${first}-${middle}-${family}-${suffix}`;
+  if (rhythmSeed == null) return base;
+  const rhythm = RHYTHM_NAMES[rhythmSeed % RHYTHM_NAMES.length];
+  return `${base}-${rhythm}`;
 }
 
 export function snippetFor(code, options = {}) {
@@ -173,6 +191,7 @@ function randomCode() {
   return {
     shapeSeed: randomShapeSeed(),
     paletteSeed: randomPaletteSeed('name'),
+    rhythmSeed: randomSeed() % RHYTHM_NAMES.length,
     format: 'name'
   };
 }

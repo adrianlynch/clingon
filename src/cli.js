@@ -13,12 +13,14 @@ Usage:
 
 Options:
       --with-name <name>
-                    Regenerate a specific clingon by name. Use '*' as a
-                    wildcard for any word slot to randomize that part.
+                    Regenerate a specific clingon. 4 or 5 hyphen-separated
+                    words: <first>-<middle>-<family>-<suffix>[-<rhythm>]
+                    Use '*' as a wildcard for any slot to randomize it.
                     Examples:
-                      orlando-*-morris-*    fix shape, random palette
-                      *-reginald-*-junior   fix palette, random shape
-                      *-*-morris-*          fix only the family word
+                      orlando-*-morris-*           fix shape, random palette
+                      *-reginald-*-junior          fix palette, random shape
+                      orlando-*-morris-*-bouncy    fix shape and rhythm
+                      *-*-*-*-*                    fully random 5-word
       --list-names    Print the available word lists for composing names
       --gallery [n]   Show n random clingons (default 8) with their names,
                       laid out as a grid that auto-fits the terminal width.
@@ -107,8 +109,9 @@ export async function runCli(args, io) {
       io.stdout.write(`Middle (palette, position 2):\n  ${lists.middle.join(', ')}\n\n`);
       io.stdout.write(`Family (shape, position 3):\n  ${lists.family.join(', ')}\n\n`);
       io.stdout.write(`Suffix (palette, position 4):\n  ${lists.suffix.join(', ')}\n\n`);
-      io.stdout.write(`Compose: <first>-<middle>-<family>-<suffix>\n`);
-      io.stdout.write(`Use with: clingon --with-name <first>-<middle>-<family>-<suffix>\n`);
+      io.stdout.write(`Rhythm (animation, position 5, optional):\n  ${lists.rhythm.join(', ')}\n\n`);
+      io.stdout.write(`Compose: <first>-<middle>-<family>-<suffix>[-<rhythm>]\n`);
+      io.stdout.write(`Use with: clingon --with-name <first>-<middle>-<family>-<suffix>[-<rhythm>]\n`);
       return;
     }
 
@@ -302,7 +305,9 @@ async function runAnimatedGallery({ count, size, color, termColumns, stream, fps
   for (let i = 0; i < count; i += 1) clingons.push(generateClingon({ size, color }));
   const moves = ['idle', 'blink', 'look', 'wiggle', 'walk'];
   const framesPerClingon = clingons.map((c) => {
-    const seed = (c.shapeSeed ^ (c.paletteSeed * 1024)) >>> 0;
+    const seed = c.rhythmSeed != null
+      ? ((c.rhythmSeed * 1234567 + 987654321) >>> 0)
+      : ((c.shapeSeed ^ (c.paletteSeed * 1024)) >>> 0);
     return composeParallel(c.pixels, moves, 160, seed);
   });
   const cycleLength = framesPerClingon[0].length;
@@ -372,12 +377,12 @@ function renderGallery({ count, size, color, termColumns }) {
 
 function expandWildcardName(name) {
   const parts = name.split('-');
-  if (parts.length !== 4) {
-    throw new Error(`Invalid clingon name "${name}". Expected four hyphen-separated words.`);
+  if (parts.length !== 4 && parts.length !== 5) {
+    throw new Error(`Invalid clingon name "${name}". Expected four or five hyphen-separated words.`);
   }
   if (!parts.includes('*')) return name;
   const lists = nameLists();
-  const slotLists = [lists.first, lists.middle, lists.family, lists.suffix];
+  const slotLists = [lists.first, lists.middle, lists.family, lists.suffix, lists.rhythm];
   return parts.map((part, i) => {
     if (part !== '*') return part;
     const list = slotLists[i];

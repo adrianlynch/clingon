@@ -325,9 +325,12 @@ export function animateClingon(options = {}) {
   } = options;
 
   const clingon = generateClingon({ name, size, color });
-  // Animation rhythm derives from the same identity that drives shape and palette,
-  // so the same name always produces the same pattern of bobs/blinks/looks.
-  const animationSeed = (clingon.shapeSeed ^ (clingon.paletteSeed * 1024)) >>> 0;
+  // Animation rhythm comes from the explicit rhythm slot (5th name word) when given,
+  // otherwise we derive a stable seed from the shape and palette so 4-word names
+  // still get a deterministic rhythm.
+  const animationSeed = clingon.rhythmSeed != null
+    ? ((clingon.rhythmSeed * 1234567 + 987654321) >>> 0)
+    : ((clingon.shapeSeed ^ (clingon.paletteSeed * 1024)) >>> 0);
   const frames = mode === 'parallel'
     ? composeParallel(clingon.pixels, moveList, 160, animationSeed)
     : buildFrames(clingon.pixels, moveList);

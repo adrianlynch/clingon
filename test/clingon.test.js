@@ -34,7 +34,7 @@ test('generates deterministic named clingons by default', () => {
   const clingon = generateClingon({ color: false });
   const regenerated = generateClingon({ name: clingon.name, color: false });
 
-  assert.match(clingon.code, /^[a-z]+-[a-z]+-[a-z]+-[a-z]+$/);
+  assert.match(clingon.code, /^[a-z]+-[a-z]+-[a-z]+-[a-z]+-[a-z]+$/);
   assert.equal(clingon.name, clingon.code);
   assert.equal(regenerated.text, clingon.text);
   assert.equal(regenerated.code, clingon.code);
