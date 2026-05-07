@@ -14,7 +14,7 @@ import {
   moveCursor, clearScreen,
   getSize, setRawMode
 } from '../src/terminal.js';
-import { blink, bob, wiggle, walk } from '../src/animation.js';
+import { blink, bob, wiggle, walk, defineMove, resolveMove, buildFrames } from '../src/animation.js';
 import { runCli } from '../src/cli.js';
 
 function fakeStream() {
@@ -266,4 +266,76 @@ test('cli --inline honors --pad-h', () => {
     stdout, stderr, env: {}
   });
   assert.match(stdout.output, /^  [\[oO\.# ]{4}\n$/);
+});
+
+test('defineMove + resolveMove round-trip a custom move', () => {
+  const sequence = [{ pixels: [[1]], duration: 2 }, { pixels: [[2]] }];
+  defineMove('test-move-1', { sequence });
+  const frames = resolveMove('test-move-1', [[0]]);
+  assert.equal(frames.length, 2);
+  assert.deepEqual(frames[0], { pixels: [[1]], duration: 2 });
+  assert.deepEqual(frames[1], { pixels: [[2]], duration: 1 });
+});
+
+test('resolveMove accepts inline Move objects', () => {
+  const move = { name: 'inline', sequence: [{ pixels: [[5]] }] };
+  const frames = resolveMove(move, [[0]]);
+  assert.deepEqual(frames, [{ pixels: [[5]], duration: 1 }]);
+});
+
+test('resolveMove invokes function-form sequence with basePixels', () => {
+  const move = { name: 'fn', sequence: (p) => [{ pixels: p, duration: 3 }] };
+  const frames = resolveMove(move, [[7, 7]]);
+  assert.deepEqual(frames, [{ pixels: [[7, 7]], duration: 3 }]);
+});
+
+test('resolveMove throws a descriptive error for an unknown move name', () => {
+  assert.throws(
+    () => resolveMove('not-a-real-move', [[0]]),
+    /Unknown move "not-a-real-move".*Registered moves:/
+  );
+});
+
+test('defineMove replaces an existing move', () => {
+  defineMove('test-move-2', { sequence: [{ pixels: [[1]] }] });
+  defineMove('test-move-2', { sequence: [{ pixels: [[2]] }] });
+  const frames = resolveMove('test-move-2', [[0]]);
+  assert.deepEqual(frames, [{ pixels: [[2]], duration: 1 }]);
+});
+
+test('built-in idle move produces 2 frames', () => {
+  const frames = resolveMove('idle', generateClingon({
+    name: 'orlando-reginald-morris-junior', size: 'tiny', color: false
+  }).pixels);
+  assert.equal(frames.length, 2);
+});
+
+test('built-in blink move produces 3 frames with expected durations', () => {
+  const frames = resolveMove('blink', generateClingon({
+    name: 'orlando-reginald-morris-junior', size: 'tiny', color: false
+  }).pixels);
+  assert.equal(frames.length, 3);
+  assert.equal(frames[0].duration, 3);
+  assert.equal(frames[1].duration, 1);
+  assert.equal(frames[2].duration, 1);
+});
+
+test('buildFrames concatenates frames from named moves', () => {
+  const base = generateClingon({ name: 'orlando-reginald-morris-junior', size: 'tiny', color: false }).pixels;
+  const frames = buildFrames(base, ['idle', 'blink']);
+  assert.equal(frames.length, 5);
+});
+
+test('buildFrames accepts mixed strings and inline Move objects', () => {
+  const base = [[1]];
+  const inline = { name: 'inline', sequence: [{ pixels: [[9]] }] };
+  defineMove('one-frame', { sequence: [{ pixels: [[3]] }] });
+  const frames = buildFrames(base, ['one-frame', inline]);
+  assert.equal(frames.length, 2);
+  assert.deepEqual(frames[0].pixels, [[3]]);
+  assert.deepEqual(frames[1].pixels, [[9]]);
+});
+
+test('buildFrames throws for unknown move name', () => {
+  assert.throws(() => buildFrames([[1]], ['idle', 'nonsense']), /Unknown move/);
 });

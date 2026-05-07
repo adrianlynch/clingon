@@ -73,3 +73,56 @@ export function walk(pixels, phase) {
     return next;
   });
 }
+
+const moveRegistry = new Map();
+
+export function defineMove(name, move) {
+  moveRegistry.set(name, { name, sequence: move.sequence });
+}
+
+export function resolveMove(input, basePixels) {
+  const move = typeof input === 'string' ? moveRegistry.get(input) : input;
+  if (!move) {
+    const known = Array.from(moveRegistry.keys()).join(', ') || '(none)';
+    throw new Error(`Unknown move "${input}". Registered moves: ${known}.`);
+  }
+  const raw = typeof move.sequence === 'function' ? move.sequence(basePixels) : move.sequence;
+  return raw.map((frame) => ({ pixels: frame.pixels, duration: frame.duration ?? 1 }));
+}
+
+export function buildFrames(basePixels, moves) {
+  const frames = [];
+  for (const move of moves) {
+    frames.push(...resolveMove(move, basePixels));
+  }
+  return frames;
+}
+
+defineMove('idle', {
+  sequence: (p) => [
+    { pixels: bob(p, 0), duration: 1 },
+    { pixels: bob(p, 1), duration: 1 }
+  ]
+});
+
+defineMove('blink', {
+  sequence: (p) => [
+    { pixels: p.map((row) => row.slice()), duration: 3 },
+    { pixels: blink(p), duration: 1 },
+    { pixels: p.map((row) => row.slice()), duration: 1 }
+  ]
+});
+
+defineMove('wiggle', {
+  sequence: (p) => [
+    { pixels: wiggle(p, 0), duration: 1 },
+    { pixels: wiggle(p, 1), duration: 1 }
+  ]
+});
+
+defineMove('walk', {
+  sequence: (p) => [
+    { pixels: walk(p, 0), duration: 1 },
+    { pixels: walk(p, 1), duration: 1 }
+  ]
+});
