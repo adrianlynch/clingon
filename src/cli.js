@@ -27,14 +27,14 @@ Options:
       --git           Show the current git branch beside the clingon
       --inline        Render a compact single-line glyph (one character per cell).
                       Suitable for statuslines, prompts, and tmux status bars.
-      --animate         Animate the creature in place. Loops until Ctrl-C.
+      --animate [list]  Animate the creature in place. Loops until Ctrl-C.
+                        Optional comma-separated list of behaviors:
+                        idle, blink, look, wiggle, walk.
+                        Default: idle,blink,look,wiggle.
+      --in-sequence     Play the listed behaviors in order, looping.
+                        Without this flag, behaviors layer on one timeline
+                        as random events.
       --fps <n>         Animation frames per second (1-30). Default 8.
-      --moves <list>    Comma-separated behaviors layered on one timeline.
-                        Each behavior triggers as random events; order doesn't
-                        matter. Default: 'idle,blink,look,wiggle'.
-      --cycle <list>    Comma-separated behaviors played in order, then loops.
-                        Order matters. Mutually exclusive with --moves.
-                        Built-in behaviors: idle, blink, look, wiggle, walk.
       --seconds <n>     Run animation for N seconds then exit.
       --pad <n>       Add padding around terminal output
       --pad-h <n>     Add spaces before each terminal output line
@@ -69,11 +69,8 @@ export async function runCli(args, io) {
     options.useColor = useColor;
 
     if (options.animate) {
-      if (options.animateMoves && options.animateCycle) {
-        throw new Error('--moves and --cycle are mutually exclusive.');
-      }
-      const useCycle = !!options.animateCycle;
-      const moveList = options.animateCycle ?? options.animateMoves ?? ['idle', 'blink', 'look', 'wiggle'];
+      const moveList = options.animateMoves ?? ['idle', 'blink', 'look', 'wiggle'];
+      const mode = options.animateInSequence ? 'sequence' : 'parallel';
 
       const { animateClingon } = await import('./animation.js');
       const controller = new AbortController();
@@ -85,7 +82,7 @@ export async function runCli(args, io) {
           size: options.size,
           color: useColor,
           frames: moveList,
-          mode: useCycle ? 'sequence' : 'parallel',
+          mode,
           fps: options.fps,
           seconds: options.seconds,
           stream: io.stdout,
@@ -206,7 +203,7 @@ function parseArgs(args) {
   const options = {
     animate: false,
     animateMoves: undefined,
-    animateCycle: undefined,
+    animateInSequence: false,
     color: true,
     fps: 8,
     help: false,
@@ -287,21 +284,20 @@ function parseArgs(args) {
       options.inline = true;
     } else if (arg === '--animate') {
       options.animate = true;
+      if (hasOptionalValue(args[index + 1])) {
+        index += 1;
+        options.animateMoves = parseFramesList(args[index]);
+      }
+    } else if (arg.startsWith('--animate=')) {
+      options.animate = true;
+      options.animateMoves = parseFramesList(arg.slice('--animate='.length));
+    } else if (arg === '--in-sequence') {
+      options.animateInSequence = true;
     } else if (arg === '--fps') {
       index += 1;
       options.fps = parseFps(args[index]);
     } else if (arg.startsWith('--fps=')) {
       options.fps = parseFps(arg.slice('--fps='.length));
-    } else if (arg === '--moves') {
-      index += 1;
-      options.animateMoves = parseFramesList(args[index]);
-    } else if (arg.startsWith('--moves=')) {
-      options.animateMoves = parseFramesList(arg.slice('--moves='.length));
-    } else if (arg === '--cycle') {
-      index += 1;
-      options.animateCycle = parseFramesList(args[index]);
-    } else if (arg.startsWith('--cycle=')) {
-      options.animateCycle = parseFramesList(arg.slice('--cycle='.length));
     } else if (arg === '--seconds') {
       index += 1;
       options.seconds = parseCount(args[index], arg);

@@ -493,20 +493,33 @@ test('cli --animate --json errors', async () => {
   process.exitCode = 0;
 });
 
-test('cli --animate --moves bogus errors', async () => {
+test('cli --animate accepts a comma-separated move list as its value', async () => {
+  // Non-TTY stdout makes the animator write a single static frame and exit.
+  const stdout = { isTTY: false, output: '', write(c) { this.output += c; } };
+  const stderr = createWritable();
+  await runCli(['--animate', 'idle,blink', '--with-name', 'orlando-reginald-morris-junior', '--tiny', '--no-color'], {
+    stdout, stderr, env: {}
+  });
+  assert.match(stdout.output, /\[\]/);
+  assert.equal(stderr.output, '');
+});
+
+test('cli --animate with bogus moves errors', async () => {
   const stdout = createWritable();
   const stderr = createWritable();
-  await runCli(['--animate', '--moves', 'bogus'], { stdout, stderr, env: {} });
-  assert.match(stderr.output, /move|moves|bogus/i);
+  await runCli(['--animate', 'bogus'], { stdout, stderr, env: {} });
+  assert.match(stderr.output, /move|bogus/i);
   process.exitCode = 0;
 });
 
-test('cli --moves and --cycle are mutually exclusive', async () => {
-  const stdout = createWritable();
+test('cli --animate accepts --in-sequence flag', async () => {
+  const stdout = { isTTY: false, output: '', write(c) { this.output += c; } };
   const stderr = createWritable();
-  await runCli(['--animate', '--moves', 'idle', '--cycle', 'idle'], { stdout, stderr, env: {} });
-  assert.match(stderr.output, /moves.*cycle|cycle.*moves|mutually exclusive/i);
-  process.exitCode = 0;
+  await runCli(['--animate', 'idle,blink', '--in-sequence', '--with-name', 'orlando-reginald-morris-junior', '--tiny', '--no-color'], {
+    stdout, stderr, env: {}
+  });
+  assert.match(stdout.output, /\[\]/);
+  assert.equal(stderr.output, '');
 });
 
 test('cli --animate --inline errors', async () => {
