@@ -69,6 +69,12 @@ Choose the startup size:
 curl -fsSL https://raw.githubusercontent.com/adrianlynch/clingon/main/install.sh | sh -s -- --size small
 ```
 
+Customize the generated `~/.zshrc` command by passing clingon options after `--`:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/adrianlynch/clingon/main/install.sh | sh -s -- --size tiny -- --message "Good morning" --date --git --pad-v=1
+```
+
 Install with npm:
 
 ```sh

@@ -5,9 +5,14 @@ zshrc=1
 size="tiny"
 startup_flags="--welcome --date --cwd --git --pad-v=1"
 
+append_startup_flag() {
+  escaped=$(printf "%s" "$1" | sed "s/'/'\\\\''/g")
+  startup_flags="${startup_flags}${startup_flags:+ }'$escaped'"
+}
+
 usage() {
   cat <<'EOF'
-Usage: install.sh [options]
+Usage: install.sh [options] [-- clingon-options]
 
 Options:
   --zshrc          Add clingon to ~/.zshrc (default)
@@ -15,6 +20,8 @@ Options:
   --size <size>    Startup size: tiny, small, normal, or large
   --size=<size>    Startup size: tiny, small, normal, or large
   -h, --help       Show help
+
+Anything after -- is written to ~/.zshrc as clingon startup options.
 EOF
 }
 
@@ -39,6 +46,14 @@ while [ "$#" -gt 0 ]; do
     --size=*)
       size="${1#--size=}"
       shift
+      ;;
+    --)
+      shift
+      startup_flags=""
+      while [ "$#" -gt 0 ]; do
+        append_startup_flag "$1"
+        shift
+      done
       ;;
     -h|--help)
       usage
