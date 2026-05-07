@@ -10,14 +10,15 @@ Usage:
   clingon [options]
 
 Options:
-  -n, --name <name>   Regenerate a specific clingon name
-  -r, --recolor       Keep the shape from --name but choose new colors
+      --with-name <name>
+                    Regenerate a specific clingon name
+      --name        Show the clingon name beside the art
+  -r, --recolor     Keep the shape from --with-name but choose new colors
       --small         Render a smaller clingon
       --tiny          Render the tiniest clingon
       --size <size>   Render size: tiny, small, or normal
   -s, --script        Print the JavaScript needed to recreate the clingon
   -j, --json          Print JSON data instead of terminal art
-  -q, --quiet         Print only the clingon art
       --welcome       Show a time-aware greeting beside the clingon
       --message <msg> Show a custom message beside the clingon
       --date          Show today's date beside the clingon
@@ -26,7 +27,6 @@ Options:
       --pad <n>       Add padding around terminal output
       --pad-h <n>     Add spaces before each terminal output line
       --pad-v <n>     Add blank lines before and after terminal output
-      --no-name       Alias for --quiet
       --no-color      Render without ANSI color
   -h, --help          Show help
   -v, --version       Show version
@@ -48,7 +48,7 @@ export function runCli(args, io) {
 
     const useColor = options.color && shouldUseColor(io);
     const clingon = generateClingon({
-      name: options.name,
+      name: options.inputName,
       recolor: options.recolor,
       size: options.size,
       color: useColor
@@ -70,10 +70,6 @@ export function runCli(args, io) {
 
 function formatTerminalOutput(clingon, options) {
   const lines = formatInfoBlock(clingon.ansi.split('\n'), infoLines(options, clingon));
-
-  if (!options.quiet) {
-    lines.push('', `name: ${clingon.name}`);
-  }
 
   if (options.script) {
     lines.push('', ...snippetFor(clingon.name, { size: clingon.size }).split('\n'));
@@ -108,21 +104,16 @@ function parseCount(value, option) {
 function parseArgs(args) {
   const options = {
     color: true,
-    cwd: false,
-    date: false,
-    git: false,
-    name: undefined,
     help: false,
+    inputName: undefined,
+    infoItems: [],
     json: false,
-    messages: [],
     padH: 0,
     padV: 0,
-    quiet: false,
     recolor: false,
     script: false,
     size: 'normal',
-    version: false,
-    welcome: false
+    version: false
   };
 
   for (let index = 0; index < args.length; index += 1) {
@@ -138,21 +129,21 @@ function parseArgs(args) {
       options.script = true;
     } else if (arg === '-j' || arg === '--json') {
       options.json = true;
-    } else if (arg === '-q' || arg === '--quiet' || arg === '--no-name' || arg === '--no-code') {
-      options.quiet = true;
+    } else if (arg === '-q' || arg === '--quiet' || arg === '--no-code' || arg === '--no-name') {
+      // Legacy flags are accepted as no-ops so existing shell startup snippets do not fail.
     } else if (arg === '--welcome') {
-      options.welcome = true;
+      options.infoItems.push({ type: 'welcome' });
     } else if (arg === '--message') {
       index += 1;
-      options.messages.push(requireValue(args[index], arg));
+      options.infoItems.push({ type: 'message', value: requireValue(args[index], arg) });
     } else if (arg.startsWith('--message=')) {
-      options.messages.push(requireValue(arg.slice('--message='.length), '--message'));
+      options.infoItems.push({ type: 'message', value: requireValue(arg.slice('--message='.length), '--message') });
     } else if (arg === '--date') {
-      options.date = true;
+      options.infoItems.push({ type: 'date' });
     } else if (arg === '--cwd') {
-      options.cwd = true;
+      options.infoItems.push({ type: 'cwd' });
     } else if (arg === '--git') {
-      options.git = true;
+      options.infoItems.push({ type: 'git' });
     } else if (arg === '--pad') {
       index += 1;
       const padding = parseCount(args[index], arg);
@@ -183,20 +174,30 @@ function parseArgs(args) {
       options.size = requireValue(arg.slice('--size='.length), '--size');
     } else if (arg === '--no-color') {
       options.color = false;
-    } else if (arg === '-n' || arg === '--name' || arg === '-c' || arg === '--code') {
+    } else if (arg === '-n' || arg === '--name') {
+      options.infoItems.push({ type: 'name' });
+    } else if (arg === '--with-name') {
       index += 1;
-      options.name = requireValue(args[index], arg);
+      options.inputName = requireValue(args[index], arg);
+    } else if (arg.startsWith('--with-name=')) {
+      options.inputName = requireValue(arg.slice('--with-name='.length), '--with-name');
+    } else if (arg === '-c' || arg === '--code') {
+      if (hasOptionalValue(args[index + 1])) {
+        index += 1;
+      }
     } else if (arg.startsWith('--name=')) {
-      options.name = requireValue(arg.slice('--name='.length), '--name');
+      // Legacy value form is accepted as a no-op. Use --with-name to regenerate.
     } else if (arg.startsWith('--code=')) {
-      options.name = requireValue(arg.slice('--code='.length), '--code');
+      // Legacy option is accepted as a no-op.
+    } else if (!arg.startsWith('-')) {
+      // Legacy positional values are accepted as no-ops.
     } else {
       throw new Error(`Unknown option "${arg}".`);
     }
   }
 
-  if (options.recolor && !options.name) {
-    throw new Error('--recolor requires --name so the shape can be preserved.');
+  if (options.recolor && !options.inputName) {
+    throw new Error('--recolor requires --with-name so the shape can be preserved.');
   }
 
   return options;
@@ -205,27 +206,23 @@ function parseArgs(args) {
 function infoLines(options, clingon) {
   const lines = [];
 
-  if (options.welcome) {
-    lines.push(styleWelcome(randomGreeting(new Date()), clingon, options));
-  }
+  for (const item of options.infoItems) {
+    if (item.type === 'name') {
+      lines.push(clingon.name);
+    } else if (item.type === 'welcome') {
+      lines.push(styleWelcome(randomGreeting(new Date()), clingon, options));
+    } else if (item.type === 'message') {
+      lines.push(...item.value.split(/\r?\n/u));
+    } else if (item.type === 'date') {
+      lines.push(styleDate(formatDate(new Date()), options));
+    } else if (item.type === 'cwd') {
+      lines.push(`~ ${basename(process.cwd()) || process.cwd()}`);
+    } else if (item.type === 'git') {
+      const branch = gitBranch();
 
-  for (const message of options.messages) {
-    lines.push(...message.split(/\r?\n/u));
-  }
-
-  if (options.date) {
-    lines.push(styleDate(formatDate(new Date()), options));
-  }
-
-  if (options.cwd) {
-    lines.push(`~ ${basename(process.cwd()) || process.cwd()}`);
-  }
-
-  if (options.git) {
-    const branch = gitBranch();
-
-    if (branch) {
-      lines.push(`* ${branch}`);
+      if (branch) {
+        lines.push(`* ${branch}`);
+      }
     }
   }
 
@@ -329,6 +326,10 @@ function gitBranch() {
   } catch {
     return '';
   }
+}
+
+function hasOptionalValue(value) {
+  return Boolean(value && !value.startsWith('-'));
 }
 
 function requireValue(value, option) {

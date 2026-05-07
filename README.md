@@ -8,13 +8,11 @@ Each clingon is created from a readable name. Save the name and you can render t
 
 ```txt
       ##      
-    [][][]    
+  [][][]    
 [][]. []. [][]
 [][][][][][][]
   []# [] #[]  
   . .    . .  
-
-name: orlando-reginald-morris-junior
 ```
 
 ## Screenshots
@@ -71,23 +69,23 @@ npm install -g @adrianlynch/clingon
 Add this to `~/.zshrc` to show a random tiny clingon in each terminal:
 
 ```sh
-clingon --tiny --quiet --pad=1
+clingon --tiny --pad=1
 ```
 
 Use a saved name for the same startup clingon every time:
 
 ```sh
-clingon --name orlando-reginald-morris-junior --tiny --quiet --pad=1
+clingon --with-name orlando-reginald-morris-junior --tiny --pad=1
 ```
 
 Show welcome text and local context beside it:
 
 ```sh
-clingon --name orlando-reginald-morris-junior --tiny --quiet --welcome --date --cwd --git --pad=1
+clingon --with-name orlando-reginald-morris-junior --tiny --welcome --date --cwd --git --pad=1
 ```
 
 `--welcome` picks a time-aware greeting from English, Spanish, or romanized Japanese.
-`--quiet` hides the emitted `name:` line, which keeps startup output clean.
+Clingon names are hidden by default. Add `--name` where you want the name to appear beside it.
 `--pad=1` adds a blank line above and below the character plus one space of left padding.
 
 ## CLI
@@ -113,19 +111,26 @@ clingon --tiny
 Regenerate a specific clingon:
 
 ```sh
-clingon --name orlando-reginald-morris-junior
+clingon --with-name orlando-reginald-morris-junior
+```
+
+Show the clingon name beside the art:
+
+```sh
+clingon --name
+clingon --with-name orlando-reginald-morris-junior --name
 ```
 
 Keep the same shape, but choose a new random palette:
 
 ```sh
-clingon --name orlando-reginald-morris-junior --recolor
+clingon --with-name orlando-reginald-morris-junior --recolor
 ```
 
 Print the JavaScript needed to recreate the same clingon:
 
 ```sh
-clingon --name orlando-reginald-morris-junior --small --script
+clingon --with-name orlando-reginald-morris-junior --small --script
 ```
 
 Print structured output:
@@ -137,24 +142,27 @@ clingon --small --json
 Print only the character art, useful in shell startup files:
 
 ```sh
-clingon --tiny --quiet
+clingon --tiny
 ```
 
 Show up to five lines of text beside the clingon:
 
 ```sh
-clingon --tiny --quiet --welcome
-clingon --tiny --quiet --message "Ready"
-clingon --tiny --quiet --date --cwd --git
+clingon --tiny --name
+clingon --tiny --welcome
+clingon --tiny --message "Ready"
+clingon --tiny --date --cwd --git
+clingon --tiny --git --message "Ready" --name
 ```
 
 `--cwd` is shown as `~ directory-name`, and `--git` is shown as `* branch-name`.
+Label flags are shown in the order you pass them.
 
 Add space around terminal output:
 
 ```sh
-clingon --tiny --quiet --pad=1
-clingon --tiny --quiet --pad-h=2 --pad-v=1
+clingon --tiny --pad=1
+clingon --tiny --pad-h=2 --pad-v=1
 ```
 
 ## Options
@@ -163,14 +171,15 @@ clingon --tiny --quiet --pad-h=2 --pad-v=1
 clingon [options]
 
 Options:
-  -n, --name <name>   Regenerate a specific clingon name
-  -r, --recolor       Keep the shape from --name but choose new colors
+      --with-name <name>
+                    Regenerate a specific clingon name
+  -n, --name          Show the clingon name beside the art
+  -r, --recolor       Keep the shape from --with-name but choose new colors
       --small         Render a smaller clingon
       --tiny          Render the tiniest clingon
       --size <size>   Render size: tiny, small, or normal
   -s, --script        Print the JavaScript needed to recreate the clingon
   -j, --json          Print JSON data instead of terminal art
-  -q, --quiet         Print only the clingon art
       --welcome       Show a time-aware greeting beside the clingon
       --message <msg> Show a custom message beside the clingon
       --date          Show today's date beside the clingon
@@ -179,7 +188,6 @@ Options:
       --pad <n>       Add padding around terminal output
       --pad-h <n>     Add spaces before each terminal output line
       --pad-v <n>     Add blank lines before and after terminal output
-      --no-name       Alias for --quiet
       --no-color      Render without ANSI color
   -h, --help          Show help
   -v, --version       Show version
@@ -243,10 +251,10 @@ console.log(renderClingon({
 
 The first and third words control the shape. The second and fourth words control the palette.
 
-Older `clg-...` seed codes are still accepted through `--name`:
+Older `clg-...` seed codes are still accepted through `--with-name`:
 
 ```sh
-clingon --name clg-00000rs-00000rt
+clingon --with-name clg-00000rs-00000rt
 ```
 
 ## Development

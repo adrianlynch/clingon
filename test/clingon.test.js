@@ -155,11 +155,11 @@ test('narrow feet mirror left and right alignment', () => {
   assert.match(footRow, /\.    \./);
 });
 
-test('cli quiet mode hides the emitted name', () => {
+test('cli default output hides the generated name', () => {
   const stdout = createWritable();
   const stderr = createWritable();
 
-  runCli(['--name', 'orlando-reginald-morris-junior', '--tiny', '--quiet', '--no-color'], {
+  runCli(['--with-name', 'orlando-reginald-morris-junior', '--tiny', '--no-color'], {
     stdout,
     stderr,
     env: {}
@@ -170,18 +170,47 @@ test('cli quiet mode hides the emitted name', () => {
   assert.equal(stderr.output, '');
 });
 
+test('cli name option displays the clingon name beside the art', () => {
+  const stdout = createWritable();
+  const stderr = createWritable();
+
+  runCli(['--with-name', 'orlando-reginald-morris-junior', '--name', '--tiny', '--no-color'], {
+    stdout,
+    stderr,
+    env: {}
+  });
+
+  assert.match(stdout.output, /  orlando-reginald-morris-junior/);
+  assert.doesNotMatch(stdout.output, /\nname:/);
+  assert.equal(stderr.output, '');
+});
+
+test('cli name option without a value displays a generated name', () => {
+  const stdout = createWritable();
+  const stderr = createWritable();
+
+  runCli(['--name', '--tiny', '--no-color'], {
+    stdout,
+    stderr,
+    env: {}
+  });
+
+  assert.match(stdout.output, /  [a-z]+-[a-z]+-[a-z]+-[a-z]+/);
+  assert.equal(stderr.output, '');
+});
+
 test('cli padding adds horizontal and vertical spacing', () => {
   const stdout = createWritable();
   const stderr = createWritable();
   const baseline = createWritable();
 
-  runCli(['--name', 'orlando-reginald-morris-junior', '--tiny', '--quiet', '--no-color'], {
+  runCli(['--with-name', 'orlando-reginald-morris-junior', '--tiny', '--no-color'], {
     stdout: baseline,
     stderr: createWritable(),
     env: {}
   });
 
-  runCli(['--name', 'orlando-reginald-morris-junior', '--tiny', '--quiet', '--no-color', '--pad=1'], {
+  runCli(['--with-name', 'orlando-reginald-morris-junior', '--tiny', '--no-color', '--pad=1'], {
     stdout,
     stderr,
     env: {}
@@ -200,17 +229,16 @@ test('cli directional padding can differ', () => {
   const stderr = createWritable();
   const baseline = createWritable();
 
-  runCli(['--name', 'orlando-reginald-morris-junior', '--tiny', '--quiet', '--no-color'], {
+  runCli(['--with-name', 'orlando-reginald-morris-junior', '--tiny', '--no-color'], {
     stdout: baseline,
     stderr: createWritable(),
     env: {}
   });
 
   runCli([
-    '--name',
+    '--with-name',
     'orlando-reginald-morris-junior',
     '--tiny',
-    '--quiet',
     '--no-color',
     '--pad-h=2',
     '--pad-v=1'
@@ -233,10 +261,9 @@ test('cli message renders beside the art and is vertically centered', () => {
   const stderr = createWritable();
 
   runCli([
-    '--name',
+    '--with-name',
     'orlando-reginald-morris-junior',
     '--tiny',
-    '--quiet',
     '--no-color',
     '--message',
     'Hello there'
@@ -260,10 +287,9 @@ test('cli info lines are capped at five', () => {
   const stderr = createWritable();
 
   runCli([
-    '--name',
+    '--with-name',
     'orlando-reginald-morris-junior',
     '--tiny',
-    '--quiet',
     '--no-color',
     '--message',
     'one',
@@ -291,15 +317,71 @@ test('cli info lines are capped at five', () => {
   assert.equal(stderr.output, '');
 });
 
+test('cli label flags render in the provided order', () => {
+  const stdout = createWritable();
+  const stderr = createWritable();
+
+  runCli([
+    '--with-name',
+    'orlando-reginald-morris-junior',
+    '--tiny',
+    '--no-color',
+    '--git',
+    '--message',
+    'Ready',
+    '--name',
+    '--cwd'
+  ], {
+    stdout,
+    stderr,
+    env: {}
+  });
+
+  const output = stdout.output;
+
+  assert.ok(output.indexOf('* main') < output.indexOf('Ready'));
+  assert.ok(output.indexOf('Ready') < output.indexOf('orlando-reginald-morris-junior'));
+  assert.ok(output.indexOf('orlando-reginald-morris-junior') < output.indexOf('~ clingon'));
+  assert.equal(stderr.output, '');
+});
+
+test('cli legacy code and quiet flags are accepted as no-ops', () => {
+  const stdout = createWritable();
+  const stderr = createWritable();
+
+  runCli(['--code', 'orlando-reginald-morris-junior', '--quiet', '--tiny', '--no-color'], {
+    stdout,
+    stderr,
+    env: {}
+  });
+
+  assert.match(stdout.output, /\[\]|\.\.|##/);
+  assert.doesNotMatch(stdout.output, /orlando-reginald-morris-junior/);
+  assert.equal(stderr.output, '');
+});
+
+test('cli legacy name value form is accepted as a no-op', () => {
+  const stdout = createWritable();
+  const stderr = createWritable();
+
+  runCli(['--name', 'orlando-reginald-morris-junior', '--tiny', '--no-color'], {
+    stdout,
+    stderr,
+    env: {}
+  });
+
+  assert.match(stdout.output, /  [a-z]+-[a-z]+-[a-z]+-[a-z]+/);
+  assert.equal(stderr.output, '');
+});
+
 test('cli info lines respect output padding', () => {
   const stdout = createWritable();
   const stderr = createWritable();
 
   runCli([
-    '--name',
+    '--with-name',
     'orlando-reginald-morris-junior',
     '--tiny',
-    '--quiet',
     '--no-color',
     '--message',
     'Hello',
@@ -324,10 +406,9 @@ test('cli optional info sources render beside the art', () => {
   const stderr = createWritable();
 
   runCli([
-    '--name',
+    '--with-name',
     'orlando-reginald-morris-junior',
     '--tiny',
-    '--quiet',
     '--no-color',
     '--message',
     'Hi',
@@ -358,10 +439,9 @@ test('cli welcome and date info are styled when color is enabled', () => {
   const [r, g, b] = hexToRgb(clingon.palette.body);
 
   runCli([
-    '--name',
+    '--with-name',
     'orlando-reginald-morris-junior',
     '--tiny',
-    '--quiet',
     '--welcome',
     '--date'
   ], {
