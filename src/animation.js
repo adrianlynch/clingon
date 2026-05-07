@@ -192,13 +192,20 @@ defineMove('walk', {
 });
 
 defineMove('look', {
-  sequence: (p) => [
-    { pixels: p.map((row) => row.slice()), duration: 6 },
-    { pixels: lookLeft(p), duration: 4 },
-    { pixels: p.map((row) => row.slice()), duration: 4 },
-    { pixels: lookRight(p), duration: 4 },
-    { pixels: p.map((row) => row.slice()), duration: 8 }
-  ]
+  sequence: (p) => {
+    const forward = () => ({ pixels: p.map((row) => row.slice()), duration: 6 + Math.floor(Math.random() * 4) });
+    const glance = () => ({
+      pixels: Math.random() < 0.5 ? lookLeft(p) : lookRight(p),
+      duration: 3 + Math.floor(Math.random() * 3)
+    });
+    const numGlances = 1 + Math.floor(Math.random() * 3); // 1-3 glances per cycle
+    const frames = [forward()];
+    for (let i = 0; i < numGlances; i += 1) {
+      frames.push(glance());
+      frames.push(forward());
+    }
+    return frames;
+  }
 });
 
 function defaultScheduler() {

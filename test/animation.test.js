@@ -320,17 +320,15 @@ test('built-in blink move blinks twice per cycle', () => {
   assert.equal(frames[3].duration, 1);
 });
 
-test('built-in look move includes both left and right glances per cycle', () => {
-  const frames = resolveMove('look', generateClingon({
-    name: 'rupert-wafer-mopbucket-deluxe', size: 'tiny', color: false
-  }).pixels);
-  assert.equal(frames.length, 5);
-  // Frames 1 and 3 are the shifted glances; they should differ from each other
-  // (one is lookLeft, the other lookRight) and both differ from the forward frames.
-  assert.notDeepEqual(frames[0].pixels, frames[1].pixels);
-  assert.notDeepEqual(frames[1].pixels, frames[3].pixels);
-  assert.deepEqual(frames[0].pixels, frames[2].pixels);
-  assert.deepEqual(frames[2].pixels, frames[4].pixels);
+test('built-in look move starts and ends at forward and contains at least one glance', () => {
+  const c = generateClingon({ name: 'rupert-wafer-mopbucket-deluxe', size: 'tiny', color: false });
+  const frames = resolveMove('look', c.pixels);
+  const forwardEyeRow = JSON.stringify(c.pixels[1]);
+  assert.ok(frames.length >= 3, 'expected at least forward + glance + forward');
+  assert.equal(JSON.stringify(frames[0].pixels[1]), forwardEyeRow);
+  assert.equal(JSON.stringify(frames[frames.length - 1].pixels[1]), forwardEyeRow);
+  const hasShift = frames.some((f) => JSON.stringify(f.pixels[1]) !== forwardEyeRow);
+  assert.ok(hasShift, 'expected at least one shifted glance');
 });
 
 test('lookLeft sub-cell shifts the eye dark-spots one character column left', () => {
