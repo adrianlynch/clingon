@@ -39,9 +39,40 @@ Each clingon is created from a readable name. Save the name and you can render t
 
 Terminal dimensions are `large` 22x8, `normal` 14x6, `small` 10x5, and `tiny` 8x4.
 
+## Animation
+
+<p>
+  <img src="./assets/orlando-reginald-morris-junior-animated.svg" width="260" alt="animated orlando-reginald-morris-junior clingon">
+</p>
+
+Animate the creature in place — bob, blink, look, wiggle, walk. Loops until Ctrl-C.
+
+```sh
+clingon --animate --tiny
+clingon --animate --moves idle,blink --tiny             # only the listed behaviors
+clingon --animate --moves walk --in-sequence --tiny     # play behaviors in order, looping
+clingon --animate --tiny --once                         # one cycle then exit
+clingon --animate --tiny --seconds 5                    # finite duration
+clingon --animate --tiny --fps 12                       # speed (1-30, default 8)
+clingon --animate --large --welcome --date --git --pad=1
+```
+
+Animation behaviors layer on a single timeline by default — bob runs continuously while blinks/looks/wiggles/walks fire as random events. Pass `--in-sequence` to play the listed moves one-at-a-time in a loop instead.
+
+Animation rhythm is **deterministic from the name** — same name always produces the same pattern of bobs and blinks. Add an optional 5th word for explicit rhythm control:
+
+```sh
+clingon --animate --with-name orlando-reginald-morris-junior --tiny           # rhythm derived
+clingon --animate --with-name orlando-reginald-morris-junior-bouncy --tiny    # explicit rhythm
+clingon --animate --with-name orlando-reginald-morris-junior-snoozy --tiny    # different rhythm, same creature
+```
+
+Animation requires a TTY. Piping to a file or another command writes a single static frame and exits.
+
 ## Option Examples
 
 <p>
+  <img src="./assets/orlando-reginald-morris-junior-animated.svg" width="260" alt="animated clingon">
   <img src="./assets/example-welcome-context.svg" width="360" alt="clingon with welcome, date, cwd, and git branch">
 </p>
 <p>
@@ -122,36 +153,6 @@ clingon --with-name orlando-reginald-morris-junior --tiny --welcome --date --cwd
 `--welcome` picks a time-aware greeting from English, Spanish, or romanized Japanese.
 Clingon names are hidden by default. Add `--name` where you want the name to appear beside it.
 `--pad=1` adds a blank line above and below the character plus one space of left padding.
-
-## Animation
-
-<p>
-  <img src="./assets/orlando-reginald-morris-junior-animated.svg" width="260" alt="animated orlando-reginald-morris-junior clingon">
-</p>
-
-Animate the creature in place — bob, blink, look, wiggle, walk. Loops until Ctrl-C.
-
-```sh
-clingon --animate --tiny
-clingon --animate --moves idle,blink --tiny             # only the listed behaviors
-clingon --animate --moves walk --in-sequence --tiny     # play behaviors in order, looping
-clingon --animate --tiny --once                         # one cycle then exit
-clingon --animate --tiny --seconds 5                    # finite duration
-clingon --animate --tiny --fps 12                       # speed (1-30, default 8)
-clingon --animate --large --welcome --date --git --pad=1
-```
-
-Animation behaviors layer on a single timeline by default — bob runs continuously while blinks/looks/wiggles/walks fire as random events. Pass `--in-sequence` to play the listed moves one-at-a-time in a loop instead.
-
-Animation rhythm is **deterministic from the name** — same name always produces the same pattern of bobs and blinks. Add an optional 5th word for explicit rhythm control:
-
-```sh
-clingon --animate --with-name orlando-reginald-morris-junior --tiny           # rhythm derived
-clingon --animate --with-name orlando-reginald-morris-junior-bouncy --tiny    # explicit rhythm
-clingon --animate --with-name orlando-reginald-morris-junior-snoozy --tiny    # different rhythm, same creature
-```
-
-Animation requires a TTY. Piping to a file or another command writes a single static frame and exits.
 
 ## Inline mode
 
