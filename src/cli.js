@@ -14,9 +14,10 @@ Options:
                     Regenerate a specific clingon name
       --name        Show the clingon name beside the art
   -r, --recolor     Keep the shape from --with-name but choose new colors
+      --large         Render the largest clingon
       --small         Render a smaller clingon
       --tiny          Render the tiniest clingon
-      --size <size>   Render size: tiny, small, or normal
+      --size <size>   Render size: tiny, small, normal, or large
   -s, --script        Print the JavaScript needed to recreate the clingon
   -j, --json          Print JSON data instead of terminal art
       --welcome       Show a time-aware greeting beside the clingon
@@ -163,6 +164,8 @@ function parseArgs(args) {
       options.padV = parseCount(args[index], arg);
     } else if (arg.startsWith('--pad-v=')) {
       options.padV = parseCount(arg.slice('--pad-v='.length), '--pad-v');
+    } else if (arg === '--large') {
+      options.size = 'large';
     } else if (arg === '--small') {
       options.size = 'small';
     } else if (arg === '--tiny') {
@@ -238,9 +241,12 @@ function formatInfoBlock(artLines, details) {
   }
 
   const artWidth = Math.max(...artLines.map((line) => visibleLength(line)));
-  const firstDetailRow = Math.max(0, Math.floor((artLines.length - details.length) / 2));
+  const height = Math.max(artLines.length, details.length);
+  const firstArtRow = Math.max(0, Math.floor((height - artLines.length) / 2));
+  const firstDetailRow = Math.max(0, Math.floor((height - details.length) / 2));
 
-  return artLines.map((line, index) => {
+  return Array.from({ length: height }, (_, index) => {
+    const line = artLines[index - firstArtRow] ?? '';
     const detail = details[index - firstDetailRow];
 
     if (!detail) {

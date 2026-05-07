@@ -1,12 +1,14 @@
 import { randomBytes } from 'node:crypto';
 
 const CODE_PREFIX = 'clg';
-const DEFAULT_WIDTH = 11;
-const DEFAULT_HEIGHT = 9;
-const SMALL_WIDTH = 7;
-const SMALL_HEIGHT = 6;
-const TINY_WIDTH = 7;
-const TINY_HEIGHT = 5;
+const LARGE_WIDTH = 11;
+const LARGE_HEIGHT = 8;
+const DEFAULT_WIDTH = 7;
+const DEFAULT_HEIGHT = 6;
+const SMALL_WIDTH = 5;
+const SMALL_HEIGHT = 5;
+const TINY_WIDTH = 4;
+const TINY_HEIGHT = 4;
 const DEFAULT_SIZE = 'normal';
 const EMPTY = 0;
 const BODY = 1;
@@ -208,14 +210,18 @@ function normalizeSize(size = DEFAULT_SIZE) {
     return DEFAULT_SIZE;
   }
 
-  if (size !== DEFAULT_SIZE && size !== 'small' && size !== 'tiny') {
-    throw new Error(`Invalid size "${size}". Expected "tiny", "small", or "normal".`);
+  if (size !== 'large' && size !== DEFAULT_SIZE && size !== 'small' && size !== 'tiny') {
+    throw new Error(`Invalid size "${size}". Expected "tiny", "small", "normal", or "large".`);
   }
 
   return size;
 }
 
 function createShape(seed, size) {
+  if (size === 'large') {
+    return createLargeShape(seed);
+  }
+
   if (size === 'tiny') {
     return createTinyShape(seed);
   }
@@ -227,14 +233,14 @@ function createShape(seed, size) {
   return createNormalShape(seed);
 }
 
-function createNormalShape(seed) {
+function createLargeShape(seed) {
   const rng = mulberry32(seed);
-  const width = DEFAULT_WIDTH;
-  const height = DEFAULT_HEIGHT;
+  const width = LARGE_WIDTH;
+  const height = LARGE_HEIGHT;
   const pixels = Array.from({ length: height }, () => Array(width).fill(EMPTY));
   const center = Math.floor(width / 2);
-  const bodyTop = 2 + int(rng, 0, 1);
-  const bodyBottom = 6 + int(rng, 0, 1);
+  const bodyTop = 1 + int(rng, 0, 1);
+  const bodyBottom = 5 + int(rng, 0, 1);
   const halfWidths = [];
 
   for (let y = bodyTop; y <= bodyBottom; y += 1) {
@@ -257,98 +263,62 @@ function createNormalShape(seed) {
   return pixels;
 }
 
+function createNormalShape(seed) {
+  return createCompactShape(seed, DEFAULT_WIDTH, DEFAULT_HEIGHT);
+}
+
 function createTinyShape(seed) {
+  return createTinyShapeWithoutHeadTop(seed);
+}
+
+function createTinyShapeWithoutHeadTop(seed) {
   const rng = mulberry32(seed);
-  const width = TINY_WIDTH;
-  const height = TINY_HEIGHT;
-  const pixels = Array.from({ length: height }, () => Array(width).fill(EMPTY));
-  const center = Math.floor(width / 2);
-  const bodyStyles = [
-    [1, 2, 1],
-    [2, 2, 1],
-    [2, 3, 2],
-    [1, 3, 1],
-    [2, 3, 1]
-  ];
-  const halfWidths = bodyStyles[int(rng, 0, bodyStyles.length - 1)];
+  const pixels = Array.from({ length: TINY_HEIGHT }, () => Array(TINY_WIDTH).fill(EMPTY));
+  const mouth = rng() > 0.5 ? ACCENT : DARK;
 
-  addTinyHeadTop(pixels, rng, center);
-
-  for (let index = 0; index < halfWidths.length; index += 1) {
-    fillSymmetric(pixels, index + 1, center, halfWidths[index], BODY);
-  }
-
-  addTinyFace(pixels, rng, center, halfWidths);
-  addTinyFeet(pixels, rng, center, halfWidths);
+  pixels[0] = [BODY, BODY, BODY, BODY];
+  pixels[1] = [BODY, EYE_DARK_LEFT, EYE_DARK_RIGHT, BODY];
+  pixels[2] = rng() > 0.5
+    ? [BODY, mouth, mouth, BODY]
+    : [BODY, BODY, rng() > 0.5 ? ACCENT : DARK, BODY];
+  pixels[3] = rng() > 0.45
+    ? [DARK_NARROW, EMPTY, EMPTY, DARK_NARROW_RIGHT]
+    : [DARK, EMPTY, EMPTY, DARK];
 
   return pixels;
-}
-
-function addTinyHeadTop(pixels, rng, center) {
-  const style = int(rng, 0, 3);
-  const value = rng() > 0.45 ? ACCENT_NARROW : ACCENT;
-
-  if (style === 0) {
-    pixels[0][center] = value;
-  } else if (style === 1) {
-    setMirrored(pixels, 0, center - 1, center + 1, value);
-  } else if (style === 2) {
-    pixels[0][center + int(rng, -1, 1)] = value;
-  }
-}
-
-function addTinyFace(pixels, rng, center, halfWidths) {
-  const eyeSpacing = halfWidths[1] >= 3 && rng() > 0.45 ? 2 : 1;
-  setEyes(pixels, rng, 2, center - eyeSpacing, center + eyeSpacing);
-
-  if (rng() > 0.5 && halfWidths[2] >= 2) {
-    setMirrored(pixels, 3, center - 1, center + 1, rng() > 0.5 ? ACCENT_NARROW : ACCENT);
-  } else {
-    pixels[3][center] = rng() > 0.5 ? ACCENT_NARROW : ACCENT;
-  }
-}
-
-function addTinyFeet(pixels, rng, center, halfWidths) {
-  const spread = Math.min(2, Math.max(1, halfWidths[2]));
-  const value = rng() > 0.35 ? DARK_NARROW : DARK;
-  setMirrored(pixels, 4, center - spread, center + spread, value);
-
-  if (spread === 1 && rng() > 0.6) {
-    setMirrored(pixels, 4, center - 2, center + 2, value);
-  }
 }
 
 function createSmallShape(seed) {
+  return createCompactShape(seed, SMALL_WIDTH, SMALL_HEIGHT);
+}
+
+function createCompactShape(seed, width, height) {
   const rng = mulberry32(seed);
-  const width = SMALL_WIDTH;
-  const height = SMALL_HEIGHT;
   const pixels = Array.from({ length: height }, () => Array(width).fill(EMPTY));
   const center = Math.floor(width / 2);
-  const bodyStyles = [
-    [2, 3, 3, 2],
-    [1, 3, 3, 2],
-    [2, 2, 3, 2],
-    [2, 3, 2, 1],
-    [1, 2, 3, 1],
-    [2, 3, 3, 3]
-  ];
-  const halfWidths = bodyStyles[int(rng, 0, bodyStyles.length - 1)];
+  const bodyRows = height - 2;
+  const maxHalfWidth = Math.min(center, width - center - 1);
+  const halfWidths = Array.from({ length: bodyRows }, (_, index) => {
+    const middle = Math.abs(index - (bodyRows - 1) / 2) < bodyRows / 3;
+    const base = middle ? maxHalfWidth : Math.max(1, maxHalfWidth - 1);
+    return Math.max(1, Math.min(maxHalfWidth, base + int(rng, 0, 1)));
+  });
 
-  addSmallHeadTop(pixels, rng, center);
+  addCompactHeadTop(pixels, rng, center, maxHalfWidth);
 
   for (let index = 0; index < halfWidths.length; index += 1) {
     fillSymmetric(pixels, index + 1, center, halfWidths[index], BODY);
   }
 
-  addSmallEyes(pixels, rng, center, halfWidths);
-  addSmallMouth(pixels, rng, center, halfWidths);
-  addSmallArms(pixels, rng, center, halfWidths);
-  addSmallFeet(pixels, rng, center, halfWidths);
+  addCompactEyes(pixels, rng, center, halfWidths);
+  addCompactMouth(pixels, rng, center, halfWidths);
+  addCompactArms(pixels, rng, center, halfWidths);
+  addCompactFeet(pixels, rng, center, halfWidths);
 
   return pixels;
 }
 
-function addSmallHeadTop(pixels, rng, center) {
+function addCompactHeadTop(pixels, rng, center, maxHalfWidth) {
   const style = int(rng, 0, 4);
   const value = rng() > 0.45 ? ACCENT_NARROW : ACCENT;
 
@@ -357,20 +327,20 @@ function addSmallHeadTop(pixels, rng, center) {
   } else if (style === 1) {
     setMirrored(pixels, 0, center - 1, center + 1, value);
   } else if (style === 2) {
-    pixels[0][center + int(rng, -1, 1)] = value;
-  } else if (style === 3) {
+    pixels[0][clampIndex(center + int(rng, -1, 1), pixels[0].length)] = value;
+  } else if (style === 3 && maxHalfWidth >= 2) {
     setMirrored(pixels, 0, center - 2, center + 2, value);
   }
 }
 
-function addSmallEyes(pixels, rng, center, halfWidths) {
-  const y = halfWidths[1] >= 2 ? 2 : 3;
-  const spacing = halfWidths[y - 1] >= 3 && rng() > 0.35 ? 2 : 1;
+function addCompactEyes(pixels, rng, center, halfWidths) {
+  const y = Math.min(pixels.length - 2, halfWidths.length > 2 ? 2 : 1);
+  const spacing = halfWidths[y - 1] >= 2 && rng() > 0.35 ? 2 : 1;
   setEyes(pixels, rng, y, center - spacing, center + spacing);
 }
 
-function addSmallMouth(pixels, rng, center, halfWidths) {
-  const y = halfWidths[3] >= 2 ? 4 : 3;
+function addCompactMouth(pixels, rng, center, halfWidths) {
+  const y = Math.min(pixels.length - 2, Math.max(2, halfWidths.length));
   const style = int(rng, 0, 2);
 
   if (style === 0) {
@@ -382,23 +352,24 @@ function addSmallMouth(pixels, rng, center, halfWidths) {
   }
 }
 
-function addSmallArms(pixels, rng, center, halfWidths) {
-  const y = int(rng, 2, 3);
+function addCompactArms(pixels, rng, center, halfWidths) {
+  const y = int(rng, 1, Math.max(1, pixels.length - 2));
   const reach = halfWidths[y - 1] + 1;
 
-  if (reach < center + 1 && rng() > 0.2) {
+  if (center - reach >= 0 && center + reach < pixels[y].length && rng() > 0.2) {
     const value = rng() > 0.5 ? BODY : rng() > 0.45 ? DARK_NARROW : DARK;
     setMirrored(pixels, y, center - reach, center + reach, value);
   }
 }
 
-function addSmallFeet(pixels, rng, center, halfWidths) {
-  const spread = Math.min(center, Math.max(1, halfWidths[3] - int(rng, 0, 1)));
+function addCompactFeet(pixels, rng, center, halfWidths) {
+  const lastBodyHalfWidth = halfWidths.at(-1);
+  const spread = Math.min(center, pixels[0].length - center - 1, Math.max(1, lastBodyHalfWidth - int(rng, 0, 1)));
   const value = rng() > 0.35 ? DARK_NARROW : DARK;
-  setMirrored(pixels, 5, center - spread, center + spread, value);
+  setMirrored(pixels, pixels.length - 1, center - spread, center + spread, value);
 
-  if (spread < 2 && rng() > 0.5) {
-    setMirrored(pixels, 5, center - spread - 1, center + spread + 1, value);
+  if (spread < 2 && center - spread - 1 >= 0 && center + spread + 1 < pixels[0].length && rng() > 0.5) {
+    setMirrored(pixels, pixels.length - 1, center - spread - 1, center + spread + 1, value);
   }
 }
 
@@ -654,6 +625,10 @@ function rgbToHex(r, g, b) {
 
 function clamp(value) {
   return Math.max(0, Math.min(255, value));
+}
+
+function clampIndex(value, length) {
+  return Math.max(0, Math.min(length - 1, value));
 }
 
 function int(rng, min, max) {

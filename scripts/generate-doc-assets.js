@@ -8,6 +8,54 @@ const BORDER = '#d0d7de';
 const TEXT = '#24292f';
 const MUTED = '#6e7781';
 
+const characterExamples = [
+  {
+    file: 'assets/orlando-reginald-morris-junior.svg',
+    title: 'orlando-reginald-morris-junior',
+    name: 'orlando-reginald-morris-junior'
+  },
+  {
+    file: 'assets/otto-beans-moonbeam-excellent.svg',
+    title: 'otto-beans-moonbeam-excellent',
+    name: 'otto-beans-moonbeam-excellent'
+  },
+  {
+    file: 'assets/mabel-waffles-wigglesworth-tiny.svg',
+    title: 'mabel-waffles-wigglesworth-tiny',
+    name: 'mabel-waffles-wigglesworth-tiny',
+    size: 'tiny'
+  },
+  {
+    file: 'assets/cosmo-pickle-toebean-cosmic.svg',
+    title: 'cosmo-pickle-toebean-cosmic',
+    name: 'cosmo-pickle-toebean-cosmic',
+    size: 'tiny'
+  },
+  {
+    file: 'assets/orlando-reginald-morris-junior-large.svg',
+    title: 'large',
+    name: 'orlando-reginald-morris-junior',
+    size: 'large'
+  },
+  {
+    file: 'assets/orlando-reginald-morris-junior-normal.svg',
+    title: 'normal',
+    name: 'orlando-reginald-morris-junior'
+  },
+  {
+    file: 'assets/orlando-reginald-morris-junior-small.svg',
+    title: 'small',
+    name: 'orlando-reginald-morris-junior',
+    size: 'small'
+  },
+  {
+    file: 'assets/orlando-reginald-morris-junior-tiny.svg',
+    title: 'tiny',
+    name: 'orlando-reginald-morris-junior',
+    size: 'tiny'
+  }
+];
+
 const examples = [
   {
     file: 'assets/example-welcome-context.svg',
@@ -43,8 +91,46 @@ const examples = [
   }
 ];
 
+for (const example of characterExamples) {
+  writeFileSync(example.file, renderCharacterExample(example));
+}
+
 for (const example of examples) {
   writeFileSync(example.file, renderExample(example));
+}
+
+function renderCharacterExample(example) {
+  const clingon = generateClingon({
+    name: example.name,
+    size: example.size,
+    color: false
+  });
+  const width = 300;
+  const height = 210;
+  const terminalX = 20;
+  const terminalY = 18;
+  const terminalWidth = width - 40;
+  const terminalHeight = 146;
+  const artWidth = clingon.pixels[0].length * CELL;
+  const artHeight = clingon.pixels.length * CELL;
+  const artX = terminalX + Math.floor((terminalWidth - artWidth) / 2);
+  const artY = terminalY + Math.floor((terminalHeight - artHeight) / 2);
+
+  return [
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeText(example.title)} clingon">`,
+    `  <rect width="${width}" height="${height}" rx="8" fill="${CARD_FILL}"/>`,
+    `  <rect x="${terminalX}" y="${terminalY}" width="${terminalWidth}" height="${terminalHeight}" rx="6" fill="${TERMINAL_FILL}" stroke="${BORDER}"/>`,
+    ...renderPixels(clingon, artX, artY),
+    renderText({
+      x: width / 2,
+      y: 194,
+      text: example.title,
+      fill: TEXT,
+      anchor: 'middle',
+      size: 13
+    }),
+    '</svg>'
+  ].join('\n');
 }
 
 function renderExample(example) {

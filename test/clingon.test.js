@@ -65,14 +65,27 @@ test('renderClingon returns ansi output for import convenience', () => {
   assert.match(renderClingon({ name: 'clg-00000rs-00000rt', color: false }), /\[\]/);
 });
 
-test('generates a smaller deterministic clingon', () => {
-  const small = generateClingon({ code: 'clg-00000rs-00000rt', size: 'small', color: false });
+test('generates deterministic clingons at the configured sizes', () => {
+  const large = generateClingon({ code: 'clg-00000rs-00000rt', size: 'large', color: false });
   const normal = generateClingon({ code: 'clg-00000rs-00000rt', color: false });
+  const small = generateClingon({ code: 'clg-00000rs-00000rt', size: 'small', color: false });
+  const tiny = generateClingon({ code: 'clg-00000rs-00000rt', size: 'tiny', color: false });
 
+  assert.equal(large.size, 'large');
+  assert.equal(large.pixels.length, 8);
+  assert.equal(large.pixels[0].length, 11);
+  assert.equal(normal.size, 'normal');
+  assert.equal(normal.pixels.length, 6);
+  assert.equal(normal.pixels[0].length, 7);
   assert.equal(small.size, 'small');
-  assert.equal(small.pixels.length, 6);
-  assert.equal(small.pixels[0].length, 7);
-  assert.notEqual(small.text, normal.text);
+  assert.equal(small.pixels.length, 5);
+  assert.equal(small.pixels[0].length, 5);
+  assert.equal(tiny.size, 'tiny');
+  assert.equal(tiny.pixels.length, 4);
+  assert.equal(tiny.pixels[0].length, 4);
+  assert.notEqual(large.text, normal.text);
+  assert.notEqual(normal.text, small.text);
+  assert.notEqual(small.text, tiny.text);
   assert.equal(generateClingon({ code: small.code, size: 'small', color: false }).text, small.text);
 });
 
@@ -87,7 +100,7 @@ test('small clingons vary shape between seeds', () => {
   assert.ok(shapes.size > 2);
 });
 
-test('generates a tiny five-line clingon', () => {
+test('generates a tiny four-line clingon', () => {
   const tiny = generateClingon({
     code: 'orlando-reginald-morris-junior',
     size: 'tiny',
@@ -95,9 +108,9 @@ test('generates a tiny five-line clingon', () => {
   });
 
   assert.equal(tiny.size, 'tiny');
-  assert.equal(tiny.pixels.length, 5);
-  assert.equal(tiny.pixels[0].length, 7);
-  assert.equal(tiny.text.split('\n').length, 5);
+  assert.equal(tiny.pixels.length, 4);
+  assert.equal(tiny.pixels[0].length, 4);
+  assert.equal(tiny.text.split('\n').length, 4);
   assert.equal(generateClingon({ code: tiny.code, size: 'tiny', color: false }).text, tiny.text);
 });
 
@@ -136,10 +149,7 @@ test('eyes can render as mirrored composite paired cells', () => {
 });
 
 test('narrow details render as one visible block in ansi mode', () => {
-  const tiny = generateClingon({
-    code: 'mabel-waffles-wigglesworth-tiny',
-    size: 'tiny'
-  });
+  const tiny = generateClingon({ code: 'cosmo-pickle-toebean-cosmic', size: 'small' });
 
   assert.match(tiny.ansi, /█ \u001b\[0m/);
 });
@@ -152,7 +162,7 @@ test('narrow feet mirror left and right alignment', () => {
   });
   const footRow = tiny.text.split('\n').at(-1);
 
-  assert.match(footRow, /\.    \./);
+  assert.match(footRow, /^\s*\.+\s+\.+\s*$/);
 });
 
 test('cli default output hides the generated name', () => {
@@ -275,10 +285,10 @@ test('cli message renders beside the art and is vertically centered', () => {
 
   const lines = stdout.output.trimEnd().split('\n');
 
-  assert.equal(lines.length, 5);
+  assert.equal(lines.length, 4);
   assert.doesNotMatch(lines[0], /Hello there/);
-  assert.match(lines[2], /  Hello there$/);
-  assert.doesNotMatch(lines[4], /Hello there/);
+  assert.match(lines[1], /  Hello there$/);
+  assert.doesNotMatch(lines[3], /Hello there/);
   assert.equal(stderr.output, '');
 });
 
@@ -396,7 +406,7 @@ test('cli info lines respect output padding', () => {
   const lines = stdout.output.split('\n');
 
   assert.equal(lines[0], '');
-  assert.match(lines[3], /^  .*  Hello$/);
+  assert.match(lines[2], /^  .*  Hello$/);
   assert.equal(lines.at(-2), '');
   assert.equal(stderr.output, '');
 });

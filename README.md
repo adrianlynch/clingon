@@ -29,12 +29,15 @@ Each clingon is created from a readable name. Save the name and you can render t
 ## Sizes
 
 <p>
+  <img src="./assets/orlando-reginald-morris-junior-large.svg" width="260" alt="large orlando-reginald-morris-junior clingon">
   <img src="./assets/orlando-reginald-morris-junior-normal.svg" width="260" alt="normal orlando-reginald-morris-junior clingon">
-  <img src="./assets/orlando-reginald-morris-junior-small.svg" width="260" alt="small orlando-reginald-morris-junior clingon">
 </p>
 <p>
+  <img src="./assets/orlando-reginald-morris-junior-small.svg" width="260" alt="small orlando-reginald-morris-junior clingon">
   <img src="./assets/orlando-reginald-morris-junior-tiny.svg" width="260" alt="tiny orlando-reginald-morris-junior clingon">
 </p>
+
+Terminal dimensions are `large` 22x8, `normal` 14x6, `small` 10x5, and `tiny` 8x4.
 
 ## Option Examples
 
@@ -102,7 +105,7 @@ Generate a compact clingon:
 clingon --small
 ```
 
-Generate a tiny five-line clingon:
+Generate a tiny four-line clingon:
 
 ```sh
 clingon --tiny
@@ -175,9 +178,10 @@ Options:
                     Regenerate a specific clingon name
   -n, --name          Show the clingon name beside the art
   -r, --recolor       Keep the shape from --with-name but choose new colors
+      --large         Render the largest clingon
       --small         Render a smaller clingon
       --tiny          Render the tiniest clingon
-      --size <size>   Render size: tiny, small, or normal
+      --size <size>   Render size: tiny, small, normal, or large
   -s, --script        Print the JavaScript needed to recreate the clingon
   -j, --json          Print JSON data instead of terminal art
       --welcome       Show a time-aware greeting beside the clingon
