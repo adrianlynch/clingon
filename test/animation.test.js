@@ -327,27 +327,37 @@ test('built-in look move alternates left and right for symmetric motion', () => 
   assert.equal(frames.length, 5);
 });
 
-test('lookLeft physically shifts the eye pair one column left', () => {
+test('lookLeft physically shifts the eye pair one column left when there is room', () => {
   // EYE_DARK_RIGHT = 9, EYE_DARK_LEFT = 8, BODY = 1
-  // Tiny eye row: [BODY, EYE_DARK_RIGHT, EYE_DARK_LEFT, BODY]
-  const pixels = [[1, 9, 8, 1]];
+  // Wide enough to keep 1-cell margin on the destination side after shifting:
+  // [BODY, BODY, EYE_DARK_RIGHT, EYE_DARK_LEFT, BODY, BODY]
+  const pixels = [[1, 1, 9, 8, 1, 1]];
   const after = lookLeft(pixels);
-  // Eye pair slides left; body fills the vacated rightmost eye position
-  assert.deepEqual(after, [[9, 8, 1, 1]]);
+  // Eye pair slides left; body fills the vacated rightmost eye position; left margin remains 1.
+  assert.deepEqual(after, [[1, 9, 8, 1, 1, 1]]);
 });
 
-test('lookRight physically shifts the eye pair one column right', () => {
-  const pixels = [[1, 9, 8, 1]];
+test('lookRight physically shifts the eye pair one column right when there is room', () => {
+  const pixels = [[1, 1, 9, 8, 1, 1]];
   const after = lookRight(pixels);
-  assert.deepEqual(after, [[1, 1, 9, 8]]);
+  assert.deepEqual(after, [[1, 1, 1, 9, 8, 1]]);
 });
 
 test('lookLeft preserves spacing between paired eyes', () => {
-  // Eyes with a gap between: [BODY, EYE_DARK_RIGHT, BODY, EYE_DARK_LEFT, BODY]
-  const pixels = [[1, 9, 1, 8, 1]];
+  // Eyes with a gap between, plenty of room either side:
+  // [BODY, BODY, EYE_DARK_RIGHT, BODY, EYE_DARK_LEFT, BODY, BODY]
+  const pixels = [[1, 1, 9, 1, 8, 1, 1]];
   const after = lookLeft(pixels);
   // Both eyes shift left by 1 — gap between them preserved
-  assert.deepEqual(after, [[9, 1, 8, 1, 1]]);
+  assert.deepEqual(after, [[1, 9, 1, 8, 1, 1, 1]]);
+});
+
+test('lookLeft refuses to shift on tiny-width rows (no margin to spare)', () => {
+  // Tiny eye row: [BODY, EYE_DARK_LEFT, EYE_DARK_RIGHT, BODY]
+  // Shifting would push the eye pair to column 0 — no body margin remaining.
+  const pixels = [[1, 8, 9, 1]];
+  const after = lookLeft(pixels);
+  assert.deepEqual(after, [[1, 8, 9, 1]]);
 });
 
 test('lookLeft refuses to shift if it would go off-grid', () => {
