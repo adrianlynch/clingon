@@ -270,31 +270,31 @@ clingon --tiny --pad-h=2 --pad-v=1
 clingon [options]
 
 Identity:
-      --with-name <name>  Regenerate a specific clingon. 4 or 5 words separated
+  -w, --with-name <name>  Regenerate a specific clingon. 4 or 5 words separated
                           by hyphens. '*' wildcards any slot.
   -r, --recolor           Keep shape, reroll palette (with --with-name).
 
 Size:
-      --large             11x8 grid
-      --normal            7x6 grid (default)
-      --small             5x5 grid
       --tiny              4x4 grid
+      --small             5x5 grid
+      --normal            7x6 grid (default)
+      --large             11x8 grid
 
 Output mode (mutually exclusive):
       (default)           Multi-line ANSI art
-      --inline            Single-line glyph (for statuslines, prompts)
+  -i, --inline            Single-line glyph (for statuslines, prompts)
   -j, --json              JSON output
   -s, --script            Print the JS code that recreates this clingon
-      --gallery [n]       Show n random clingons in a grid (default 8)
+  -g, --gallery [n]       Show n random clingons in a grid (default 8)
       --list-names        Print the available word lists for composing names
 
 Animation (require --animate):
-      --animate           Animate in place, loops until Ctrl-C
+  -a, --animate           Animate in place, loops until Ctrl-C
       --moves <list>      Behaviors: idle,blink,look,wiggle,walk (default: all)
       --in-sequence       Play moves in order vs. layered (default: layered)
       --once              Play one cycle and exit
-      --seconds <n>       Run for n seconds and exit
       --fps <n>           Frames per second (1-30, default 8)
+      --seconds <n>       Run for n seconds and exit
 
 Info panel:
   -n, --name              Show the clingon's name
@@ -304,12 +304,14 @@ Info panel:
       --cwd               Current directory name
       --git               Current git branch
 
-Layout:
-      --pad <n>           Padding around output
+Padding:
+  -p, --pad <n>           Padding around output
       --pad-h <n>         Left padding only
       --pad-v <n>         Vertical padding only
+
+Style:
       --no-color          Plain text glyphs, no ANSI escapes
-      --light             Darker palette for light terminal backgrounds
+  -l, --light             Darker palette for light terminal backgrounds
 
 Other:
   -h, --help              Show help
@@ -380,10 +382,10 @@ Names are 4 or 5 hyphen-separated words:
 - 2nd (middle) and 4th (suffix) → palette
 - 5th (rhythm, optional) → animation timing
 
-Older `clg-...` seed codes are also accepted through `--with-name`:
+Older `clg-...` seed codes are still accepted via the JavaScript API:
 
-```sh
-clingon --with-name clg-00000rs-00000rt
+```js
+generateClingon({ code: 'clg-00000rs-00000rt' });
 ```
 
 ## Custom moves
