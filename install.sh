@@ -11,8 +11,17 @@ append_startup_flag() {
     custom_startup_flags=1
   fi
 
-  escaped=$(printf "%s" "$1" | sed "s/'/'\\\\''/g")
-  startup_flags="${startup_flags}${startup_flags:+ }'$escaped'"
+  case "$1" in
+    *[!A-Za-z0-9_./:=+,%@-]*|'')
+      escaped=$(printf "%s" "$1" | sed "s/'/'\\\\''/g")
+      formatted="'$escaped'"
+      ;;
+    *)
+      formatted="$1"
+      ;;
+  esac
+
+  startup_flags="${startup_flags}${startup_flags:+ }$formatted"
 }
 
 usage() {
