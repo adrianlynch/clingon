@@ -11,7 +11,7 @@ Usage:
   clingon [options]
 
 *--------- Identity ---------------------------------------------------------
-      --with-name <name>  Regenerate a specific clingon. 4 or 5 hyphen-separated
+  -w, --with-name <name>  Regenerate a specific clingon. 4 or 5 hyphen-separated
                           words: <first>-<middle>-<family>-<suffix>[-<rhythm>].
                           Use '*' as a wildcard for any slot to randomize it.
                           Examples:
@@ -28,27 +28,25 @@ Usage:
       --large             11x8 grid
 
 *--------- Output mode (mutually exclusive) ---------------------------------
-                          (default)  Multi-line ANSI art
-      --inline            Single-line glyph (for statuslines, prompts)
+  -i, --inline            Single-line glyph (for statuslines, prompts)
   -j, --json              JSON output
   -s, --script            Print the JS code that recreates this clingon
-      --gallery [n]       Show n random clingons (default 8) with their names,
+  -g, --gallery [n]       Show n random clingons (default 8) with their names,
                           laid out as a grid that auto-fits the terminal width.
                           Combine with --animate to see them all moving.
       --list-names        Print the available word lists for composing names
 
-*--------- Animation (require --animate) ------------------------------------
-      --animate           Animate the creature in place. Loops until Ctrl-C.
+*--------- Animation --------------------------------------------------------
+  -a, --animate           Animate the creature in place. Loops until Ctrl-C.
+                          The flags below all require --animate.
       --moves <list>      Comma-separated list of behaviors. Built-ins:
                           idle, blink, look, wiggle, walk.
                           Default: idle,blink,look,wiggle,walk.
                           For custom moves, use the JavaScript API.
-      --in-sequence       Play the listed behaviors in order, looping.
-                          Without this flag, behaviors layer on one timeline
-                          as random events.
-      --once              Play one full animation cycle and exit.
+      --in-sequence       Play behaviors in order vs. layered (default: layered)
+      --once              Play one full animation cycle and exit
       --fps <n>           Animation frames per second (1-30). Default 8.
-      --seconds <n>       Run animation for N seconds then exit.
+      --seconds <n>       Run animation for N seconds then exit
 
 *--------- Info panel -------------------------------------------------------
   -n, --name              Show the clingon's name beside the art
@@ -58,12 +56,14 @@ Usage:
       --cwd               Show the current directory beside the art
       --git               Show the current git branch beside the art
 
-*--------- Layout -----------------------------------------------------------
-      --pad <n>           Add padding around terminal output
+*--------- Padding ----------------------------------------------------------
+  -p, --pad <n>           Add padding around terminal output
       --pad-h <n>         Add spaces before each terminal output line
       --pad-v <n>         Add blank lines before and after terminal output
+
+*--------- Style ------------------------------------------------------------
       --no-color          Render without ANSI color
-      --light             Use a darker palette tuned for light terminal backgrounds
+  -l, --light             Use a darker palette tuned for light terminals
 
 *--------- Other ------------------------------------------------------------
   -h, --help              Show help
@@ -489,7 +489,7 @@ function parseArgs(args) {
       options.infoItems.push({ type: 'cwd' });
     } else if (arg === '--git') {
       options.infoItems.push({ type: 'git' });
-    } else if (arg === '--pad') {
+    } else if (arg === '-p' || arg === '--pad') {
       index += 1;
       const padding = parseCount(args[index], arg);
       options.padH = padding;
@@ -516,11 +516,11 @@ function parseArgs(args) {
       options.size = 'tiny';
     } else if (arg === '--no-color') {
       options.color = false;
-    } else if (arg === '--light') {
+    } else if (arg === '-l' || arg === '--light') {
       options.lightMode = true;
-    } else if (arg === '--inline') {
+    } else if (arg === '-i' || arg === '--inline') {
       options.inline = true;
-    } else if (arg === '--animate') {
+    } else if (arg === '-a' || arg === '--animate') {
       options.animate = true;
     } else if (arg === '--moves') {
       index += 1;
@@ -533,7 +533,7 @@ function parseArgs(args) {
       options.animateOnce = true;
     } else if (arg === '--list-names') {
       options.listNames = true;
-    } else if (arg === '--gallery') {
+    } else if (arg === '-g' || arg === '--gallery') {
       options.gallery = true;
       if (hasOptionalValue(args[index + 1])) {
         index += 1;
@@ -556,7 +556,7 @@ function parseArgs(args) {
       options.seconds = parseCount(arg.slice('--seconds='.length), '--seconds');
     } else if (arg === '-n' || arg === '--name') {
       options.infoItems.push({ type: 'name' });
-    } else if (arg === '--with-name') {
+    } else if (arg === '-w' || arg === '--with-name') {
       index += 1;
       options.inputName = expandWildcardName(requireValue(args[index], arg));
     } else if (arg.startsWith('--with-name=')) {
