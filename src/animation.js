@@ -191,18 +191,14 @@ defineMove('walk', {
   ]
 });
 
-let lookDirectionCounter = 0;
 defineMove('look', {
-  sequence: (p) => {
-    const goLeft = lookDirectionCounter % 2 === 0;
-    lookDirectionCounter += 1;
-    const shifted = goLeft ? lookLeft(p) : lookRight(p);
-    return [
-      { pixels: p.map((row) => row.slice()), duration: 6 },
-      { pixels: shifted, duration: 4 },
-      { pixels: p.map((row) => row.slice()), duration: 8 }
-    ];
-  }
+  sequence: (p) => [
+    { pixels: p.map((row) => row.slice()), duration: 6 },
+    { pixels: lookLeft(p), duration: 4 },
+    { pixels: p.map((row) => row.slice()), duration: 4 },
+    { pixels: lookRight(p), duration: 4 },
+    { pixels: p.map((row) => row.slice()), duration: 8 }
+  ]
 });
 
 function defaultScheduler() {

@@ -320,22 +320,17 @@ test('built-in blink move blinks twice per cycle', () => {
   assert.equal(frames[3].duration, 1);
 });
 
-test('built-in look move produces a single glance per cycle', () => {
+test('built-in look move includes both left and right glances per cycle', () => {
   const frames = resolveMove('look', generateClingon({
-    name: 'orlando-reginald-morris-junior', size: 'tiny', color: false
-  }).pixels);
-  assert.equal(frames.length, 3);
-});
-
-test('built-in look alternates direction across consecutive cycles', () => {
-  const base = generateClingon({
     name: 'rupert-wafer-mopbucket-deluxe', size: 'tiny', color: false
-  }).pixels;
-  // Resolve twice and inspect the middle (shifted) frame.
-  const a = resolveMove('look', base)[1].pixels;
-  const b = resolveMove('look', base)[1].pixels;
-  // The two cycles should produce different shifted states (left vs right).
-  assert.notDeepEqual(a, b);
+  }).pixels);
+  assert.equal(frames.length, 5);
+  // Frames 1 and 3 are the shifted glances; they should differ from each other
+  // (one is lookLeft, the other lookRight) and both differ from the forward frames.
+  assert.notDeepEqual(frames[0].pixels, frames[1].pixels);
+  assert.notDeepEqual(frames[1].pixels, frames[3].pixels);
+  assert.deepEqual(frames[0].pixels, frames[2].pixels);
+  assert.deepEqual(frames[2].pixels, frames[4].pixels);
 });
 
 test('lookLeft sub-cell shifts the eye dark-spots one character column left', () => {
