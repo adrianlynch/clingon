@@ -1,7 +1,19 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { execFileSync } from 'node:child_process';
+import { basename } from 'node:path';
 import { runCli } from '../src/cli.js';
 import { generateClingon, parseCode, renderClingon } from '../src/index.js';
+
+// Resolve the values --cwd and --git would print, regardless of where tests run.
+const CWD_NAME = basename(process.cwd());
+const GIT_BRANCH = (() => {
+  try {
+    return execFileSync('git', ['branch', '--show-current'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+  } catch {
+    return '';
+  }
+})();
 
 test('generates deterministic clingons from a code', () => {
   const first = generateClingon({ code: 'clg-00000rs-00000rt', color: false });
@@ -349,9 +361,9 @@ test('cli label flags render in the provided order', () => {
 
   const output = stdout.output;
 
-  assert.ok(output.indexOf('* main') < output.indexOf('Ready'));
+  assert.ok(output.indexOf(`* ${GIT_BRANCH}`) < output.indexOf('Ready'));
   assert.ok(output.indexOf('Ready') < output.indexOf('orlando-reginald-morris-junior'));
-  assert.ok(output.indexOf('orlando-reginald-morris-junior') < output.indexOf('~ clingon'));
+  assert.ok(output.indexOf('orlando-reginald-morris-junior') < output.indexOf(`~ ${CWD_NAME}`));
   assert.equal(stderr.output, '');
 });
 
@@ -404,8 +416,8 @@ test('cli optional info sources render beside the art', () => {
 
   assert.match(stdout.output, /  Hi/);
   assert.match(stdout.output, /\d{4}|,\s\d{1,2}/);
-  assert.match(stdout.output, /  ~ clingon/);
-  assert.match(stdout.output, /  \* main/);
+  assert.match(stdout.output, new RegExp(`  ~ ${CWD_NAME}`));
+  assert.match(stdout.output, new RegExp(`  \\* ${GIT_BRANCH}`));
   assert.equal(stderr.output, '');
 });
 
