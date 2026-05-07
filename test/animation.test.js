@@ -338,34 +338,41 @@ test('built-in look alternates direction across consecutive cycles', () => {
   assert.notDeepEqual(a, b);
 });
 
-test('lookLeft physically shifts the eye pair one column left', () => {
+test('lookLeft sub-cell shifts the eye dark-spots one character column left', () => {
   // EYE_DARK_RIGHT = 9, EYE_DARK_LEFT = 8, BODY = 1
   // Tiny eye row: [BODY, EYE_DARK_LEFT, EYE_DARK_RIGHT, BODY]
+  // Dark spots are at character columns 2 (left half of cell 1) and 5 (right half of cell 2).
   const pixels = [[1, 8, 9, 1]];
   const after = lookLeft(pixels);
-  // Eye pair slides left by 1 column; body fills the vacated rightmost position
-  assert.deepEqual(after, [[8, 9, 1, 1]]);
+  // Dark spots shift to char columns 1, 4:
+  //   char 1 = right half of cell 0 → cell 0 becomes EYE_DARK_RIGHT
+  //   char 4 = left half of cell 2 → cell 2 becomes EYE_DARK_LEFT
+  // Old eye cells (1 and 2) get reset to BODY.
+  assert.deepEqual(after, [[9, 1, 8, 1]]);
 });
 
-test('lookRight physically shifts the eye pair one column right', () => {
+test('lookRight sub-cell shifts the eye dark-spots one character column right', () => {
   const pixels = [[1, 8, 9, 1]];
   const after = lookRight(pixels);
-  assert.deepEqual(after, [[1, 1, 8, 9]]);
+  // Dark spots shift to char columns 3, 6:
+  //   char 3 = right half of cell 1 → cell 1 becomes EYE_DARK_RIGHT
+  //   char 6 = left half of cell 3 → cell 3 becomes EYE_DARK_LEFT
+  assert.deepEqual(after, [[1, 9, 1, 8]]);
 });
 
-test('lookLeft preserves spacing between paired eyes with a gap', () => {
-  // Eyes with a gap between: [BODY, EYE_DARK_LEFT, BODY, EYE_DARK_RIGHT, BODY]
-  const pixels = [[1, 8, 1, 9, 1]];
+test('lookLeft preserves the eye color (LIGHT vs DARK)', () => {
+  // EYE_LIGHT_LEFT = 10, EYE_LIGHT_RIGHT = 11
+  const pixels = [[1, 10, 11, 1]];
   const after = lookLeft(pixels);
-  // Both eyes shift left by 1 — gap between them preserved
-  assert.deepEqual(after, [[8, 1, 9, 1, 1]]);
+  assert.deepEqual(after, [[11, 1, 10, 1]]);
 });
 
-test('lookLeft refuses to shift if it would go off-grid', () => {
-  // Eye already at column 0 — cannot shift further left
-  const pixels = [[9, 8, 1, 1]];
+test('lookLeft refuses to shift if a dark-spot would go off-grid', () => {
+  // Dark spots already at char columns 0 and 3 — char 0 cannot move left.
+  // Eye row: [EYE_DARK_LEFT, EYE_DARK_RIGHT, BODY, BODY] — darks at chars 0, 3.
+  const pixels = [[8, 9, 1, 1]];
   const after = lookLeft(pixels);
-  assert.deepEqual(after, [[9, 8, 1, 1]]);
+  assert.deepEqual(after, [[8, 9, 1, 1]]);
 });
 
 test('lookLeft / lookRight do not mutate input', () => {

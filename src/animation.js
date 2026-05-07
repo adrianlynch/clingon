@@ -76,34 +76,46 @@ export function walk(pixels, phase) {
   });
 }
 
+// Shifts composite eye cells by `delta` character columns (each grid cell renders
+// as 2 character columns, so delta=1 moves the eye dark-spot by half a grid cell).
 function shiftEyes(pixels, delta) {
   return pixels.map((row) => {
-    const eyeIndexes = [];
+    const eyes = [];
     for (let i = 0; i < row.length; i += 1) {
-      if (isEye(row[i])) eyeIndexes.push(i);
+      const cell = row[i];
+      if (cell === EYE_DARK_LEFT) eyes.push({ cell: i, char: i * 2, kind: 'dark' });
+      else if (cell === EYE_DARK_RIGHT) eyes.push({ cell: i, char: i * 2 + 1, kind: 'dark' });
+      else if (cell === EYE_LIGHT_LEFT) eyes.push({ cell: i, char: i * 2, kind: 'light' });
+      else if (cell === EYE_LIGHT_RIGHT) eyes.push({ cell: i, char: i * 2 + 1, kind: 'light' });
     }
-    if (eyeIndexes.length === 0) return row.slice();
+    if (eyes.length === 0) return row.slice();
 
-    const newPositions = eyeIndexes.map((i) => i + delta);
-    if (newPositions.some((i) => i < 0 || i >= row.length)) {
-      return row.slice();
-    }
+    const maxChar = row.length * 2;
+    const newChars = eyes.map((e) => e.char + delta);
+    if (newChars.some((c) => c < 0 || c >= maxChar)) return row.slice();
 
-    const newSet = new Set(newPositions);
-    const oldSet = new Set(eyeIndexes);
-    for (const newIdx of newPositions) {
-      if (oldSet.has(newIdx)) continue;
-      if (row[newIdx] !== BODY) return row.slice();
+    const placements = newChars.map((c, idx) => {
+      const cellIdx = Math.floor(c / 2);
+      const isRight = (c % 2) === 1;
+      const kind = eyes[idx].kind;
+      const cellType = kind === 'dark'
+        ? (isRight ? EYE_DARK_RIGHT : EYE_DARK_LEFT)
+        : (isRight ? EYE_LIGHT_RIGHT : EYE_LIGHT_LEFT);
+      return { cellIdx, cellType };
+    });
+
+    const newCellSet = new Set(placements.map((p) => p.cellIdx));
+    if (newCellSet.size !== placements.length) return row.slice();
+
+    const oldCellSet = new Set(eyes.map((e) => e.cell));
+    for (const p of placements) {
+      if (oldCellSet.has(p.cellIdx)) continue;
+      if (row[p.cellIdx] !== BODY) return row.slice();
     }
 
     const newRow = row.slice();
-    const ordered = delta < 0 ? [...eyeIndexes] : [...eyeIndexes].reverse();
-    for (const idx of ordered) {
-      newRow[idx + delta] = row[idx];
-    }
-    for (const idx of eyeIndexes) {
-      if (!newSet.has(idx)) newRow[idx] = BODY;
-    }
+    for (const e of eyes) newRow[e.cell] = BODY;
+    for (const p of placements) newRow[p.cellIdx] = p.cellType;
     return newRow;
   });
 }
