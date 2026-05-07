@@ -27,6 +27,11 @@ Options:
       --git           Show the current git branch beside the clingon
       --inline        Render a compact single-line glyph (one character per cell).
                       Suitable for statuslines, prompts, and tmux status bars.
+      --animate         Animate the creature in place. Loops until Ctrl-C.
+      --fps <n>         Animation frames per second (1-30). Default 6.
+      --frames <list>   Comma-separated moves (idle,blink,wiggle,walk).
+                        Default 'idle,blink'.
+      --seconds <n>     Run animation for N seconds then exit.
       --pad <n>       Add padding around terminal output
       --pad-h <n>     Add spaces before each terminal output line
       --pad-v <n>     Add blank lines before and after terminal output
@@ -39,7 +44,7 @@ Examples:
     clingon --size small --welcome --name --date --cwd --git --pad=2
 `;
 
-export function runCli(args, io) {
+export async function runCli(args, io) {
   try {
     const options = parseArgs(args);
 
@@ -53,18 +58,33 @@ export function runCli(args, io) {
       return;
     }
 
-    if (options.inline) {
-      validateInlineConflicts(options);
-    }
+    if (options.animate) validateAnimateConflicts(options);
+    if (options.inline) validateInlineConflicts(options);
 
     const useColor = options.color && shouldUseColor(io);
+    options.useColor = useColor;
+
+    if (options.animate) {
+      const { animateClingon } = await import('./animation.js');
+      const handle = animateClingon({
+        name: options.inputName,
+        size: options.size,
+        color: useColor,
+        frames: options.animateFrames,
+        fps: options.fps,
+        seconds: options.seconds,
+        stream: io.stdout
+      });
+      await handle.done;
+      return;
+    }
+
     const clingon = generateClingon({
       name: options.inputName,
       recolor: options.recolor,
       size: options.size,
       color: useColor
     });
-    options.useColor = useColor;
 
     if (options.json) {
       io.stdout.write(`${JSON.stringify(toJson(clingon), null, 2)}\n`);
@@ -108,11 +128,18 @@ function writeTerminalOutput(stdout, output) {
 }
 
 function validateInlineConflicts(options) {
+  if (options.animate) throw new Error('--inline cannot be combined with --animate.');
   if (options.json) throw new Error('--inline cannot be combined with --json.');
   if (options.script) throw new Error('--inline cannot be combined with --script.');
   if (options.infoItems.length > 0) {
     throw new Error('--inline cannot be combined with --welcome, --message, --date, --cwd, --git, or --name.');
   }
+}
+
+function validateAnimateConflicts(options) {
+  if (options.inline) throw new Error('--animate cannot be combined with --inline.');
+  if (options.json) throw new Error('--animate cannot be combined with --json.');
+  if (options.script) throw new Error('--animate cannot be combined with --script.');
 }
 
 function writeInline(stdout, clingon, options) {
@@ -135,9 +162,33 @@ function parseCount(value, option) {
   return count;
 }
 
+const BUILT_IN_MOVES = ['idle', 'blink', 'wiggle', 'walk'];
+
+function parseFps(value) {
+  const n = Number.parseInt(value, 10);
+  if (!Number.isFinite(n) || n < 1 || n > 30) {
+    throw new Error('--fps must be an integer between 1 and 30.');
+  }
+  return n;
+}
+
+function parseFramesList(value) {
+  if (!value) throw new Error('--frames requires a comma-separated list.');
+  const moves = value.split(',').map((s) => s.trim()).filter(Boolean);
+  for (const m of moves) {
+    if (!BUILT_IN_MOVES.includes(m)) {
+      throw new Error(`Unknown move "${m}" in --frames. Built-in moves: ${BUILT_IN_MOVES.join(', ')}.`);
+    }
+  }
+  return moves;
+}
+
 function parseArgs(args) {
   const options = {
+    animate: false,
+    animateFrames: ['idle', 'blink'],
     color: true,
+    fps: 6,
     help: false,
     inline: false,
     inputName: undefined,
@@ -147,6 +198,7 @@ function parseArgs(args) {
     padV: 0,
     recolor: false,
     script: false,
+    seconds: undefined,
     size: 'normal',
     version: false
   };
@@ -213,6 +265,23 @@ function parseArgs(args) {
       options.color = false;
     } else if (arg === '--inline') {
       options.inline = true;
+    } else if (arg === '--animate') {
+      options.animate = true;
+    } else if (arg === '--fps') {
+      index += 1;
+      options.fps = parseFps(args[index]);
+    } else if (arg.startsWith('--fps=')) {
+      options.fps = parseFps(arg.slice('--fps='.length));
+    } else if (arg === '--frames') {
+      index += 1;
+      options.animateFrames = parseFramesList(args[index]);
+    } else if (arg.startsWith('--frames=')) {
+      options.animateFrames = parseFramesList(arg.slice('--frames='.length));
+    } else if (arg === '--seconds') {
+      index += 1;
+      options.seconds = parseCount(args[index], arg);
+    } else if (arg.startsWith('--seconds=')) {
+      options.seconds = parseCount(arg.slice('--seconds='.length), '--seconds');
     } else if (arg === '-n' || arg === '--name') {
       options.infoItems.push({ type: 'name' });
     } else if (arg === '--with-name') {

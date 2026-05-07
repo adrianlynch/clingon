@@ -14,7 +14,7 @@ import {
   moveCursor, clearScreen,
   getSize, setRawMode
 } from '../src/terminal.js';
-import { blink, bob, wiggle, walk, defineMove, resolveMove, buildFrames } from '../src/animation.js';
+import { blink, bob, wiggle, walk, defineMove, resolveMove, buildFrames, animateClingon } from '../src/animation.js';
 import { runCli } from '../src/cli.js';
 
 function fakeStream() {
@@ -338,4 +338,125 @@ test('buildFrames accepts mixed strings and inline Move objects', () => {
 
 test('buildFrames throws for unknown move name', () => {
   assert.throws(() => buildFrames([[1]], ['idle', 'nonsense']), /Unknown move/);
+});
+
+function fakeTtyStream() {
+  return {
+    isTTY: true,
+    columns: 80,
+    rows: 24,
+    writes: [],
+    write(chunk) { this.writes.push(chunk); }
+  };
+}
+
+function fakeScheduler() {
+  const callbacks = [];
+  return {
+    setInterval(fn) { callbacks.push(fn); return callbacks.length - 1; },
+    clearInterval(id) { callbacks[id] = null; },
+    tick(times = 1) {
+      for (let i = 0; i < times; i += 1) {
+        for (const cb of callbacks) if (cb) cb();
+      }
+    }
+  };
+}
+
+test('animateClingon hides cursor and writes first frame on start', () => {
+  const stream = fakeTtyStream();
+  const scheduler = fakeScheduler();
+  const handle = animateClingon({
+    name: 'orlando-reginald-morris-junior', size: 'tiny', color: false,
+    fps: 6, stream, scheduler
+  });
+  assert.match(stream.writes[0], /\[\?25l/);
+  assert.ok(stream.writes.length >= 2);
+  handle.stop();
+});
+
+test('animateClingon advances frames on tick with cursor-up between frames', () => {
+  const stream = fakeTtyStream();
+  const scheduler = fakeScheduler();
+  const handle = animateClingon({
+    name: 'orlando-reginald-morris-junior', size: 'tiny', color: false,
+    frames: ['idle'], fps: 6, stream, scheduler
+  });
+  const before = stream.writes.length;
+  scheduler.tick(1);
+  const after = stream.writes.slice(before);
+  assert.ok(after.some((w) => /\[\d+A\r/.test(w)), 'expected cursor-up sequence after tick');
+  handle.stop();
+});
+
+test('animateClingon restores cursor on stop', async () => {
+  const stream = fakeTtyStream();
+  const scheduler = fakeScheduler();
+  const handle = animateClingon({
+    name: 'orlando-reginald-morris-junior', size: 'tiny', color: false,
+    stream, scheduler
+  });
+  handle.stop();
+  await handle.done;
+  const last = stream.writes.at(-1);
+  assert.match(last, /^\n$|\[\?25h/);
+});
+
+test('animateClingon writes static frame and resolves immediately on non-TTY stream', async () => {
+  const stream = { isTTY: false, writes: [], write(c) { this.writes.push(c); } };
+  const scheduler = fakeScheduler();
+  const handle = animateClingon({
+    name: 'orlando-reginald-morris-junior', size: 'tiny', color: false,
+    stream, scheduler
+  });
+  await handle.done;
+  assert.equal(stream.writes.length, 1);
+});
+
+test('animateClingon stops cleanly on AbortSignal', async () => {
+  const stream = fakeTtyStream();
+  const scheduler = fakeScheduler();
+  const controller = new AbortController();
+  const handle = animateClingon({
+    name: 'orlando-reginald-morris-junior', size: 'tiny', color: false,
+    stream, scheduler, signal: controller.signal
+  });
+  controller.abort();
+  await handle.done;
+  const writes = stream.writes.join('');
+  assert.match(writes, /\[\?25h/);
+});
+
+test('cli --animate --json errors', async () => {
+  const stdout = createWritable();
+  const stderr = createWritable();
+  await runCli(['--animate', '--json'], { stdout, stderr, env: {} });
+  assert.match(stderr.output, /animate.*json|json.*animate/i);
+  process.exitCode = 0;
+});
+
+test('cli --animate --frames bogus errors', async () => {
+  const stdout = createWritable();
+  const stderr = createWritable();
+  await runCli(['--animate', '--frames', 'bogus'], { stdout, stderr, env: {} });
+  assert.match(stderr.output, /move|frames|bogus/i);
+  process.exitCode = 0;
+});
+
+test('cli --animate --inline errors', async () => {
+  const stdout = createWritable();
+  const stderr = createWritable();
+  await runCli(['--animate', '--inline'], { stdout, stderr, env: {} });
+  assert.match(stderr.output, /animate.*inline|inline.*animate/i);
+  process.exitCode = 0;
+});
+
+test('cli --animate with non-TTY stdout writes static frame and exits', async () => {
+  const stdout = { isTTY: false, output: '', write(c) { this.output += c; } };
+  const stderr = createWritable();
+  await runCli(['--animate', '--with-name', 'orlando-reginald-morris-junior', '--tiny', '--no-color'], {
+    stdout, stderr, env: {}
+  });
+  assert.match(stdout.output, /\[\]/);
+  assert.equal(stderr.output, '');
 });

@@ -2,8 +2,10 @@ import {
   EMPTY, BODY, ACCENT, DARK,
   DARK_NARROW, DARK_NARROW_RIGHT,
   EYE_DARK_LEFT, EYE_DARK_RIGHT,
-  EYE_LIGHT_LEFT, EYE_LIGHT_RIGHT
+  EYE_LIGHT_LEFT, EYE_LIGHT_RIGHT,
+  generateClingon, renderAnsi
 } from './index.js';
+import { hideCursor, showCursor, cursorUp } from './terminal.js';
 
 function isEye(cell) {
   return cell === EYE_DARK_LEFT
@@ -126,3 +128,95 @@ defineMove('walk', {
     { pixels: walk(p, 1), duration: 1 }
   ]
 });
+
+function defaultScheduler() {
+  return {
+    setInterval: (fn, ms) => globalThis.setInterval(fn, ms),
+    clearInterval: (id) => globalThis.clearInterval(id)
+  };
+}
+
+export function animateClingon(options = {}) {
+  const {
+    name, size, color = true,
+    frames: moveList = ['idle', 'blink'],
+    fps = 6,
+    loops = Infinity,
+    seconds,
+    stream = process.stdout,
+    signal,
+    scheduler = defaultScheduler()
+  } = options;
+
+  const clingon = generateClingon({ name, size, color });
+  let resolveDone;
+  const done = new Promise((r) => { resolveDone = r; });
+
+  if (!stream.isTTY) {
+    stream.write(`${clingon.ansi}\n`);
+    resolveDone();
+    return { stop() {}, done };
+  }
+
+  const frames = buildFrames(clingon.pixels, moveList);
+  const renderedFrames = frames.map((frame) => ({
+    ansi: renderAnsi(frame.pixels, clingon.palette, { color }),
+    duration: frame.duration
+  }));
+  const height = clingon.pixels.length;
+
+  let frameIndex = 0;
+  let durationLeft = renderedFrames[0].duration;
+  let loopsRemaining = loops;
+  let stopped = false;
+  let intervalHandle;
+  let timeoutHandle;
+
+  function teardown() {
+    if (stopped) return;
+    stopped = true;
+    if (intervalHandle != null) scheduler.clearInterval(intervalHandle);
+    if (timeoutHandle != null) clearTimeout(timeoutHandle);
+    showCursor(stream);
+    stream.write('\n');
+    if (signal && typeof signal.removeEventListener === 'function') {
+      signal.removeEventListener('abort', teardown);
+    }
+    resolveDone();
+  }
+
+  hideCursor(stream);
+  stream.write(renderedFrames[0].ansi);
+
+  intervalHandle = scheduler.setInterval(() => {
+    if (stopped) return;
+    durationLeft -= 1;
+    if (durationLeft > 0) return;
+    frameIndex += 1;
+    if (frameIndex >= renderedFrames.length) {
+      loopsRemaining -= 1;
+      if (loopsRemaining <= 0) { teardown(); return; }
+      frameIndex = 0;
+    }
+    durationLeft = renderedFrames[frameIndex].duration;
+    cursorUp(stream, height);
+    stream.write(renderedFrames[frameIndex].ansi);
+  }, 1000 / fps);
+
+  if (seconds && Number.isFinite(seconds)) {
+    timeoutHandle = setTimeout(teardown, seconds * 1000);
+  }
+
+  if (signal) {
+    if (signal.aborted) {
+      teardown();
+    } else {
+      signal.addEventListener('abort', teardown, { once: true });
+    }
+  }
+
+  return {
+    stop() { teardown(); },
+    done
+  };
+}
