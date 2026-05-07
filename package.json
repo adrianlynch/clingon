@@ -1,6 +1,6 @@
 {
   "name": "@adrianlynch/clingon",
-  "version": "0.1.9",
+  "version": "0.2.0",
   "description": "Generate tiny deterministic terminal characters.",
   "type": "module",
   "bin": {

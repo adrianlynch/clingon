@@ -54,7 +54,7 @@ export async function runCli(args, io) {
     }
 
     if (options.version) {
-      io.stdout.write('0.1.0\n');
+      io.stdout.write('0.2.0\n');
       return;
     }
 
