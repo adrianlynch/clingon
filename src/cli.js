@@ -31,6 +31,10 @@ Options:
       --no-color      Render without ANSI color
   -h, --help          Show help
   -v, --version       Show version
+
+Examples:
+  Add clingon to your terminal startup:
+    clingon --size small --welcome --name --date --cwd --git --pad=2
 `;
 
 export function runCli(args, io) {
