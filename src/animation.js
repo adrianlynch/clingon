@@ -227,10 +227,12 @@ function buildTrack(name, cycleLength) {
       directions.push(goLeft ? 'left' : 'right');
       goLeft = !goLeft;
     }
-    const lookDuration = 8;
+    const eventLength = 10; // 1 entry-blink + 8 held + 1 exit-blink
     return (frame, t) => {
-      const idx = lookAt.findIndex((start) => t >= start && t < start + lookDuration);
+      const idx = lookAt.findIndex((start) => t >= start && t < start + eventLength);
       if (idx < 0) return frame;
+      const offset = t - lookAt[idx];
+      if (offset === 0 || offset === eventLength - 1) return blink(frame);
       return directions[idx] === 'left' ? lookLeft(frame) : lookRight(frame);
     };
   }
@@ -271,14 +273,17 @@ export function composeParallel(basePixels, moveNames, cycleLength = 160) {
 defineMove('look', {
   sequence: (p) => {
     const forward = () => ({ pixels: p.map((row) => row.slice()), duration: 6 + Math.floor(Math.random() * 4) });
-    const numGlances = 1 + Math.floor(Math.random() * 3); // 1-3 glances per cycle
+    const numGlances = 1 + Math.floor(Math.random() * 3);
     let goLeft = Math.random() < 0.5;
     const frames = [forward()];
     for (let i = 0; i < numGlances; i += 1) {
+      // Brief blink masks the asymmetric forward → look transition.
+      frames.push({ pixels: blink(p), duration: 1 });
       frames.push({
         pixels: goLeft ? lookLeft(p) : lookRight(p),
         duration: 6 + Math.floor(Math.random() * 3)
       });
+      frames.push({ pixels: blink(p), duration: 1 });
       frames.push(forward());
       goLeft = !goLeft;
     }
