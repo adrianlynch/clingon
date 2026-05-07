@@ -29,10 +29,12 @@ Options:
                       Suitable for statuslines, prompts, and tmux status bars.
       --animate         Animate the creature in place. Loops until Ctrl-C.
       --fps <n>         Animation frames per second (1-30). Default 8.
-      --frames <list>   Comma-separated moves: idle, blink, look, wiggle, walk.
-                        Default 'idle,blink,look,wiggle'.
-      --mode <mode>     'parallel' (default): all moves layer on one timeline.
-                        'sequence': moves play one after another, looping.
+      --moves <list>    Comma-separated behaviors layered on one timeline.
+                        Each behavior triggers as random events; order doesn't
+                        matter. Default: 'idle,blink,look,wiggle'.
+      --cycle <list>    Comma-separated behaviors played in order, then loops.
+                        Order matters. Mutually exclusive with --moves.
+                        Built-in behaviors: idle, blink, look, wiggle, walk.
       --seconds <n>     Run animation for N seconds then exit.
       --pad <n>       Add padding around terminal output
       --pad-h <n>     Add spaces before each terminal output line
@@ -67,6 +69,12 @@ export async function runCli(args, io) {
     options.useColor = useColor;
 
     if (options.animate) {
+      if (options.animateMoves && options.animateCycle) {
+        throw new Error('--moves and --cycle are mutually exclusive.');
+      }
+      const useCycle = !!options.animateCycle;
+      const moveList = options.animateCycle ?? options.animateMoves ?? ['idle', 'blink', 'look', 'wiggle'];
+
       const { animateClingon } = await import('./animation.js');
       const controller = new AbortController();
       const onSigint = () => controller.abort();
@@ -76,8 +84,8 @@ export async function runCli(args, io) {
           name: options.inputName,
           size: options.size,
           color: useColor,
-          frames: options.animateFrames,
-          mode: options.animateMode,
+          frames: moveList,
+          mode: useCycle ? 'sequence' : 'parallel',
           fps: options.fps,
           seconds: options.seconds,
           stream: io.stdout,
@@ -175,13 +183,6 @@ function parseCount(value, option) {
 
 const BUILT_IN_MOVES = ['idle', 'blink', 'look', 'wiggle', 'walk'];
 
-function parseMode(value) {
-  if (value !== 'sequence' && value !== 'parallel') {
-    throw new Error(`--mode must be 'sequence' or 'parallel', got '${value}'.`);
-  }
-  return value;
-}
-
 function parseFps(value) {
   const n = Number.parseInt(value, 10);
   if (!Number.isFinite(n) || n < 1 || n > 30) {
@@ -191,11 +192,11 @@ function parseFps(value) {
 }
 
 function parseFramesList(value) {
-  if (!value) throw new Error('--frames requires a comma-separated list.');
+  if (!value) throw new Error('move list requires a comma-separated value.');
   const moves = value.split(',').map((s) => s.trim()).filter(Boolean);
   for (const m of moves) {
     if (!BUILT_IN_MOVES.includes(m)) {
-      throw new Error(`Unknown move "${m}" in --frames. Built-in moves: ${BUILT_IN_MOVES.join(', ')}.`);
+      throw new Error(`Unknown move "${m}". Built-in moves: ${BUILT_IN_MOVES.join(', ')}.`);
     }
   }
   return moves;
@@ -204,8 +205,8 @@ function parseFramesList(value) {
 function parseArgs(args) {
   const options = {
     animate: false,
-    animateFrames: ['idle', 'blink', 'look', 'wiggle'],
-    animateMode: 'parallel',
+    animateMoves: undefined,
+    animateCycle: undefined,
     color: true,
     fps: 8,
     help: false,
@@ -291,16 +292,16 @@ function parseArgs(args) {
       options.fps = parseFps(args[index]);
     } else if (arg.startsWith('--fps=')) {
       options.fps = parseFps(arg.slice('--fps='.length));
-    } else if (arg === '--frames') {
+    } else if (arg === '--moves') {
       index += 1;
-      options.animateFrames = parseFramesList(args[index]);
-    } else if (arg.startsWith('--frames=')) {
-      options.animateFrames = parseFramesList(arg.slice('--frames='.length));
-    } else if (arg === '--mode') {
+      options.animateMoves = parseFramesList(args[index]);
+    } else if (arg.startsWith('--moves=')) {
+      options.animateMoves = parseFramesList(arg.slice('--moves='.length));
+    } else if (arg === '--cycle') {
       index += 1;
-      options.animateMode = parseMode(args[index]);
-    } else if (arg.startsWith('--mode=')) {
-      options.animateMode = parseMode(arg.slice('--mode='.length));
+      options.animateCycle = parseFramesList(args[index]);
+    } else if (arg.startsWith('--cycle=')) {
+      options.animateCycle = parseFramesList(arg.slice('--cycle='.length));
     } else if (arg === '--seconds') {
       index += 1;
       options.seconds = parseCount(args[index], arg);

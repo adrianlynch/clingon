@@ -493,11 +493,19 @@ test('cli --animate --json errors', async () => {
   process.exitCode = 0;
 });
 
-test('cli --animate --frames bogus errors', async () => {
+test('cli --animate --moves bogus errors', async () => {
   const stdout = createWritable();
   const stderr = createWritable();
-  await runCli(['--animate', '--frames', 'bogus'], { stdout, stderr, env: {} });
-  assert.match(stderr.output, /move|frames|bogus/i);
+  await runCli(['--animate', '--moves', 'bogus'], { stdout, stderr, env: {} });
+  assert.match(stderr.output, /move|moves|bogus/i);
+  process.exitCode = 0;
+});
+
+test('cli --moves and --cycle are mutually exclusive', async () => {
+  const stdout = createWritable();
+  const stderr = createWritable();
+  await runCli(['--animate', '--moves', 'idle', '--cycle', 'idle'], { stdout, stderr, env: {} });
+  assert.match(stderr.output, /moves.*cycle|cycle.*moves|mutually exclusive/i);
   process.exitCode = 0;
 });
 
