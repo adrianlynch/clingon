@@ -125,12 +125,26 @@ Clingon names are hidden by default. Add `--name` where you want the name to app
 
 ## Animation
 
-Animate the creature in place — gentle bob and blink. Loops until interrupted.
+Animate the creature in place — bob, blink, look, wiggle, walk. Loops until Ctrl-C.
 
 ```sh
 clingon --animate --tiny
-clingon --animate --frames idle,blink,wiggle --fps 8
-clingon --animate --seconds 5
+clingon --animate --moves idle,blink --tiny             # only the listed behaviors
+clingon --animate --moves walk --in-sequence --tiny     # play behaviors in order, looping
+clingon --animate --tiny --once                         # one cycle then exit
+clingon --animate --tiny --seconds 5                    # finite duration
+clingon --animate --tiny --fps 12                       # speed (1-30, default 8)
+clingon --animate --large --welcome --date --git --pad=1
+```
+
+Animation behaviors layer on a single timeline by default — bob runs continuously while blinks/looks/wiggles/walks fire as random events. Pass `--in-sequence` to play the listed moves one-at-a-time in a loop instead.
+
+Animation rhythm is **deterministic from the name** — same name always produces the same pattern of bobs and blinks. Add an optional 5th word for explicit rhythm control:
+
+```sh
+clingon --animate --with-name orlando-reginald-morris-junior --tiny           # rhythm derived
+clingon --animate --with-name orlando-reginald-morris-junior-bouncy --tiny    # explicit rhythm
+clingon --animate --with-name orlando-reginald-morris-junior-snoozy --tiny    # different rhythm, same creature
 ```
 
 Animation requires a TTY. Piping to a file or another command writes a single static frame and exits.
@@ -144,6 +158,30 @@ clingon --inline --tiny --with-name orlando-reginald-morris-junior
 ```
 
 Output is one line, width matching the size (4 chars for tiny, up to 11 for large). See [docs/integrations.md](docs/integrations.md) for tmux, starship, oh-my-posh, and Claude Code examples.
+
+## Discovery
+
+Browse a grid of random creatures with their names — useful for picking one to save:
+
+```sh
+clingon --gallery               # 8 random clingons (default)
+clingon --gallery 12 --tiny     # 12 tiny ones, more per row
+clingon --gallery --animate     # animated grid, all moving at once
+```
+
+List all the words you can compose names from:
+
+```sh
+clingon --list-names
+```
+
+Names are 4 hyphen-separated words by default (`<first>-<middle>-<family>-<suffix>`). The 1st and 3rd words drive the shape; the 2nd and 4th drive the palette. An optional 5th word picks an animation rhythm. Use `*` as a wildcard in any slot:
+
+```sh
+clingon --with-name orlando-*-morris-*           # fix shape, random palette
+clingon --with-name *-reginald-*-junior          # fix palette, random shape
+clingon --with-name orlando-*-morris-*-bouncy    # fix shape and rhythm
+```
 
 ## CLI
 
@@ -227,28 +265,51 @@ clingon --tiny --pad-h=2 --pad-v=1
 ```txt
 clingon [options]
 
-Options:
-      --with-name <name>
-                    Regenerate a specific clingon name
-  -n, --name          Show the clingon name beside the art
-  -r, --recolor       Keep the shape from --with-name but choose new colors
-      --large         Render the largest clingon
-      --small         Render a smaller clingon
-      --tiny          Render the tiniest clingon
-      --size <size>   Render size: tiny, small, normal, or large
-  -s, --script        Print the JavaScript needed to recreate the clingon
-  -j, --json          Print JSON data instead of terminal art
-      --welcome       Show a time-aware greeting beside the clingon
-      --message <msg> Show a custom message beside the clingon
-      --date          Show today's date beside the clingon
-      --cwd           Show the current directory beside the clingon
-      --git           Show the current git branch beside the clingon
-      --pad <n>       Add padding around terminal output
-      --pad-h <n>     Add spaces before each terminal output line
-      --pad-v <n>     Add blank lines before and after terminal output
-      --no-color      Render without ANSI color
-  -h, --help          Show help
-  -v, --version       Show version
+Identity:
+      --with-name <name>  Regenerate a specific clingon. 4 or 5 words separated
+                          by hyphens. '*' wildcards any slot.
+  -r, --recolor           Keep shape, reroll palette (with --with-name).
+
+Size:
+      --large             11x8 grid
+      --normal            7x6 grid (default)
+      --small             5x5 grid
+      --tiny              4x4 grid
+      --size <size>       Same as the four flags above by name.
+
+Output mode (mutually exclusive):
+      (default)           Multi-line ANSI art
+      --inline            Single-line glyph (for statuslines, prompts)
+  -j, --json              JSON output
+  -s, --script            Print the JS code that recreates this clingon
+      --gallery [n]       Show n random clingons in a grid (default 8)
+      --list-names        Print the available word lists for composing names
+
+Animation (require --animate):
+      --animate           Animate in place, loops until Ctrl-C
+      --moves <list>      Behaviors: idle,blink,look,wiggle,walk (default: all)
+      --in-sequence       Play moves in order vs. layered (default: layered)
+      --once              Play one cycle and exit
+      --seconds <n>       Run for n seconds and exit
+      --fps <n>           Frames per second (1-30, default 8)
+
+Info panel:
+  -n, --name              Show the clingon's name
+      --welcome           Time-aware greeting
+      --message <msg>     Custom message (repeatable)
+      --date              Today's date
+      --cwd               Current directory name
+      --git               Current git branch
+
+Layout:
+      --pad <n>           Padding around output
+      --pad-h <n>         Left padding only
+      --pad-v <n>         Vertical padding only
+      --no-color          Plain text glyphs, no ANSI escapes
+
+Other:
+  -h, --help              Show help
+  -v, --version           Show version
 ```
 
 ## JavaScript API
@@ -296,6 +357,7 @@ console.log(renderClingon({
   size: 'tiny',
   shapeSeed: 0,
   paletteSeed: 0,
+  rhythmSeed: null,            // set when name has a 5th rhythm word
   palette: {
     body: '#f06a0d',
     accent: '#2bce67',
@@ -303,17 +365,49 @@ console.log(renderClingon({
   },
   pixels: [[0, 0, 0]],
   ansi: '...',
-  text: '...'
+  text: '...',
+  inline: '[oo['               // single-line render for statuslines
 }
 ```
 
-The first and third words control the shape. The second and fourth words control the palette.
+Names are 4 or 5 hyphen-separated words:
 
-Older `clg-...` seed codes are still accepted through `--with-name`:
+- 1st (first) and 3rd (family) → shape
+- 2nd (middle) and 4th (suffix) → palette
+- 5th (rhythm, optional) → animation timing
+
+Older `clg-...` seed codes are also accepted through `--with-name`:
 
 ```sh
 clingon --with-name clg-00000rs-00000rt
 ```
+
+## Custom moves
+
+Built-in moves cover most uses. For custom animations, use the JavaScript API:
+
+```js
+import { animateClingon, defineMove, blink, bob } from '@adrianlynch/clingon';
+
+defineMove('peek', {
+  sequence: (basePixels) => [
+    { pixels: bob(basePixels, 1), duration: 6 },
+    { pixels: bob(basePixels, 0), duration: 3 },
+    { pixels: blink(bob(basePixels, 0)), duration: 1 },
+    { pixels: bob(basePixels, 0), duration: 4 }
+  ]
+});
+
+await animateClingon({
+  name: 'orlando-reginald-morris-junior',
+  size: 'tiny',
+  frames: ['peek'],
+  mode: 'sequence',
+  seconds: 5
+}).done;
+```
+
+Built-in mutators (`blink`, `bob`, `wiggle`, `walk`, `lookLeft`, `lookRight`) and cell-ID constants (`BODY`, `ACCENT`, `DARK`, `EMPTY`, `EYE_*`, etc.) are exported for use inside custom moves. See [examples/custom-moves.js](examples/custom-moves.js) for a runnable example.
 
 ## Development
 
