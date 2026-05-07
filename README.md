@@ -55,6 +55,12 @@ Terminal dimensions are `large` 22x8, `normal` 14x6, `small` 10x5, and `tiny` 8x
 npm install @adrianlynch/clingon
 ```
 
+Install with Homebrew:
+
+```sh
+brew install adrianlynch/tap/clingon
+```
+
 Run it without installing:
 
 ```sh
