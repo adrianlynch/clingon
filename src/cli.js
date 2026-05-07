@@ -1,7 +1,8 @@
 import { execFileSync } from 'node:child_process';
 import { basename, resolve as resolvePath } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { generateClingon, nameLists, snippetFor } from './index.js';
+import { generateClingon, nameLists, snippetFor, renderAnsi, composeParallel } from './index.js';
+import { hideCursor, showCursor, cursorUp } from './terminal.js';
 
 const MAX_INFO_LINES = 5;
 
@@ -20,7 +21,8 @@ Options:
                       *-*-morris-*          fix only the family word
       --list-names    Print the available word lists for composing names
       --gallery [n]   Show n random clingons (default 8) with their names,
-                      laid out as a grid that auto-fits the terminal width
+                      laid out as a grid that auto-fits the terminal width.
+                      Combine with --animate to see them all moving.
       --name        Show the clingon name beside the art
   -r, --recolor     Keep the shape from --with-name but choose new colors
       --large         Render the largest clingon
@@ -78,13 +80,24 @@ export async function runCli(args, io) {
 
     if (options.gallery) {
       const useColor = options.color && shouldUseColor(io);
-      io.stdout.write(renderGallery({
+      const galleryOptions = {
         count: options.galleryCount ?? 8,
         size: options.size,
         color: useColor,
         termColumns: io.stdout.columns ?? 80
-      }));
-      io.stdout.write('\n');
+      };
+      if (options.animate) {
+        await runAnimatedGallery({
+          ...galleryOptions,
+          stream: io.stdout,
+          fps: options.fps,
+          seconds: options.seconds,
+          once: options.animateOnce
+        });
+      } else {
+        io.stdout.write(renderGallery(galleryOptions));
+        io.stdout.write('\n');
+      }
       return;
     }
 
@@ -254,26 +267,99 @@ function parseFps(value) {
   return n;
 }
 
-function renderGallery({ count, size, color, termColumns }) {
-  const clingons = [];
-  for (let i = 0; i < count; i += 1) {
-    clingons.push(generateClingon({ size, color }));
-  }
+function buildGalleryLayout(clingons, termColumns) {
   const slotWidth = clingons.reduce((max, c) => {
     const artWidth = c.pixels[0].length * 2;
     return Math.max(max, artWidth, c.name.length);
   }, 0);
   const gap = 2;
   const perRow = Math.max(1, Math.floor((termColumns + gap) / (slotWidth + gap)));
+  return { slotWidth, gap, perRow };
+}
 
+function composeGalleryFrame(clingons, framesPerClingon, t, color, layout) {
+  const { slotWidth, gap, perRow } = layout;
+  const out = [];
+  for (let i = 0; i < clingons.length; i += perRow) {
+    const row = clingons.slice(i, i + perRow);
+    const artBlocks = row.map((c, idx) => {
+      const set = framesPerClingon[i + idx];
+      const frame = set[t % set.length];
+      return renderAnsi(frame.pixels, c.palette, { color }).split('\n');
+    });
+    const height = Math.max(...artBlocks.map((b) => b.length));
+    for (let y = 0; y < height; y += 1) {
+      out.push(artBlocks.map((b) => padVisibleEnd(b[y] ?? '', slotWidth)).join(' '.repeat(gap)));
+    }
+    out.push(row.map((c) => padVisibleEnd(c.name, slotWidth)).join(' '.repeat(gap)));
+    if (i + perRow < clingons.length) out.push('');
+  }
+  return out.join('\n');
+}
+
+async function runAnimatedGallery({ count, size, color, termColumns, stream, fps = 8, seconds, once }) {
+  const clingons = [];
+  for (let i = 0; i < count; i += 1) clingons.push(generateClingon({ size, color }));
+  const moves = ['idle', 'blink', 'look', 'wiggle', 'walk'];
+  const framesPerClingon = clingons.map((c) => composeParallel(c.pixels, moves));
+  const cycleLength = framesPerClingon[0].length;
+  const layout = buildGalleryLayout(clingons, termColumns);
+
+  const renderAt = (t) => composeGalleryFrame(clingons, framesPerClingon, t, color, layout);
+
+  if (!stream.isTTY) {
+    stream.write(`${renderAt(0)}\n`);
+    return;
+  }
+
+  const controller = new AbortController();
+  const onSigint = () => controller.abort();
+  process.on('SIGINT', onSigint);
+
+  hideCursor(stream);
+  const firstFrame = renderAt(0);
+  stream.write(firstFrame);
+  const totalHeight = firstFrame.split('\n').length;
+
+  const stopAt = Number.isFinite(seconds) ? Date.now() + seconds * 1000 : null;
+  let t = 0;
+  let stopped = false;
+
+  await new Promise((resolve) => {
+    const interval = setInterval(() => {
+      if (stopped) return;
+      const aborted = controller.signal.aborted;
+      const finiteDone = stopAt !== null && Date.now() >= stopAt;
+      const cycleDone = once && t >= cycleLength - 1;
+      if (aborted || finiteDone || cycleDone) {
+        stopped = true;
+        clearInterval(interval);
+        showCursor(stream);
+        stream.write('\n');
+        process.off('SIGINT', onSigint);
+        resolve();
+        return;
+      }
+      t += 1;
+      cursorUp(stream, totalHeight - 1);
+      stream.write(renderAt(t));
+    }, 1000 / fps);
+  });
+}
+
+function renderGallery({ count, size, color, termColumns }) {
+  const clingons = [];
+  for (let i = 0; i < count; i += 1) {
+    clingons.push(generateClingon({ size, color }));
+  }
+  const { slotWidth, gap, perRow } = buildGalleryLayout(clingons, termColumns);
   const out = [];
   for (let i = 0; i < clingons.length; i += perRow) {
     const row = clingons.slice(i, i + perRow);
     const artBlocks = row.map((c) => c.ansi.split('\n'));
     const height = Math.max(...artBlocks.map((b) => b.length));
     for (let y = 0; y < height; y += 1) {
-      const line = artBlocks.map((b) => padVisibleEnd(b[y] ?? '', slotWidth)).join(' '.repeat(gap));
-      out.push(line);
+      out.push(artBlocks.map((b) => padVisibleEnd(b[y] ?? '', slotWidth)).join(' '.repeat(gap)));
     }
     out.push(row.map((c) => padVisibleEnd(c.name, slotWidth)).join(' '.repeat(gap)));
     if (i + perRow < clingons.length) out.push('');
