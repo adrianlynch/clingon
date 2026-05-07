@@ -303,33 +303,28 @@ test('defineMove replaces an existing move', () => {
   assert.deepEqual(frames, [{ pixels: [[2]], duration: 1 }]);
 });
 
-test('built-in idle move produces frames with rest-heavy timing', () => {
+test('built-in idle move has multiple bobs for visible motion', () => {
   const frames = resolveMove('idle', generateClingon({
     name: 'orlando-reginald-morris-junior', size: 'tiny', color: false
   }).pixels);
-  assert.equal(frames.length, 3);
-  // mostly resting at base position with brief lifts
-  assert.ok(frames[0].duration > frames[1].duration);
-  assert.ok(frames[2].duration > frames[1].duration);
+  assert.equal(frames.length, 5);
 });
 
-test('built-in blink move has long open phase and brief blink', () => {
+test('built-in blink move blinks twice per cycle', () => {
   const frames = resolveMove('blink', generateClingon({
     name: 'orlando-reginald-morris-junior', size: 'tiny', color: false
   }).pixels);
-  assert.equal(frames.length, 3);
-  // long open, brief blink
-  assert.ok(frames[0].duration > frames[1].duration);
+  assert.equal(frames.length, 5);
+  // brief blinks at frames 1 and 3
   assert.equal(frames[1].duration, 1);
+  assert.equal(frames[3].duration, 1);
 });
 
 test('built-in look move alternates left and right for symmetric motion', () => {
   const frames = resolveMove('look', generateClingon({
     name: 'orlando-reginald-morris-junior', size: 'tiny', color: false
   }).pixels);
-  assert.equal(frames.length, 4);
-  // adjacent lookLeft and lookRight frames have BOTH eyes change
-  // (not asymmetric forward-to-side transitions)
+  assert.equal(frames.length, 5);
 });
 
 test('lookLeft replaces EYE_*_RIGHT with EYE_*_LEFT', () => {
@@ -356,8 +351,8 @@ test('lookLeft / lookRight do not mutate input', () => {
 test('buildFrames concatenates frames from named moves', () => {
   const base = generateClingon({ name: 'orlando-reginald-morris-junior', size: 'tiny', color: false }).pixels;
   const frames = buildFrames(base, ['idle', 'blink']);
-  // idle (3) + blink (3) = 6
-  assert.equal(frames.length, 6);
+  // idle (5) + blink (5) = 10
+  assert.equal(frames.length, 10);
 });
 
 test('buildFrames accepts mixed strings and inline Move objects', () => {
@@ -417,8 +412,8 @@ test('animateClingon advances frames on tick with cursor-up between frames', () 
     frames: ['idle'], fps: 6, stream, scheduler
   });
   const before = stream.writes.length;
-  // idle's first frame holds for 12 ticks; tick enough to roll to the next
-  scheduler.tick(14);
+  // idle's first frame holds for 2 ticks; tick enough to roll to the next
+  scheduler.tick(3);
   const after = stream.writes.slice(before);
   assert.ok(after.some((w) => /\[\d+A\r/.test(w)), 'expected cursor-up sequence after tick');
   handle.stop();

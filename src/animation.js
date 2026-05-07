@@ -118,31 +118,38 @@ export function buildFrames(basePixels, moves) {
 
 defineMove('idle', {
   sequence: (p) => [
-    { pixels: bob(p, 0), duration: 12 },
+    { pixels: bob(p, 0), duration: 2 },
     { pixels: bob(p, 1), duration: 1 },
-    { pixels: bob(p, 0), duration: 8 }
+    { pixels: bob(p, 0), duration: 1 },
+    { pixels: bob(p, 1), duration: 1 },
+    { pixels: bob(p, 0), duration: 4 }
   ]
 });
 
 defineMove('blink', {
   sequence: (p) => [
-    { pixels: p.map((row) => row.slice()), duration: 30 },
+    { pixels: p.map((row) => row.slice()), duration: 6 },
     { pixels: blink(p), duration: 1 },
-    { pixels: p.map((row) => row.slice()), duration: 8 }
+    { pixels: p.map((row) => row.slice()), duration: 3 },
+    { pixels: blink(p), duration: 1 },
+    { pixels: p.map((row) => row.slice()), duration: 3 }
   ]
 });
 
 defineMove('wiggle', {
   sequence: (p) => [
-    { pixels: wiggle(p, 0), duration: 4 },
-    { pixels: wiggle(p, 1), duration: 2 },
-    { pixels: wiggle(p, 0), duration: 4 },
-    { pixels: wiggle(p, 1), duration: 2 }
+    { pixels: wiggle(p, 0), duration: 2 },
+    { pixels: wiggle(p, 1), duration: 1 },
+    { pixels: wiggle(p, 0), duration: 1 },
+    { pixels: wiggle(p, 1), duration: 1 },
+    { pixels: wiggle(p, 0), duration: 2 }
   ]
 });
 
 defineMove('walk', {
   sequence: (p) => [
+    { pixels: walk(p, 0), duration: 2 },
+    { pixels: walk(p, 1), duration: 2 },
     { pixels: walk(p, 0), duration: 2 },
     { pixels: walk(p, 1), duration: 2 }
   ]
@@ -150,10 +157,11 @@ defineMove('walk', {
 
 defineMove('look', {
   sequence: (p) => [
-    { pixels: lookLeft(p), duration: 6 },
-    { pixels: lookRight(p), duration: 6 },
-    { pixels: lookLeft(p), duration: 6 },
-    { pixels: p.map((row) => row.slice()), duration: 8 }
+    { pixels: lookLeft(p), duration: 3 },
+    { pixels: lookRight(p), duration: 3 },
+    { pixels: lookLeft(p), duration: 3 },
+    { pixels: lookRight(p), duration: 3 },
+    { pixels: p.map((row) => row.slice()), duration: 4 }
   ]
 });
 
@@ -168,7 +176,7 @@ export function animateClingon(options = {}) {
   const {
     name, size, color = true,
     frames: moveList = ['idle', 'blink', 'look', 'wiggle', 'idle'],
-    fps = 6,
+    fps = 8,
     loops = Infinity,
     seconds,
     stream = process.stdout,

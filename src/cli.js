@@ -28,7 +28,7 @@ Options:
       --inline        Render a compact single-line glyph (one character per cell).
                       Suitable for statuslines, prompts, and tmux status bars.
       --animate         Animate the creature in place. Loops until Ctrl-C.
-      --fps <n>         Animation frames per second (1-30). Default 6.
+      --fps <n>         Animation frames per second (1-30). Default 8.
       --frames <list>   Comma-separated moves: idle, blink, look, wiggle, walk.
                         Default 'idle,blink,look,wiggle,idle' for variety.
       --seconds <n>     Run animation for N seconds then exit.
@@ -196,7 +196,7 @@ function parseArgs(args) {
     animate: false,
     animateFrames: ['idle', 'blink', 'look', 'wiggle', 'idle'],
     color: true,
-    fps: 6,
+    fps: 8,
     help: false,
     inline: false,
     inputName: undefined,
