@@ -85,11 +85,7 @@ function shiftEyes(pixels, delta) {
     if (eyeIndexes.length === 0) return row.slice();
 
     const newPositions = eyeIndexes.map((i) => i + delta);
-    // Require at least 1 BODY cell of margin on the destination side after shifting.
-    // This prevents the eye pair from being pushed to the edge of the creature.
-    const minNew = Math.min(...newPositions);
-    const maxNew = Math.max(...newPositions);
-    if (minNew < 1 || maxNew > row.length - 2) {
+    if (newPositions.some((i) => i < 0 || i >= row.length)) {
       return row.slice();
     }
 
@@ -183,14 +179,18 @@ defineMove('walk', {
   ]
 });
 
+let lookDirectionCounter = 0;
 defineMove('look', {
-  sequence: (p) => [
-    { pixels: p.map((row) => row.slice()), duration: 6 },
-    { pixels: lookLeft(p), duration: 4 },
-    { pixels: p.map((row) => row.slice()), duration: 4 },
-    { pixels: lookRight(p), duration: 4 },
-    { pixels: p.map((row) => row.slice()), duration: 8 }
-  ]
+  sequence: (p) => {
+    const goLeft = lookDirectionCounter % 2 === 0;
+    lookDirectionCounter += 1;
+    const shifted = goLeft ? lookLeft(p) : lookRight(p);
+    return [
+      { pixels: p.map((row) => row.slice()), duration: 6 },
+      { pixels: shifted, duration: 4 },
+      { pixels: p.map((row) => row.slice()), duration: 8 }
+    ];
+  }
 });
 
 function defaultScheduler() {
