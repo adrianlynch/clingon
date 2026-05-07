@@ -201,54 +201,68 @@ function randomEventTicks(totalLength, minSpacing, maxSpacing) {
   return ticks;
 }
 
-defineMove('alive', {
-  sequence: (basePixels) => {
-    const cycleLength = 96;
-    const bobStartAt = randomEventTicks(cycleLength, 7, 12);
+function buildTrack(name, cycleLength) {
+  if (name === 'idle') {
+    const bobStartAt = randomEventTicks(cycleLength, 12, 20);
     const bobSet = new Set();
     for (const start of bobStartAt) {
       bobSet.add(start);
       if (Math.random() < 0.3) bobSet.add(start + 1);
     }
-
-    const blinkAt = randomEventTicks(cycleLength, 24, 40);
-    const lookAt = randomEventTicks(cycleLength, 28, 48);
-    const wiggleAt = randomEventTicks(cycleLength, 16, 28);
-
-    const lookDirections = [];
+    return (frame, t) => bob(frame, bobSet.has(t) ? 1 : 0);
+  }
+  if (name === 'blink') {
+    const blinkAt = new Set(randomEventTicks(cycleLength, 50, 80));
+    return (frame, t) => blinkAt.has(t) ? blink(frame) : frame;
+  }
+  if (name === 'look') {
+    const lookAt = randomEventTicks(cycleLength, 60, 90);
+    const directions = [];
     let goLeft = Math.random() < 0.5;
     for (let i = 0; i < lookAt.length; i += 1) {
-      lookDirections.push(goLeft ? 'left' : 'right');
+      directions.push(goLeft ? 'left' : 'right');
       goLeft = !goLeft;
     }
     const lookDuration = 8;
-    const wiggleDuration = 6;
-
-    const frames = [];
-    for (let t = 0; t < cycleLength; t += 1) {
-      const bobPhase = bobSet.has(t) ? 1 : 0;
-      let frame = bob(basePixels, bobPhase);
-
-      const lookIdx = lookAt.findIndex((start) => t >= start && t < start + lookDuration);
-      if (lookIdx >= 0) {
-        frame = lookDirections[lookIdx] === 'left' ? lookLeft(frame) : lookRight(frame);
-      }
-
-      const wiggleStart = wiggleAt.find((start) => t >= start && t < start + wiggleDuration);
-      if (wiggleStart !== undefined) {
-        const wigglePhase = (t - wiggleStart) % 2;
-        frame = wiggle(frame, wigglePhase);
-      }
-
-      if (blinkAt.includes(t)) {
-        frame = blink(frame);
-      }
-
-      frames.push({ pixels: frame, duration: 1 });
-    }
-    return frames;
+    return (frame, t) => {
+      const idx = lookAt.findIndex((start) => t >= start && t < start + lookDuration);
+      if (idx < 0) return frame;
+      return directions[idx] === 'left' ? lookLeft(frame) : lookRight(frame);
+    };
   }
-});
+  if (name === 'wiggle') {
+    const wiggleAt = randomEventTicks(cycleLength, 40, 60);
+    const wiggleDuration = 6;
+    return (frame, t) => {
+      const start = wiggleAt.find((s) => t >= s && t < s + wiggleDuration);
+      if (start === undefined) return frame;
+      return wiggle(frame, (t - start) % 2);
+    };
+  }
+  if (name === 'walk') {
+    const walkAt = randomEventTicks(cycleLength, 35, 55);
+    const walkDuration = 4;
+    return (frame, t) => {
+      const start = walkAt.find((s) => t >= s && t < s + walkDuration);
+      if (start === undefined) return frame;
+      return walk(frame, (t - start) % 2);
+    };
+  }
+  throw new Error(`Move "${name}" cannot run in parallel mode. Built-in parallel-mode moves: idle, blink, look, wiggle, walk.`);
+}
+
+export function composeParallel(basePixels, moveNames, cycleLength = 160) {
+  const tracks = moveNames.map((name) => buildTrack(name, cycleLength));
+  const frames = [];
+  for (let t = 0; t < cycleLength; t += 1) {
+    let frame = basePixels;
+    for (const track of tracks) {
+      frame = track(frame, t);
+    }
+    frames.push({ pixels: frame, duration: 1 });
+  }
+  return frames;
+}
 
 defineMove('look', {
   sequence: (p) => {
@@ -278,7 +292,8 @@ function defaultScheduler() {
 export function animateClingon(options = {}) {
   const {
     name, size, color = true,
-    frames: moveList = ['alive'],
+    frames: moveList = ['idle', 'blink', 'look', 'wiggle'],
+    mode = 'parallel',
     fps = 8,
     loops = Infinity,
     seconds,
@@ -297,7 +312,9 @@ export function animateClingon(options = {}) {
     return { stop() {}, done };
   }
 
-  const frames = buildFrames(clingon.pixels, moveList);
+  const frames = mode === 'parallel'
+    ? composeParallel(clingon.pixels, moveList)
+    : buildFrames(clingon.pixels, moveList);
   const renderedFrames = frames.map((frame) => ({
     ansi: renderAnsi(frame.pixels, clingon.palette, { color }),
     duration: frame.duration

@@ -29,9 +29,10 @@ Options:
                       Suitable for statuslines, prompts, and tmux status bars.
       --animate         Animate the creature in place. Loops until Ctrl-C.
       --fps <n>         Animation frames per second (1-30). Default 8.
-      --frames <list>   Comma-separated moves: alive, idle, blink, look, wiggle, walk.
-                        Default 'alive' (composes bob + blinks + looks + wiggles
-                        on a single timeline). Other moves play sequentially.
+      --frames <list>   Comma-separated moves: idle, blink, look, wiggle, walk.
+                        Default 'idle,blink,look,wiggle'.
+      --mode <mode>     'parallel' (default): all moves layer on one timeline.
+                        'sequence': moves play one after another, looping.
       --seconds <n>     Run animation for N seconds then exit.
       --pad <n>       Add padding around terminal output
       --pad-h <n>     Add spaces before each terminal output line
@@ -76,6 +77,7 @@ export async function runCli(args, io) {
           size: options.size,
           color: useColor,
           frames: options.animateFrames,
+          mode: options.animateMode,
           fps: options.fps,
           seconds: options.seconds,
           stream: io.stdout,
@@ -171,7 +173,14 @@ function parseCount(value, option) {
   return count;
 }
 
-const BUILT_IN_MOVES = ['alive', 'idle', 'blink', 'look', 'wiggle', 'walk'];
+const BUILT_IN_MOVES = ['idle', 'blink', 'look', 'wiggle', 'walk'];
+
+function parseMode(value) {
+  if (value !== 'sequence' && value !== 'parallel') {
+    throw new Error(`--mode must be 'sequence' or 'parallel', got '${value}'.`);
+  }
+  return value;
+}
 
 function parseFps(value) {
   const n = Number.parseInt(value, 10);
@@ -195,7 +204,8 @@ function parseFramesList(value) {
 function parseArgs(args) {
   const options = {
     animate: false,
-    animateFrames: ['alive'],
+    animateFrames: ['idle', 'blink', 'look', 'wiggle'],
+    animateMode: 'parallel',
     color: true,
     fps: 8,
     help: false,
@@ -286,6 +296,11 @@ function parseArgs(args) {
       options.animateFrames = parseFramesList(args[index]);
     } else if (arg.startsWith('--frames=')) {
       options.animateFrames = parseFramesList(arg.slice('--frames='.length));
+    } else if (arg === '--mode') {
+      index += 1;
+      options.animateMode = parseMode(args[index]);
+    } else if (arg.startsWith('--mode=')) {
+      options.animateMode = parseMode(arg.slice('--mode='.length));
     } else if (arg === '--seconds') {
       index += 1;
       options.seconds = parseCount(args[index], arg);
