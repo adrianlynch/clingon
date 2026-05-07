@@ -2,26 +2,29 @@
 set -eu
 
 zshrc=1
-size="tiny"
-startup_flags="--welcome --date --cwd --git --pad-v=1"
+startup_flags="--tiny --welcome --date --cwd --git --pad-v=1"
+custom_startup_flags=0
 
 append_startup_flag() {
+  if [ "$custom_startup_flags" -eq 0 ]; then
+    startup_flags=""
+    custom_startup_flags=1
+  fi
+
   escaped=$(printf "%s" "$1" | sed "s/'/'\\\\''/g")
   startup_flags="${startup_flags}${startup_flags:+ }'$escaped'"
 }
 
 usage() {
   cat <<'EOF'
-Usage: install.sh [options] [-- clingon-options]
+Usage: install.sh [options] [clingon-options]
 
 Options:
   --zshrc          Add clingon to ~/.zshrc (default)
   --no-zshrc       Install only, do not edit ~/.zshrc
-  --size <size>    Startup size: tiny, small, normal, or large
-  --size=<size>    Startup size: tiny, small, normal, or large
   -h, --help       Show help
 
-Anything after -- is written to ~/.zshrc as clingon startup options.
+Any other options are written to ~/.zshrc as clingon startup options.
 EOF
 }
 
@@ -35,46 +38,19 @@ while [ "$#" -gt 0 ]; do
       zshrc=0
       shift
       ;;
-    --size)
-      if [ "$#" -lt 2 ]; then
-        echo "install.sh: --size requires a value" >&2
-        exit 1
-      fi
-      size="$2"
-      shift 2
-      ;;
-    --size=*)
-      size="${1#--size=}"
-      shift
-      ;;
     --)
       shift
-      startup_flags=""
-      while [ "$#" -gt 0 ]; do
-        append_startup_flag "$1"
-        shift
-      done
       ;;
     -h|--help)
       usage
       exit 0
       ;;
     *)
-      echo "install.sh: unknown option: $1" >&2
-      usage >&2
-      exit 1
+      append_startup_flag "$1"
+      shift
       ;;
   esac
 done
-
-case "$size" in
-  tiny|small|normal|large) ;;
-  *)
-    echo "install.sh: invalid size: $size" >&2
-    echo "install.sh: expected tiny, small, normal, or large" >&2
-    exit 1
-    ;;
-esac
 
 if ! command -v brew >/dev/null 2>&1; then
   echo "install.sh: Homebrew is required: https://brew.sh" >&2
@@ -85,7 +61,7 @@ brew install adrianlynch/tap/clingon
 
 if [ "$zshrc" -eq 1 ]; then
   zshrc_file="${ZDOTDIR:-$HOME}/.zshrc"
-  startup_line="clingon --size $size $startup_flags"
+  startup_line="clingon $startup_flags"
 
   touch "$zshrc_file"
 
