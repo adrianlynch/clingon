@@ -51,6 +51,26 @@ Terminal dimensions are `large` 22x8, `normal` 14x6, `small` 10x5, and `tiny` 8x
 
 ## Install
 
+Install with Homebrew and add clingon to `~/.zshrc`:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/adrianlynch/clingon/main/install.sh | sh
+```
+
+Install only, without changing `~/.zshrc`:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/adrianlynch/clingon/main/install.sh | sh -s -- --no-zshrc
+```
+
+Choose the startup size:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/adrianlynch/clingon/main/install.sh | sh -s -- --size small
+```
+
+Install with npm:
+
 ```sh
 npm install @adrianlynch/clingon
 ```
