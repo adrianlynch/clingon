@@ -194,15 +194,16 @@ defineMove('walk', {
 defineMove('look', {
   sequence: (p) => {
     const forward = () => ({ pixels: p.map((row) => row.slice()), duration: 6 + Math.floor(Math.random() * 4) });
-    const glance = () => ({
-      pixels: Math.random() < 0.5 ? lookLeft(p) : lookRight(p),
-      duration: 6 + Math.floor(Math.random() * 3)
-    });
     const numGlances = 1 + Math.floor(Math.random() * 3); // 1-3 glances per cycle
+    let goLeft = Math.random() < 0.5;
     const frames = [forward()];
     for (let i = 0; i < numGlances; i += 1) {
-      frames.push(glance());
+      frames.push({
+        pixels: goLeft ? lookLeft(p) : lookRight(p),
+        duration: 6 + Math.floor(Math.random() * 3)
+      });
       frames.push(forward());
+      goLeft = !goLeft;
     }
     return frames;
   }
