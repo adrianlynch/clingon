@@ -125,6 +125,10 @@ Clingon names are hidden by default. Add `--name` where you want the name to app
 
 ## Animation
 
+<p>
+  <img src="./assets/orlando-reginald-morris-junior-animated.svg" width="260" alt="animated orlando-reginald-morris-junior clingon">
+</p>
+
 Animate the creature in place — bob, blink, look, wiggle, walk. Loops until Ctrl-C.
 
 ```sh

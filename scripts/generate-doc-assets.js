@@ -1,5 +1,5 @@
 import { writeFileSync } from 'node:fs';
-import { generateClingon } from '../src/index.js';
+import { generateClingon, composeParallel } from '../src/index.js';
 
 const CELL = 16;
 const CARD_FILL = '#f6f8fa';
@@ -91,12 +91,25 @@ const examples = [
   }
 ];
 
+const animatedExamples = [
+  {
+    file: 'assets/orlando-reginald-morris-junior-animated.svg',
+    title: 'orlando-reginald-morris-junior (animated)',
+    name: 'orlando-reginald-morris-junior',
+    size: 'normal'
+  }
+];
+
 for (const example of characterExamples) {
   writeFileSync(example.file, renderCharacterExample(example));
 }
 
 for (const example of examples) {
   writeFileSync(example.file, renderExample(example));
+}
+
+for (const example of animatedExamples) {
+  writeFileSync(example.file, renderAnimatedExample(example));
 }
 
 function renderCharacterExample(example) {
@@ -170,6 +183,71 @@ function renderExample(example) {
     renderText({
       x: width / 2,
       y: 174,
+      text: example.title,
+      fill: TEXT,
+      anchor: 'middle',
+      size: 13
+    }),
+    '</svg>'
+  ].join('\n');
+}
+
+function renderAnimatedExample(example) {
+  const clingon = generateClingon({ name: example.name, size: example.size, color: false });
+  const seed = (clingon.shapeSeed ^ (clingon.paletteSeed * 1024)) >>> 0;
+  const cycleLength = 64;
+  const fps = 8;
+  const frames = composeParallel(
+    clingon.pixels,
+    ['idle', 'blink', 'look', 'wiggle', 'walk'],
+    cycleLength,
+    seed
+  );
+  const totalDur = (cycleLength / fps).toFixed(2);
+
+  const width = 300;
+  const height = 210;
+  const terminalX = 20;
+  const terminalY = 18;
+  const terminalWidth = width - 40;
+  const terminalHeight = 146;
+  const artWidth = clingon.pixels[0].length * CELL;
+  const artHeight = clingon.pixels.length * CELL;
+  const artX = terminalX + Math.floor((terminalWidth - artWidth) / 2);
+  const artY = terminalY + Math.floor((terminalHeight - artHeight) / 2);
+
+  // Deduplicate frames so identical pixel grids share a single SVG group.
+  const uniqueFrames = new Map();
+  frames.forEach((frame, i) => {
+    const key = JSON.stringify(frame.pixels);
+    if (!uniqueFrames.has(key)) {
+      uniqueFrames.set(key, {
+        rects: renderPixels({ pixels: frame.pixels, palette: clingon.palette }, artX, artY),
+        indexes: new Set()
+      });
+    }
+    uniqueFrames.get(key).indexes.add(i);
+  });
+
+  const frameGroups = [...uniqueFrames.values()].map(({ rects, indexes }) => {
+    const values = Array.from({ length: cycleLength + 1 }, (_, j) => (indexes.has(j % cycleLength) ? '1' : '0')).join(';');
+    const keyTimes = Array.from({ length: cycleLength + 1 }, (_, j) => (j / cycleLength).toFixed(4)).join(';');
+    return [
+      '  <g opacity="0">',
+      `    <animate attributeName="opacity" values="${values}" keyTimes="${keyTimes}" dur="${totalDur}s" repeatCount="indefinite" calcMode="discrete"/>`,
+      ...rects.map((r) => `  ${r}`),
+      '  </g>'
+    ].join('\n');
+  });
+
+  return [
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="animated ${escapeText(example.title)} clingon">`,
+    `  <rect width="${width}" height="${height}" rx="8" fill="${CARD_FILL}"/>`,
+    `  <rect x="${terminalX}" y="${terminalY}" width="${terminalWidth}" height="${terminalHeight}" rx="6" fill="${TERMINAL_FILL}" stroke="${BORDER}"/>`,
+    ...frameGroups,
+    renderText({
+      x: width / 2,
+      y: 194,
       text: example.title,
       fill: TEXT,
       anchor: 'middle',
