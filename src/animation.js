@@ -191,28 +191,39 @@ defineMove('walk', {
   ]
 });
 
-function randomEventTicks(totalLength, minSpacing, maxSpacing) {
+function mulberry32(seed) {
+  let s = seed >>> 0;
+  return function next() {
+    s = (s + 0x6d2b79f5) >>> 0;
+    let t = s;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function randomEventTicks(totalLength, minSpacing, maxSpacing, rng = Math.random) {
   const ticks = [];
-  let t = Math.floor(Math.random() * minSpacing);
+  let t = Math.floor(rng() * minSpacing);
   while (t < totalLength) {
     ticks.push(t);
-    t += minSpacing + Math.floor(Math.random() * (maxSpacing - minSpacing + 1));
+    t += minSpacing + Math.floor(rng() * (maxSpacing - minSpacing + 1));
   }
   return ticks;
 }
 
-function buildTrack(name, cycleLength) {
+function buildTrack(name, cycleLength, rng) {
   if (name === 'idle') {
-    const bobStartAt = randomEventTicks(cycleLength, 12, 20);
+    const bobStartAt = randomEventTicks(cycleLength, 12, 20, rng);
     const bobSet = new Set();
     for (const start of bobStartAt) {
       bobSet.add(start);
-      if (Math.random() < 0.3) bobSet.add(start + 1);
+      if (rng() < 0.3) bobSet.add(start + 1);
     }
     return (frame, t) => bob(frame, bobSet.has(t) ? 1 : 0);
   }
   if (name === 'blink') {
-    const blinkAt = randomEventTicks(cycleLength, 24, 44);
+    const blinkAt = randomEventTicks(cycleLength, 24, 44, rng);
     const blinkDuration = 2;
     return (frame, t) => {
       const active = blinkAt.some((start) => t >= start && t < start + blinkDuration);
@@ -220,14 +231,14 @@ function buildTrack(name, cycleLength) {
     };
   }
   if (name === 'look') {
-    const lookAt = randomEventTicks(cycleLength, 40, 70);
+    const lookAt = randomEventTicks(cycleLength, 40, 70, rng);
     const directions = [];
-    let goLeft = Math.random() < 0.5;
+    let goLeft = rng() < 0.5;
     for (let i = 0; i < lookAt.length; i += 1) {
       directions.push(goLeft ? 'left' : 'right');
       goLeft = !goLeft;
     }
-    const eventLength = 10; // 1 entry-blink + 8 held + 1 exit-blink
+    const eventLength = 10;
     return (frame, t) => {
       const idx = lookAt.findIndex((start) => t >= start && t < start + eventLength);
       if (idx < 0) return frame;
@@ -237,7 +248,7 @@ function buildTrack(name, cycleLength) {
     };
   }
   if (name === 'wiggle') {
-    const wiggleAt = randomEventTicks(cycleLength, 40, 60);
+    const wiggleAt = randomEventTicks(cycleLength, 40, 60, rng);
     const wiggleDuration = 6;
     return (frame, t) => {
       const start = wiggleAt.find((s) => t >= s && t < s + wiggleDuration);
@@ -246,7 +257,7 @@ function buildTrack(name, cycleLength) {
     };
   }
   if (name === 'walk') {
-    const walkAt = randomEventTicks(cycleLength, 35, 55);
+    const walkAt = randomEventTicks(cycleLength, 35, 55, rng);
     const walkDuration = 4;
     return (frame, t) => {
       const start = walkAt.find((s) => t >= s && t < s + walkDuration);
@@ -257,8 +268,9 @@ function buildTrack(name, cycleLength) {
   throw new Error(`Move "${name}" cannot run in parallel mode. Built-in parallel-mode moves: idle, blink, look, wiggle, walk.`);
 }
 
-export function composeParallel(basePixels, moveNames, cycleLength = 160) {
-  const tracks = moveNames.map((name) => buildTrack(name, cycleLength));
+export function composeParallel(basePixels, moveNames, cycleLength = 160, seed = null) {
+  const rng = seed != null ? mulberry32(seed) : Math.random;
+  const tracks = moveNames.map((name) => buildTrack(name, cycleLength, rng));
   const frames = [];
   for (let t = 0; t < cycleLength; t += 1) {
     let frame = basePixels;
@@ -313,9 +325,11 @@ export function animateClingon(options = {}) {
   } = options;
 
   const clingon = generateClingon({ name, size, color });
-  // Resolve frames eagerly so unknown moves surface as errors before any output.
+  // Animation rhythm derives from the same identity that drives shape and palette,
+  // so the same name always produces the same pattern of bobs/blinks/looks.
+  const animationSeed = (clingon.shapeSeed ^ (clingon.paletteSeed * 1024)) >>> 0;
   const frames = mode === 'parallel'
-    ? composeParallel(clingon.pixels, moveList)
+    ? composeParallel(clingon.pixels, moveList, 160, animationSeed)
     : buildFrames(clingon.pixels, moveList);
 
   let resolveDone;

@@ -301,7 +301,10 @@ async function runAnimatedGallery({ count, size, color, termColumns, stream, fps
   const clingons = [];
   for (let i = 0; i < count; i += 1) clingons.push(generateClingon({ size, color }));
   const moves = ['idle', 'blink', 'look', 'wiggle', 'walk'];
-  const framesPerClingon = clingons.map((c) => composeParallel(c.pixels, moves));
+  const framesPerClingon = clingons.map((c) => {
+    const seed = (c.shapeSeed ^ (c.paletteSeed * 1024)) >>> 0;
+    return composeParallel(c.pixels, moves, 160, seed);
+  });
   const cycleLength = framesPerClingon[0].length;
   const layout = buildGalleryLayout(clingons, termColumns);
 
