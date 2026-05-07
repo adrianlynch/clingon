@@ -12,7 +12,12 @@ Usage:
 
 Options:
       --with-name <name>
-                    Regenerate a specific clingon name
+                    Regenerate a specific clingon by name. Use '*' as a
+                    wildcard for any word slot to randomize that part.
+                    Examples:
+                      orlando-*-morris-*    fix shape, random palette
+                      *-reginald-*-junior   fix palette, random shape
+                      *-*-morris-*          fix only the family word
       --list-names    Print the available word lists for composing names
       --name        Show the clingon name beside the art
   -r, --recolor     Keep the shape from --with-name but choose new colors
@@ -235,6 +240,21 @@ function parseFps(value) {
   return n;
 }
 
+function expandWildcardName(name) {
+  const parts = name.split('-');
+  if (parts.length !== 4) {
+    throw new Error(`Invalid clingon name "${name}". Expected four hyphen-separated words.`);
+  }
+  if (!parts.includes('*')) return name;
+  const lists = nameLists();
+  const slotLists = [lists.first, lists.middle, lists.family, lists.suffix];
+  return parts.map((part, i) => {
+    if (part !== '*') return part;
+    const list = slotLists[i];
+    return list[Math.floor(Math.random() * list.length)];
+  }).join('-');
+}
+
 function parseMovesList(value) {
   if (!value) throw new Error('--moves requires a comma-separated list.');
   const moves = value.split(',').map((s) => s.trim()).filter(Boolean);
@@ -362,9 +382,9 @@ function parseArgs(args) {
       options.infoItems.push({ type: 'name' });
     } else if (arg === '--with-name') {
       index += 1;
-      options.inputName = requireValue(args[index], arg);
+      options.inputName = expandWildcardName(requireValue(args[index], arg));
     } else if (arg.startsWith('--with-name=')) {
-      options.inputName = requireValue(arg.slice('--with-name='.length), '--with-name');
+      options.inputName = expandWildcardName(requireValue(arg.slice('--with-name='.length), '--with-name'));
     } else if (arg === '-c' || arg === '--code') {
       if (hasOptionalValue(args[index + 1])) {
         index += 1;
