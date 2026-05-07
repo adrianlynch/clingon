@@ -204,6 +204,13 @@ function randomEventTicks(totalLength, minSpacing, maxSpacing) {
 defineMove('alive', {
   sequence: (basePixels) => {
     const cycleLength = 96;
+    const bobStartAt = randomEventTicks(cycleLength, 7, 12);
+    const bobSet = new Set();
+    for (const start of bobStartAt) {
+      bobSet.add(start);
+      if (Math.random() < 0.3) bobSet.add(start + 1);
+    }
+
     const blinkAt = randomEventTicks(cycleLength, 24, 40);
     const lookAt = randomEventTicks(cycleLength, 28, 48);
     const wiggleAt = randomEventTicks(cycleLength, 16, 28);
@@ -219,7 +226,7 @@ defineMove('alive', {
 
     const frames = [];
     for (let t = 0; t < cycleLength; t += 1) {
-      const bobPhase = (t % 9 === 4) ? 1 : 0;
+      const bobPhase = bobSet.has(t) ? 1 : 0;
       let frame = bob(basePixels, bobPhase);
 
       const lookIdx = lookAt.findIndex((start) => t >= start && t < start + lookDuration);
