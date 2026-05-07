@@ -10,7 +10,7 @@ const HELP = `clingon
 Usage:
   clingon [options]
 
-*--------- Identity ---------------------------------------------------------
+  *-- Identity ---------------------------------------------------------------
   -w, --with-name <name>  Regenerate a specific clingon. 4 or 5 hyphen-separated
                           words: <first>-<middle>-<family>-<suffix>[-<rhythm>].
                           Use '*' as a wildcard for any slot to randomize it.
@@ -21,13 +21,13 @@ Usage:
                             *-*-*-*-*                    fully random 5-word
   -r, --recolor           Keep the shape from --with-name but choose new colors
 
-*--------- Size -------------------------------------------------------------
+  *-- Size -------------------------------------------------------------------
       --tiny              4x4 grid
       --small             5x5 grid
       --normal            7x6 grid (default)
       --large             11x8 grid
 
-*--------- Output mode (mutually exclusive) ---------------------------------
+  *-- Output mode (mutually exclusive) -----------------------------------------
   -i, --inline            Single-line glyph (for statuslines, prompts)
   -j, --json              JSON output
   -s, --script            Print the JS code that recreates this clingon
@@ -36,7 +36,7 @@ Usage:
                           Combine with --animate to see them all moving.
       --list-names        Print the available word lists for composing names
 
-*--------- Animation --------------------------------------------------------
+  *-- Animation --------------------------------------------------------------
   -a, --animate           Animate the creature in place. Loops until Ctrl-C.
                           The flags below all require --animate.
       --moves <list>      Comma-separated list of behaviors. Built-ins:
@@ -48,7 +48,7 @@ Usage:
       --fps <n>           Animation frames per second (1-30). Default 8.
       --seconds <n>       Run animation for N seconds then exit
 
-*--------- Info panel -------------------------------------------------------
+  *-- Info panel -------------------------------------------------------------
   -n, --name              Show the clingon's name beside the art
       --welcome           Show a time-aware greeting beside the art
       --message <msg>     Show a custom message beside the art
@@ -56,16 +56,16 @@ Usage:
       --cwd               Show the current directory beside the art
       --git               Show the current git branch beside the art
 
-*--------- Padding ----------------------------------------------------------
+  *-- Padding ----------------------------------------------------------------
   -p, --pad <n>           Add padding around terminal output
       --pad-h <n>         Add spaces before each terminal output line
       --pad-v <n>         Add blank lines before and after terminal output
 
-*--------- Style ------------------------------------------------------------
+  *-- Style ------------------------------------------------------------------
       --no-color          Render without ANSI color
   -l, --light             Use a darker palette tuned for light terminals
 
-*--------- Other ------------------------------------------------------------
+  *-- Other ------------------------------------------------------------------
   -h, --help              Show help
   -v, --version           Show version
 
