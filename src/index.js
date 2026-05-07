@@ -87,7 +87,8 @@ export function generateClingon(options = {}) {
     palette,
     pixels: shape,
     ansi: renderAnsi(shape, palette, options),
-    text: renderText(shape)
+    text: renderText(shape),
+    inline: renderInline(shape, palette, options)
   };
 }
 
@@ -493,7 +494,7 @@ function fillSymmetric(pixels, y, center, halfWidth, value) {
   }
 }
 
-function renderAnsi(shape, palette, options = {}) {
+export function renderAnsi(shape, palette, options = {}) {
   const useColor = options.color !== false;
   const rows = shape.map((row) => row.map((cell) => renderCell(cell, palette, useColor)).join(''));
   return rows.join('\n');
@@ -501,6 +502,56 @@ function renderAnsi(shape, palette, options = {}) {
 
 function renderText(shape) {
   return shape.map((row) => row.map(renderTextCell).join('')).join('\n');
+}
+
+export function renderInline(shape, palette, options = {}) {
+  const useColor = options.color !== false;
+  const row = pickInlineRow(shape);
+  return row.map((cell) => renderInlineCell(cell, palette, useColor)).join('');
+}
+
+function pickInlineRow(shape) {
+  for (let y = 0; y < shape.length; y += 1) {
+    if (shape[y].some((cell) => (
+      cell === EYE_DARK_LEFT || cell === EYE_DARK_RIGHT
+        || cell === EYE_LIGHT_LEFT || cell === EYE_LIGHT_RIGHT
+    ))) {
+      return shape[y];
+    }
+  }
+  return shape[Math.min(1, shape.length - 1)];
+}
+
+function renderInlineCell(cell, palette, useColor) {
+  if (cell === EMPTY) return ' ';
+  if (!useColor) return inlineTextGlyph(cell);
+  const color = inlineCellColor(cell, palette);
+  const glyph = inlineColorGlyph(cell);
+  return `${ansiColor(color)}${glyph}[0m`;
+}
+
+function inlineTextGlyph(cell) {
+  if (cell === BODY) return '[';
+  if (cell === ACCENT || cell === ACCENT_NARROW || cell === ACCENT_NARROW_RIGHT) return '#';
+  if (cell === DARK || cell === DARK_NARROW || cell === DARK_NARROW_RIGHT) return '.';
+  if (cell === EYE_DARK_LEFT || cell === EYE_DARK_RIGHT) return 'o';
+  if (cell === EYE_LIGHT_LEFT || cell === EYE_LIGHT_RIGHT) return 'O';
+  return ' ';
+}
+
+function inlineColorGlyph(cell) {
+  if (cell === EYE_DARK_LEFT || cell === EYE_DARK_RIGHT
+      || cell === EYE_LIGHT_LEFT || cell === EYE_LIGHT_RIGHT) return '◉';
+  return '█';
+}
+
+function inlineCellColor(cell, palette) {
+  if (cell === BODY) return palette.body;
+  if (cell === ACCENT || cell === ACCENT_NARROW || cell === ACCENT_NARROW_RIGHT) return palette.accent;
+  if (cell === DARK || cell === DARK_NARROW || cell === DARK_NARROW_RIGHT) return palette.dark;
+  if (cell === EYE_DARK_LEFT || cell === EYE_DARK_RIGHT) return palette.dark;
+  if (cell === EYE_LIGHT_LEFT || cell === EYE_LIGHT_RIGHT) return palette.accent;
+  return palette.body;
 }
 
 function renderCell(cell, palette, useColor) {

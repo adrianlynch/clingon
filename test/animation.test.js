@@ -5,7 +5,8 @@ import {
   ACCENT_NARROW, DARK_NARROW,
   ACCENT_NARROW_RIGHT, DARK_NARROW_RIGHT,
   EYE_DARK_LEFT, EYE_DARK_RIGHT,
-  EYE_LIGHT_LEFT, EYE_LIGHT_RIGHT
+  EYE_LIGHT_LEFT, EYE_LIGHT_RIGHT,
+  generateClingon, renderInline
 } from '../src/index.js';
 import {
   hideCursor, showCursor, cursorUp,
@@ -13,6 +14,8 @@ import {
   moveCursor, clearScreen,
   getSize, setRawMode
 } from '../src/terminal.js';
+import { blink, bob, wiggle, walk } from '../src/animation.js';
+import { runCli } from '../src/cli.js';
 
 function fakeStream() {
   return { writes: [], write(chunk) { this.writes.push(chunk); } };
@@ -83,9 +86,6 @@ test('setRawMode toggles when supported', () => {
   setRawMode(input, false);
   assert.equal(last, false);
 });
-
-import { blink, bob, wiggle, walk } from '../src/animation.js';
-import { generateClingon } from '../src/index.js';
 
 test('blink replaces eye cells in eye rows with BODY', () => {
   const clingon = generateClingon({ name: 'orlando-reginald-morris-junior', size: 'tiny', color: false });
@@ -189,4 +189,81 @@ test('walk returns input unchanged when no foot row exists', () => {
   const pixels = [[1, 1], [1, 1], [1, 1]];
   const after = walk(pixels, 1);
   assert.deepEqual(after, pixels);
+});
+
+test('renderInline (text mode) produces a single line with creature width', () => {
+  const tiny = generateClingon({ name: 'orlando-reginald-morris-junior', size: 'tiny', color: false });
+  const inline = renderInline(tiny.pixels, tiny.palette, { color: false });
+  assert.equal(inline.split('\n').length, 1);
+  assert.equal(inline.length, tiny.pixels[0].length);
+});
+
+test('renderInline color mode emits ANSI escape sequences', () => {
+  const tiny = generateClingon({ name: 'orlando-reginald-morris-junior', size: 'tiny', color: false });
+  const inline = renderInline(tiny.pixels, tiny.palette, { color: true });
+  assert.match(inline, /\[38;2;\d+;\d+;\d+m/);
+  assert.match(inline, /\[0m$/);
+});
+
+test('renderInline color-mode visible length matches creature width', () => {
+  const tiny = generateClingon({ name: 'orlando-reginald-morris-junior', size: 'tiny', color: false });
+  const inline = renderInline(tiny.pixels, tiny.palette, { color: true });
+  const visible = inline.replace(/\[[0-9;]*m/g, '');
+  assert.equal(visible.length, tiny.pixels[0].length);
+});
+
+test('renderInline width matches creature size', () => {
+  for (const [size, expected] of [['tiny', 4], ['small', 5], ['normal', 7], ['large', 11]]) {
+    const c = generateClingon({ name: 'orlando-reginald-morris-junior', size, color: false });
+    const inline = renderInline(c.pixels, c.palette, { color: false });
+    assert.equal(inline.length, expected, `size ${size} expected width ${expected} got ${inline.length}`);
+  }
+});
+
+test('generateClingon returns inline alongside ansi and text', () => {
+  const c = generateClingon({ name: 'orlando-reginald-morris-junior', size: 'tiny', color: false });
+  assert.equal(typeof c.inline, 'string');
+  assert.equal(c.inline.split('\n').length, 1);
+  assert.equal(c.inline, renderInline(c.pixels, c.palette, { color: false }));
+});
+
+function createWritable() {
+  return { output: '', write(chunk) { this.output += chunk; } };
+}
+
+test('cli --inline produces a single line', () => {
+  const stdout = createWritable();
+  const stderr = createWritable();
+  runCli(['--with-name', 'orlando-reginald-morris-junior', '--tiny', '--no-color', '--inline'], {
+    stdout, stderr, env: {}
+  });
+  const newlines = (stdout.output.match(/\n/g) || []).length;
+  assert.equal(newlines, 1);
+  assert.match(stdout.output, /^[\[oO\.# ]{4}\n$/);
+  assert.equal(stderr.output, '');
+});
+
+test('cli --inline rejects info-panel flags', () => {
+  const stdout = createWritable();
+  const stderr = createWritable();
+  runCli(['--inline', '--message', 'hi'], { stdout, stderr, env: {} });
+  assert.match(stderr.output, /inline/i);
+  process.exitCode = 0;
+});
+
+test('cli --inline rejects --json', () => {
+  const stdout = createWritable();
+  const stderr = createWritable();
+  runCli(['--inline', '--json'], { stdout, stderr, env: {} });
+  assert.match(stderr.output, /inline.*json|json.*inline/i);
+  process.exitCode = 0;
+});
+
+test('cli --inline honors --pad-h', () => {
+  const stdout = createWritable();
+  const stderr = createWritable();
+  runCli(['--with-name', 'orlando-reginald-morris-junior', '--tiny', '--no-color', '--inline', '--pad-h=2'], {
+    stdout, stderr, env: {}
+  });
+  assert.match(stdout.output, /^  [\[oO\.# ]{4}\n$/);
 });

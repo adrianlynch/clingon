@@ -25,6 +25,8 @@ Options:
       --date          Show today's date beside the clingon
       --cwd           Show the current directory beside the clingon
       --git           Show the current git branch beside the clingon
+      --inline        Render a compact single-line glyph (one character per cell).
+                      Suitable for statuslines, prompts, and tmux status bars.
       --pad <n>       Add padding around terminal output
       --pad-h <n>     Add spaces before each terminal output line
       --pad-v <n>     Add blank lines before and after terminal output
@@ -51,6 +53,10 @@ export function runCli(args, io) {
       return;
     }
 
+    if (options.inline) {
+      validateInlineConflicts(options);
+    }
+
     const useColor = options.color && shouldUseColor(io);
     const clingon = generateClingon({
       name: options.inputName,
@@ -62,6 +68,11 @@ export function runCli(args, io) {
 
     if (options.json) {
       io.stdout.write(`${JSON.stringify(toJson(clingon), null, 2)}\n`);
+      return;
+    }
+
+    if (options.inline) {
+      writeInline(io.stdout, clingon, options);
       return;
     }
 
@@ -96,6 +107,24 @@ function writeTerminalOutput(stdout, output) {
   stdout.write(`${output}\n`);
 }
 
+function validateInlineConflicts(options) {
+  if (options.json) throw new Error('--inline cannot be combined with --json.');
+  if (options.script) throw new Error('--inline cannot be combined with --script.');
+  if (options.infoItems.length > 0) {
+    throw new Error('--inline cannot be combined with --welcome, --message, --date, --cwd, --git, or --name.');
+  }
+}
+
+function writeInline(stdout, clingon, options) {
+  const padded = options.padH > 0 ? ' '.repeat(options.padH) + clingon.inline : clingon.inline;
+  if (options.padV > 0) {
+    const blanks = Array(options.padV).fill('').join('\n');
+    stdout.write(`${blanks}\n${padded}\n${blanks}\n`);
+  } else {
+    stdout.write(`${padded}\n`);
+  }
+}
+
 function parseCount(value, option) {
   const count = Number.parseInt(requireValue(value, option), 10);
 
@@ -110,6 +139,7 @@ function parseArgs(args) {
   const options = {
     color: true,
     help: false,
+    inline: false,
     inputName: undefined,
     infoItems: [],
     json: false,
@@ -181,6 +211,8 @@ function parseArgs(args) {
       options.size = requireValue(arg.slice('--size='.length), '--size');
     } else if (arg === '--no-color') {
       options.color = false;
+    } else if (arg === '--inline') {
+      options.inline = true;
     } else if (arg === '-n' || arg === '--name') {
       options.infoItems.push({ type: 'name' });
     } else if (arg === '--with-name') {
