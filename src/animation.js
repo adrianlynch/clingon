@@ -191,6 +191,58 @@ defineMove('walk', {
   ]
 });
 
+function randomEventTicks(totalLength, minSpacing, maxSpacing) {
+  const ticks = [];
+  let t = Math.floor(Math.random() * minSpacing);
+  while (t < totalLength) {
+    ticks.push(t);
+    t += minSpacing + Math.floor(Math.random() * (maxSpacing - minSpacing + 1));
+  }
+  return ticks;
+}
+
+defineMove('alive', {
+  sequence: (basePixels) => {
+    const cycleLength = 96;
+    const blinkAt = randomEventTicks(cycleLength, 24, 40);
+    const lookAt = randomEventTicks(cycleLength, 28, 48);
+    const wiggleAt = randomEventTicks(cycleLength, 16, 28);
+
+    const lookDirections = [];
+    let goLeft = Math.random() < 0.5;
+    for (let i = 0; i < lookAt.length; i += 1) {
+      lookDirections.push(goLeft ? 'left' : 'right');
+      goLeft = !goLeft;
+    }
+    const lookDuration = 8;
+    const wiggleDuration = 6;
+
+    const frames = [];
+    for (let t = 0; t < cycleLength; t += 1) {
+      const bobPhase = (t % 9 === 4) ? 1 : 0;
+      let frame = bob(basePixels, bobPhase);
+
+      const lookIdx = lookAt.findIndex((start) => t >= start && t < start + lookDuration);
+      if (lookIdx >= 0) {
+        frame = lookDirections[lookIdx] === 'left' ? lookLeft(frame) : lookRight(frame);
+      }
+
+      const wiggleStart = wiggleAt.find((start) => t >= start && t < start + wiggleDuration);
+      if (wiggleStart !== undefined) {
+        const wigglePhase = (t - wiggleStart) % 2;
+        frame = wiggle(frame, wigglePhase);
+      }
+
+      if (blinkAt.includes(t)) {
+        frame = blink(frame);
+      }
+
+      frames.push({ pixels: frame, duration: 1 });
+    }
+    return frames;
+  }
+});
+
 defineMove('look', {
   sequence: (p) => {
     const forward = () => ({ pixels: p.map((row) => row.slice()), duration: 6 + Math.floor(Math.random() * 4) });
@@ -219,7 +271,7 @@ function defaultScheduler() {
 export function animateClingon(options = {}) {
   const {
     name, size, color = true,
-    frames: moveList = ['idle', 'blink', 'look', 'wiggle', 'idle'],
+    frames: moveList = ['alive'],
     fps = 8,
     loops = Infinity,
     seconds,
