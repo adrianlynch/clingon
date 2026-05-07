@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { basename, resolve as resolvePath } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { generateClingon, snippetFor } from './index.js';
+import { generateClingon, nameLists, snippetFor } from './index.js';
 
 const MAX_INFO_LINES = 5;
 
@@ -13,6 +13,7 @@ Usage:
 Options:
       --with-name <name>
                     Regenerate a specific clingon name
+      --list-names    Print the available word lists for composing names
       --name        Show the clingon name beside the art
   -r, --recolor     Keep the shape from --with-name but choose new colors
       --large         Render the largest clingon
@@ -65,6 +66,17 @@ export async function runCli(args, io) {
 
     if (options.version) {
       io.stdout.write('0.2.0\n');
+      return;
+    }
+
+    if (options.listNames) {
+      const lists = nameLists();
+      io.stdout.write(`First (shape, position 1):\n  ${lists.first.join(', ')}\n\n`);
+      io.stdout.write(`Middle (palette, position 2):\n  ${lists.middle.join(', ')}\n\n`);
+      io.stdout.write(`Family (shape, position 3):\n  ${lists.family.join(', ')}\n\n`);
+      io.stdout.write(`Suffix (palette, position 4):\n  ${lists.suffix.join(', ')}\n\n`);
+      io.stdout.write(`Compose: <first>-<middle>-<family>-<suffix>\n`);
+      io.stdout.write(`Use with: clingon --with-name <first>-<middle>-<family>-<suffix>\n`);
       return;
     }
 
@@ -236,6 +248,7 @@ function parseArgs(args) {
     animateMoves: undefined,
     animateInSequence: false,
     animateOnce: false,
+    listNames: false,
     loadModules: [],
     color: true,
     fps: 8,
@@ -331,6 +344,8 @@ function parseArgs(args) {
       options.loadModules.push(requireValue(args[index], arg));
     } else if (arg.startsWith('--load=')) {
       options.loadModules.push(requireValue(arg.slice('--load='.length), '--load'));
+    } else if (arg === '--list-names') {
+      options.listNames = true;
     } else if (arg === '--normal') {
       options.size = 'normal';
     } else if (arg === '--fps') {

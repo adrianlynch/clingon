@@ -72,6 +72,15 @@ const PALETTES = [
   ['#10b981', '#a855f7', '#064e3b']
 ];
 
+export function nameLists() {
+  return {
+    first: [...FIRST_NAMES],
+    middle: [...MIDDLE_NAMES],
+    family: [...FAMILY_NAMES],
+    suffix: [...SUFFIX_NAMES]
+  };
+}
+
 export function generateClingon(options = {}) {
   const requestedName = options.name ?? options.code;
   const requested = requestedName ? parseCode(requestedName) : randomCode();
