@@ -196,7 +196,7 @@ defineMove('look', {
     const forward = () => ({ pixels: p.map((row) => row.slice()), duration: 6 + Math.floor(Math.random() * 4) });
     const glance = () => ({
       pixels: Math.random() < 0.5 ? lookLeft(p) : lookRight(p),
-      duration: 3 + Math.floor(Math.random() * 3)
+      duration: 6 + Math.floor(Math.random() * 3)
     });
     const numGlances = 1 + Math.floor(Math.random() * 3); // 1-3 glances per cycle
     const frames = [forward()];
