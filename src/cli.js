@@ -81,12 +81,25 @@ export async function runCli(args, io) {
     if (options.help) {
       io.stdout.write(HELP);
       const useColor = options.color && shouldUseColor(io);
-      const greeter = generateClingon({
-        size: 'tiny',
+      const exampleClingon = generateClingon({
+        size: 'small',
         color: useColor,
         lightMode: options.lightMode
       });
-      io.stdout.write(`\n  ${greeter.ansi.split('\n').join('\n  ')}\n  ${greeter.name}\n`);
+      const exampleOptions = {
+        padH: 2,
+        padV: 2,
+        useColor,
+        script: false,
+        infoItems: [
+          { type: 'welcome' },
+          { type: 'name' },
+          { type: 'date' },
+          { type: 'cwd' },
+          { type: 'git' }
+        ]
+      };
+      io.stdout.write('\n' + formatTerminalOutput(exampleClingon, exampleOptions) + '\n');
       return;
     }
 
