@@ -10,53 +10,64 @@ const HELP = `clingon
 Usage:
   clingon [options]
 
-Options:
-      --with-name <name>
-                    Regenerate a specific clingon. 4 or 5 hyphen-separated
-                    words: <first>-<middle>-<family>-<suffix>[-<rhythm>]
-                    Use '*' as a wildcard for any slot to randomize it.
-                    Examples:
-                      orlando-*-morris-*           fix shape, random palette
-                      *-reginald-*-junior          fix palette, random shape
-                      orlando-*-morris-*-bouncy    fix shape and rhythm
-                      *-*-*-*-*                    fully random 5-word
-      --list-names    Print the available word lists for composing names
-      --gallery [n]   Show n random clingons (default 8) with their names,
-                      laid out as a grid that auto-fits the terminal width.
-                      Combine with --animate to see them all moving.
-      --name        Show the clingon name beside the art
-  -r, --recolor     Keep the shape from --with-name but choose new colors
-      --large         Render the largest clingon
-      --normal        Render a normal-sized clingon (default)
-      --small         Render a smaller clingon
-      --tiny          Render the tiniest clingon
-  -s, --script        Print the JavaScript needed to recreate the clingon
-  -j, --json          Print JSON data instead of terminal art
-      --welcome       Show a time-aware greeting beside the clingon
-      --message <msg> Show a custom message beside the clingon
-      --date          Show today's date beside the clingon
-      --cwd           Show the current directory beside the clingon
-      --git           Show the current git branch beside the clingon
-      --inline        Render a compact single-line glyph (one character per cell).
-                      Suitable for statuslines, prompts, and tmux status bars.
-      --animate         Animate the creature in place. Loops until Ctrl-C.
-      --moves <list>    Comma-separated list of behaviors. Built-ins:
-                        idle, blink, look, wiggle, walk.
-                        Default: idle,blink,look,wiggle,walk.
-                        For custom moves, use the JavaScript API.
-      --in-sequence     Play the listed behaviors in order, looping.
-                        Without this flag, behaviors layer on one timeline
-                        as random events.
-      --once            Play one full animation cycle and exit.
-      --fps <n>         Animation frames per second (1-30). Default 8.
-      --seconds <n>     Run animation for N seconds then exit.
-      --pad <n>       Add padding around terminal output
-      --pad-h <n>     Add spaces before each terminal output line
-      --pad-v <n>     Add blank lines before and after terminal output
-      --no-color      Render without ANSI color
-      --light         Use a darker palette tuned for light terminal backgrounds
-  -h, --help          Show help
-  -v, --version       Show version
+Identity:
+      --with-name <name>  Regenerate a specific clingon. 4 or 5 hyphen-separated
+                          words: <first>-<middle>-<family>-<suffix>[-<rhythm>].
+                          Use '*' as a wildcard for any slot to randomize it.
+                          Examples:
+                            orlando-*-morris-*           fix shape, random palette
+                            *-reginald-*-junior          fix palette, random shape
+                            orlando-*-morris-*-bouncy    fix shape and rhythm
+                            *-*-*-*-*                    fully random 5-word
+  -r, --recolor           Keep the shape from --with-name but choose new colors
+
+Size:
+      --tiny              4x4 grid
+      --small             5x5 grid
+      --normal            7x6 grid (default)
+      --large             11x8 grid
+
+Output mode (mutually exclusive):
+                          (default)  Multi-line ANSI art
+      --inline            Single-line glyph (for statuslines, prompts)
+  -j, --json              JSON output
+  -s, --script            Print the JS code that recreates this clingon
+      --gallery [n]       Show n random clingons (default 8) with their names,
+                          laid out as a grid that auto-fits the terminal width.
+                          Combine with --animate to see them all moving.
+      --list-names        Print the available word lists for composing names
+
+Animation (require --animate):
+      --animate           Animate the creature in place. Loops until Ctrl-C.
+      --moves <list>      Comma-separated list of behaviors. Built-ins:
+                          idle, blink, look, wiggle, walk.
+                          Default: idle,blink,look,wiggle,walk.
+                          For custom moves, use the JavaScript API.
+      --in-sequence       Play the listed behaviors in order, looping.
+                          Without this flag, behaviors layer on one timeline
+                          as random events.
+      --once              Play one full animation cycle and exit.
+      --fps <n>           Animation frames per second (1-30). Default 8.
+      --seconds <n>       Run animation for N seconds then exit.
+
+Info panel:
+  -n, --name              Show the clingon's name beside the art
+      --welcome           Show a time-aware greeting beside the art
+      --message <msg>     Show a custom message beside the art
+      --date              Show today's date beside the art
+      --cwd               Show the current directory beside the art
+      --git               Show the current git branch beside the art
+
+Layout:
+      --pad <n>           Add padding around terminal output
+      --pad-h <n>         Add spaces before each terminal output line
+      --pad-v <n>         Add blank lines before and after terminal output
+      --no-color          Render without ANSI color
+      --light             Use a darker palette tuned for light terminal backgrounds
+
+Other:
+  -h, --help              Show help
+  -v, --version           Show version
 
 Examples:
   Add clingon to your terminal startup:
