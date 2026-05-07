@@ -32,7 +32,7 @@ Options:
       --animate         Animate the creature in place. Loops until Ctrl-C.
       --moves <list>    Comma-separated list of behaviors. Built-ins:
                         idle, blink, look, wiggle, walk.
-                        Default: idle,blink,look,wiggle.
+                        Default: idle,blink,look,wiggle,walk.
                         Custom moves can be added via --load.
       --in-sequence     Play the listed behaviors in order, looping.
                         Without this flag, behaviors layer on one timeline
@@ -79,7 +79,7 @@ export async function runCli(args, io) {
     }
 
     if (options.animate) {
-      const moveList = options.animateMoves ?? ['idle', 'blink', 'look', 'wiggle'];
+      const moveList = options.animateMoves ?? ['idle', 'blink', 'look', 'wiggle', 'walk'];
       const mode = options.animateInSequence ? 'sequence' : 'parallel';
 
       const baseClingon = generateClingon({

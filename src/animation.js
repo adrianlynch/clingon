@@ -18,15 +18,47 @@ function isDarkLike(cell) {
   return cell === DARK || cell === DARK_NARROW || cell === DARK_NARROW_RIGHT;
 }
 
-export function blink(pixels) {
-  return pixels.map((row) => {
-    const hasEye = row.some(isEye);
-    if (!hasEye) {
-      return row.slice();
+function findEyeRow(pixels) {
+  // Composite eye cells are unambiguous markers.
+  for (let y = 0; y < pixels.length; y += 1) {
+    if (pixels[y].some(isEye)) return { y, kind: 'composite' };
+  }
+  // Fallback heuristic for simple-block eyes: the topmost row that
+  // (a) is at least half BODY cells (filters out decorative antenna rows), and
+  // (b) contains exactly two mirror-symmetric DARK or ACCENT cells.
+  for (let y = 0; y < pixels.length; y += 1) {
+    const row = pixels[y];
+    const bodyCount = row.filter((c) => c === BODY).length;
+    if (bodyCount * 2 < row.length) continue;
+    const darks = [];
+    const accents = [];
+    for (let x = 0; x < row.length; x += 1) {
+      if (row[x] === DARK) darks.push(x);
+      else if (row[x] === ACCENT) accents.push(x);
     }
-    return row.map((cell) => (
-      isEye(cell) || cell === ACCENT || cell === DARK ? BODY : cell
-    ));
+    const positions = darks.length === 2 ? darks : (accents.length === 2 ? accents : null);
+    if (!positions) continue;
+    const center = (row.length - 1) / 2;
+    if (Math.abs((positions[0] + positions[1]) / 2 - center) < 0.6) {
+      return { y, kind: 'simple', cells: positions };
+    }
+  }
+  return null;
+}
+
+export function blink(pixels) {
+  const eye = findEyeRow(pixels);
+  if (!eye) return pixels.map((row) => row.slice());
+  return pixels.map((row, y) => {
+    if (y !== eye.y) return row.slice();
+    if (eye.kind === 'composite') {
+      return row.map((cell) => (
+        isEye(cell) || cell === ACCENT || cell === DARK ? BODY : cell
+      ));
+    }
+    const next = row.slice();
+    for (const idx of eye.cells) next[idx] = BODY;
+    return next;
   });
 }
 
@@ -260,7 +292,7 @@ function defaultScheduler() {
 export function animateClingon(options = {}) {
   const {
     name, size, color = true,
-    frames: moveList = ['idle', 'blink', 'look', 'wiggle'],
+    frames: moveList = ['idle', 'blink', 'look', 'wiggle', 'walk'],
     mode = 'parallel',
     fps = 8,
     loops = Infinity,
