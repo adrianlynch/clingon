@@ -191,7 +191,7 @@ function randomCode() {
   return {
     shapeSeed: randomShapeSeed(),
     paletteSeed: randomPaletteSeed('name'),
-    rhythmSeed: randomSeed() % RHYTHM_NAMES.length,
+    rhythmSeed: null,
     format: 'name'
   };
 }
