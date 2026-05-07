@@ -76,6 +76,22 @@ export function walk(pixels, phase) {
   });
 }
 
+export function lookLeft(pixels) {
+  return pixels.map((row) => row.map((cell) => {
+    if (cell === EYE_DARK_RIGHT) return EYE_DARK_LEFT;
+    if (cell === EYE_LIGHT_RIGHT) return EYE_LIGHT_LEFT;
+    return cell;
+  }));
+}
+
+export function lookRight(pixels) {
+  return pixels.map((row) => row.map((cell) => {
+    if (cell === EYE_DARK_LEFT) return EYE_DARK_RIGHT;
+    if (cell === EYE_LIGHT_LEFT) return EYE_LIGHT_RIGHT;
+    return cell;
+  }));
+}
+
 const moveRegistry = new Map();
 
 export function defineMove(name, move) {
@@ -102,30 +118,45 @@ export function buildFrames(basePixels, moves) {
 
 defineMove('idle', {
   sequence: (p) => [
-    { pixels: bob(p, 0), duration: 1 },
-    { pixels: bob(p, 1), duration: 1 }
+    { pixels: bob(p, 0), duration: 6 },
+    { pixels: bob(p, 1), duration: 1 },
+    { pixels: bob(p, 0), duration: 6 },
+    { pixels: bob(p, 1), duration: 1 },
+    { pixels: bob(p, 0), duration: 4 }
   ]
 });
 
 defineMove('blink', {
   sequence: (p) => [
-    { pixels: p.map((row) => row.slice()), duration: 3 },
+    { pixels: p.map((row) => row.slice()), duration: 30 },
     { pixels: blink(p), duration: 1 },
-    { pixels: p.map((row) => row.slice()), duration: 1 }
+    { pixels: p.map((row) => row.slice()), duration: 8 }
   ]
 });
 
 defineMove('wiggle', {
   sequence: (p) => [
-    { pixels: wiggle(p, 0), duration: 1 },
-    { pixels: wiggle(p, 1), duration: 1 }
+    { pixels: wiggle(p, 0), duration: 4 },
+    { pixels: wiggle(p, 1), duration: 2 },
+    { pixels: wiggle(p, 0), duration: 4 },
+    { pixels: wiggle(p, 1), duration: 2 }
   ]
 });
 
 defineMove('walk', {
   sequence: (p) => [
-    { pixels: walk(p, 0), duration: 1 },
-    { pixels: walk(p, 1), duration: 1 }
+    { pixels: walk(p, 0), duration: 2 },
+    { pixels: walk(p, 1), duration: 2 }
+  ]
+});
+
+defineMove('look', {
+  sequence: (p) => [
+    { pixels: p.map((row) => row.slice()), duration: 8 },
+    { pixels: lookLeft(p), duration: 5 },
+    { pixels: p.map((row) => row.slice()), duration: 5 },
+    { pixels: lookRight(p), duration: 5 },
+    { pixels: p.map((row) => row.slice()), duration: 8 }
   ]
 });
 
@@ -139,7 +170,7 @@ function defaultScheduler() {
 export function animateClingon(options = {}) {
   const {
     name, size, color = true,
-    frames: moveList = ['idle', 'blink'],
+    frames: moveList = ['idle', 'blink', 'look', 'idle'],
     fps = 6,
     loops = Infinity,
     seconds,

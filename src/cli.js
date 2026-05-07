@@ -29,8 +29,8 @@ Options:
                       Suitable for statuslines, prompts, and tmux status bars.
       --animate         Animate the creature in place. Loops until Ctrl-C.
       --fps <n>         Animation frames per second (1-30). Default 6.
-      --frames <list>   Comma-separated moves (idle,blink,wiggle,walk).
-                        Default 'idle,blink'.
+      --frames <list>   Comma-separated moves: idle, blink, look, wiggle, walk.
+                        Default 'idle,blink,look,idle' for naturalistic mix.
       --seconds <n>     Run animation for N seconds then exit.
       --pad <n>       Add padding around terminal output
       --pad-h <n>     Add spaces before each terminal output line
@@ -162,7 +162,7 @@ function parseCount(value, option) {
   return count;
 }
 
-const BUILT_IN_MOVES = ['idle', 'blink', 'wiggle', 'walk'];
+const BUILT_IN_MOVES = ['idle', 'blink', 'look', 'wiggle', 'walk'];
 
 function parseFps(value) {
   const n = Number.parseInt(value, 10);
@@ -186,7 +186,7 @@ function parseFramesList(value) {
 function parseArgs(args) {
   const options = {
     animate: false,
-    animateFrames: ['idle', 'blink'],
+    animateFrames: ['idle', 'blink', 'look', 'idle'],
     color: true,
     fps: 6,
     help: false,

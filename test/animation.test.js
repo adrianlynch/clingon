@@ -14,7 +14,7 @@ import {
   moveCursor, clearScreen,
   getSize, setRawMode
 } from '../src/terminal.js';
-import { blink, bob, wiggle, walk, defineMove, resolveMove, buildFrames, animateClingon } from '../src/animation.js';
+import { blink, bob, wiggle, walk, lookLeft, lookRight, defineMove, resolveMove, buildFrames, animateClingon } from '../src/animation.js';
 import { runCli } from '../src/cli.js';
 
 function fakeStream() {
@@ -303,27 +303,58 @@ test('defineMove replaces an existing move', () => {
   assert.deepEqual(frames, [{ pixels: [[2]], duration: 1 }]);
 });
 
-test('built-in idle move produces 2 frames', () => {
+test('built-in idle move produces frames with rest-heavy timing', () => {
   const frames = resolveMove('idle', generateClingon({
     name: 'orlando-reginald-morris-junior', size: 'tiny', color: false
   }).pixels);
-  assert.equal(frames.length, 2);
+  assert.equal(frames.length, 5);
+  // mostly resting at base position with brief lifts
+  assert.ok(frames[0].duration >= frames[1].duration);
 });
 
-test('built-in blink move produces 3 frames with expected durations', () => {
+test('built-in blink move has long open phase and brief blink', () => {
   const frames = resolveMove('blink', generateClingon({
     name: 'orlando-reginald-morris-junior', size: 'tiny', color: false
   }).pixels);
   assert.equal(frames.length, 3);
-  assert.equal(frames[0].duration, 3);
+  // long open, brief blink
+  assert.ok(frames[0].duration > frames[1].duration);
   assert.equal(frames[1].duration, 1);
-  assert.equal(frames[2].duration, 1);
+});
+
+test('built-in look move produces 5 frames covering left and right', () => {
+  const frames = resolveMove('look', generateClingon({
+    name: 'orlando-reginald-morris-junior', size: 'tiny', color: false
+  }).pixels);
+  assert.equal(frames.length, 5);
+});
+
+test('lookLeft replaces EYE_*_RIGHT with EYE_*_LEFT', () => {
+  // EYE_DARK_RIGHT = 9, EYE_DARK_LEFT = 8
+  const pixels = [[1, 9, 8, 1]];
+  const after = lookLeft(pixels);
+  assert.deepEqual(after, [[1, 8, 8, 1]]);
+});
+
+test('lookRight replaces EYE_*_LEFT with EYE_*_RIGHT', () => {
+  const pixels = [[1, 9, 8, 1]];
+  const after = lookRight(pixels);
+  assert.deepEqual(after, [[1, 9, 9, 1]]);
+});
+
+test('lookLeft / lookRight do not mutate input', () => {
+  const pixels = [[1, 9, 8, 1]];
+  const original = JSON.parse(JSON.stringify(pixels));
+  lookLeft(pixels);
+  lookRight(pixels);
+  assert.deepEqual(pixels, original);
 });
 
 test('buildFrames concatenates frames from named moves', () => {
   const base = generateClingon({ name: 'orlando-reginald-morris-junior', size: 'tiny', color: false }).pixels;
   const frames = buildFrames(base, ['idle', 'blink']);
-  assert.equal(frames.length, 5);
+  // idle (5) + blink (3) = 8
+  assert.equal(frames.length, 8);
 });
 
 test('buildFrames accepts mixed strings and inline Move objects', () => {
@@ -383,7 +414,8 @@ test('animateClingon advances frames on tick with cursor-up between frames', () 
     frames: ['idle'], fps: 6, stream, scheduler
   });
   const before = stream.writes.length;
-  scheduler.tick(1);
+  // idle's first frame holds for 6 ticks; tick enough to roll to the next
+  scheduler.tick(8);
   const after = stream.writes.slice(before);
   assert.ok(after.some((w) => /\[\d+A\r/.test(w)), 'expected cursor-up sequence after tick');
   handle.stop();
