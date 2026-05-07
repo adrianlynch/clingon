@@ -3,7 +3,7 @@ import {
   DARK_NARROW, DARK_NARROW_RIGHT,
   EYE_DARK_LEFT, EYE_DARK_RIGHT,
   EYE_LIGHT_LEFT, EYE_LIGHT_RIGHT,
-  generateClingon, renderAnsi
+  generateClingon, renderAnsi, mulberry32
 } from './index.js';
 import { hideCursor, showCursor, cursorUp } from './terminal.js';
 
@@ -134,20 +134,26 @@ export function defineMove(name, move) {
   moveRegistry.set(name, { name, sequence: move.sequence });
 }
 
-export function resolveMove(input, basePixels) {
+export function resolveMove(input, basePixels, rng = Math.random) {
   const move = typeof input === 'string' ? moveRegistry.get(input) : input;
   if (!move) {
     const known = Array.from(moveRegistry.keys()).join(', ') || '(none)';
     throw new Error(`Unknown move "${input}". Registered moves: ${known}.`);
   }
-  const raw = typeof move.sequence === 'function' ? move.sequence(basePixels) : move.sequence;
-  return raw.map((frame) => ({ pixels: frame.pixels, duration: frame.duration ?? 1 }));
+  const raw = typeof move.sequence === 'function' ? move.sequence(basePixels, rng) : move.sequence;
+  return raw.map((frame) => {
+    const duration = frame.duration ?? 1;
+    if (!Number.isInteger(duration) || duration < 1) {
+      throw new Error(`Move "${move.name}" produced a frame with invalid duration ${duration}; must be a positive integer.`);
+    }
+    return { pixels: frame.pixels, duration };
+  });
 }
 
-export function buildFrames(basePixels, moves) {
+export function buildFrames(basePixels, moves, rng = Math.random) {
   const frames = [];
   for (const move of moves) {
-    frames.push(...resolveMove(move, basePixels));
+    frames.push(...resolveMove(move, basePixels, rng));
   }
   return frames;
 }
@@ -191,15 +197,17 @@ defineMove('walk', {
   ]
 });
 
-function mulberry32(seed) {
-  let s = seed >>> 0;
-  return function next() {
-    s = (s + 0x6d2b79f5) >>> 0;
-    let t = s;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
+// Derive a 32-bit animation seed from a clingon's identity. Same identity always
+// produces the same seed, so the same name plays the same animation pattern.
+// When a 5th rhythm word is given, it dominates so users can deliberately swap
+// the rhythm without changing the creature. The amplification constants
+// (1234567 / 987654321) just spread the small 0-31 rhythmSeed across the seed
+// space — mulberry32 mixes well even at low bit counts but spreading keeps
+// adjacent rhythm choices visibly distinct.
+export function seedFromClingon(clingon) {
+  return clingon.rhythmSeed != null
+    ? ((clingon.rhythmSeed * 1234567 + 987654321) >>> 0)
+    : ((clingon.shapeSeed ^ (clingon.paletteSeed * 1024)) >>> 0);
 }
 
 function randomEventTicks(totalLength, minSpacing, maxSpacing, rng = Math.random) {
@@ -283,17 +291,17 @@ export function composeParallel(basePixels, moveNames, cycleLength = 160, seed =
 }
 
 defineMove('look', {
-  sequence: (p) => {
-    const forward = () => ({ pixels: p.map((row) => row.slice()), duration: 6 + Math.floor(Math.random() * 4) });
-    const numGlances = 1 + Math.floor(Math.random() * 3);
-    let goLeft = Math.random() < 0.5;
+  sequence: (p, rng = Math.random) => {
+    const forward = () => ({ pixels: p.map((row) => row.slice()), duration: 6 + Math.floor(rng() * 4) });
+    const numGlances = 1 + Math.floor(rng() * 3);
+    let goLeft = rng() < 0.5;
     const frames = [forward()];
     for (let i = 0; i < numGlances; i += 1) {
       // Brief blink masks the asymmetric forward → look transition.
       frames.push({ pixels: blink(p), duration: 1 });
       frames.push({
         pixels: goLeft ? lookLeft(p) : lookRight(p),
-        duration: 6 + Math.floor(Math.random() * 3)
+        duration: 6 + Math.floor(rng() * 3)
       });
       frames.push({ pixels: blink(p), duration: 1 });
       frames.push(forward());
@@ -325,15 +333,10 @@ export function animateClingon(options = {}) {
   } = options;
 
   const clingon = generateClingon({ name, size, color });
-  // Animation rhythm comes from the explicit rhythm slot (5th name word) when given,
-  // otherwise we derive a stable seed from the shape and palette so 4-word names
-  // still get a deterministic rhythm.
-  const animationSeed = clingon.rhythmSeed != null
-    ? ((clingon.rhythmSeed * 1234567 + 987654321) >>> 0)
-    : ((clingon.shapeSeed ^ (clingon.paletteSeed * 1024)) >>> 0);
+  const animationSeed = seedFromClingon(clingon);
   const frames = mode === 'parallel'
     ? composeParallel(clingon.pixels, moveList, 160, animationSeed)
-    : buildFrames(clingon.pixels, moveList);
+    : buildFrames(clingon.pixels, moveList, mulberry32(animationSeed));
 
   let resolveDone;
   const done = new Promise((r) => { resolveDone = r; });

@@ -1,5 +1,5 @@
 // Standalone example: register a custom move and animate.
-// Run with: node examples/custom-moves.js
+// Run with: node docs/examples/custom-moves.js
 //
 // In your own project, install with `npm i @adrianlynch/clingon` and import
 // from '@adrianlynch/clingon'. Here we use a relative path so the example
@@ -7,7 +7,7 @@
 import {
   animateClingon, defineMove,
   blink, bob
-} from '../src/index.js';
+} from '../../src/index.js';
 
 defineMove('peek', {
   sequence: (basePixels) => [

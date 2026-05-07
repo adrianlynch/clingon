@@ -279,7 +279,6 @@ Size:
       --normal            7x6 grid (default)
       --small             5x5 grid
       --tiny              4x4 grid
-      --size <size>       Same as the four flags above by name.
 
 Output mode (mutually exclusive):
       (default)           Multi-line ANSI art
@@ -411,7 +410,7 @@ await animateClingon({
 }).done;
 ```
 
-Built-in mutators (`blink`, `bob`, `wiggle`, `walk`, `lookLeft`, `lookRight`) and cell-ID constants (`BODY`, `ACCENT`, `DARK`, `EMPTY`, `EYE_*`, etc.) are exported for use inside custom moves. See [examples/custom-moves.js](examples/custom-moves.js) for a runnable example.
+Built-in mutators (`blink`, `bob`, `wiggle`, `walk`, `lookLeft`, `lookRight`) and cell-ID constants (`BODY`, `ACCENT`, `DARK`, `EMPTY`, `EYE_*`, etc.) are exported for use inside custom moves. See [docs/examples/custom-moves.js](docs/examples/custom-moves.js) for a runnable example.
 
 ## Development
 

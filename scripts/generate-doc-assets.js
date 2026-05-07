@@ -1,5 +1,5 @@
 import { writeFileSync } from 'node:fs';
-import { generateClingon, composeParallel } from '../src/index.js';
+import { generateClingon, composeParallel, seedFromClingon } from '../src/index.js';
 
 const CELL = 16;
 const CARD_FILL = '#f6f8fa';
@@ -194,7 +194,7 @@ function renderExample(example) {
 
 function renderAnimatedExample(example) {
   const clingon = generateClingon({ name: example.name, size: example.size, color: false });
-  const seed = (clingon.shapeSeed ^ (clingon.paletteSeed * 1024)) >>> 0;
+  const seed = seedFromClingon(clingon);
   const cycleLength = 64;
   const fps = 8;
   const frames = composeParallel(

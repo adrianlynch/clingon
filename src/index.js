@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto';
 
 export {
   animateClingon, buildFrames, composeParallel,
-  defineMove, resolveMove,
+  defineMove, resolveMove, seedFromClingon,
   blink, bob, wiggle, walk, lookLeft, lookRight
 } from './animation.js';
 
@@ -720,7 +720,7 @@ function int(rng, min, max) {
   return Math.floor(rng() * (max - min + 1)) + min;
 }
 
-function mulberry32(seed) {
+export function mulberry32(seed) {
   return function next() {
     let t = seed += 0x6d2b79f5;
     t = Math.imul(t ^ t >>> 15, t | 1);

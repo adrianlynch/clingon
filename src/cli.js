@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { basename } from 'node:path';
-import { generateClingon, nameLists, snippetFor, renderAnsi, composeParallel } from './index.js';
+import { generateClingon, nameLists, snippetFor, renderAnsi, composeParallel, seedFromClingon } from './index.js';
 import { hideCursor, showCursor, cursorUp } from './terminal.js';
 
 const MAX_INFO_LINES = 5;
@@ -30,7 +30,6 @@ Options:
       --normal        Render a normal-sized clingon (default)
       --small         Render a smaller clingon
       --tiny          Render the tiniest clingon
-      --size <size>   Render size: tiny, small, normal, or large
   -s, --script        Print the JavaScript needed to recreate the clingon
   -j, --json          Print JSON data instead of terminal art
       --welcome       Show a time-aware greeting beside the clingon
@@ -60,7 +59,7 @@ Options:
 
 Examples:
   Add clingon to your terminal startup:
-    clingon --size small --welcome --name --date --cwd --git --pad=2
+    clingon --small --welcome --name --date --cwd --git --pad=2
 `;
 
 export async function runCli(args, io) {
@@ -314,12 +313,7 @@ async function runAnimatedGallery({ count, size, color, termColumns, stream, fps
   const clingons = [];
   for (let i = 0; i < count; i += 1) clingons.push(generateClingon({ size, color }));
   const moves = ['idle', 'blink', 'look', 'wiggle', 'walk'];
-  const framesPerClingon = clingons.map((c) => {
-    const seed = c.rhythmSeed != null
-      ? ((c.rhythmSeed * 1234567 + 987654321) >>> 0)
-      : ((c.shapeSeed ^ (c.paletteSeed * 1024)) >>> 0);
-    return composeParallel(c.pixels, moves, 160, seed);
-  });
+  const framesPerClingon = clingons.map((c) => composeParallel(c.pixels, moves, 160, seedFromClingon(c)));
   const cycleLength = framesPerClingon[0].length;
   const layout = buildGalleryLayout(clingons, termColumns);
 
@@ -483,11 +477,6 @@ function parseArgs(args) {
       options.size = 'small';
     } else if (arg === '--tiny') {
       options.size = 'tiny';
-    } else if (arg === '--size') {
-      index += 1;
-      options.size = requireValue(args[index], arg);
-    } else if (arg.startsWith('--size=')) {
-      options.size = requireValue(arg.slice('--size='.length), '--size');
     } else if (arg === '--no-color') {
       options.color = false;
     } else if (arg === '--inline') {
@@ -686,7 +675,11 @@ function requireValue(value, option) {
 }
 
 function shouldUseColor(io) {
-  return io.env.NO_COLOR === undefined;
+  // FORCE_COLOR=1 always wins, even if NO_COLOR is set or TERM is dumb.
+  if (io.env.FORCE_COLOR && io.env.FORCE_COLOR !== '0') return true;
+  if (io.env.NO_COLOR !== undefined) return false;
+  if (io.env.TERM === 'dumb') return false;
+  return true;
 }
 
 function toJson(clingon) {
