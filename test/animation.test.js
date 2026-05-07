@@ -522,6 +522,19 @@ test('cli --animate accepts --in-sequence flag', async () => {
   assert.equal(stderr.output, '');
 });
 
+test('cli --animate composes info panel and padding into each frame (non-TTY)', async () => {
+  const stdout = { isTTY: false, output: '', write(c) { this.output += c; } };
+  const stderr = createWritable();
+  await runCli(['--animate', '--with-name', 'orlando-reginald-morris-junior', '--tiny', '--no-color', '--message', 'Hi', '--pad-h=2'], {
+    stdout, stderr, env: {}
+  });
+  // Expect each art line to start with 2 spaces of padding and end with the message
+  // beside the centered art row.
+  assert.match(stdout.output, /^  /m, 'expected --pad-h to add leading spaces');
+  assert.match(stdout.output, /  Hi/, 'expected --message to appear beside art');
+  assert.equal(stderr.output, '');
+});
+
 test('animateClingon with loops=1 stops after one full cycle', async () => {
   const stream = fakeTtyStream();
   const scheduler = fakeScheduler();

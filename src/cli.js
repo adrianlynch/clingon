@@ -73,6 +73,29 @@ export async function runCli(args, io) {
       const moveList = options.animateMoves ?? ['idle', 'blink', 'look', 'wiggle'];
       const mode = options.animateInSequence ? 'sequence' : 'parallel';
 
+      const baseClingon = generateClingon({
+        name: options.inputName,
+        recolor: options.recolor,
+        size: options.size,
+        color: useColor
+      });
+      options.useColor = useColor;
+      const details = infoLines(options, baseClingon);
+      const hasDecoration = details.length > 0 || options.padH > 0 || options.padV > 0;
+      const decorate = hasDecoration
+        ? (ansi) => {
+            const lines = formatInfoBlock(ansi.split('\n'), details);
+            const paddedLines = options.padH > 0
+              ? lines.map((line) => `${' '.repeat(options.padH)}${line}`)
+              : lines;
+            if (options.padV > 0) {
+              const blanks = new Array(options.padV).fill('');
+              return [...blanks, ...paddedLines, ...blanks].join('\n');
+            }
+            return paddedLines.join('\n');
+          }
+        : undefined;
+
       const { animateClingon } = await import('./animation.js');
       const controller = new AbortController();
       const onSigint = () => controller.abort();
@@ -88,7 +111,8 @@ export async function runCli(args, io) {
           loops: options.animateOnce ? 1 : Infinity,
           seconds: options.seconds,
           stream: io.stdout,
-          signal: controller.signal
+          signal: controller.signal,
+          decorate
         });
         await handle.done;
       } finally {

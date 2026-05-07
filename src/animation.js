@@ -299,15 +299,17 @@ export function animateClingon(options = {}) {
     seconds,
     stream = process.stdout,
     signal,
+    decorate,
     scheduler = defaultScheduler()
   } = options;
 
   const clingon = generateClingon({ name, size, color });
   let resolveDone;
   const done = new Promise((r) => { resolveDone = r; });
+  const wrap = (ansi) => (decorate ? decorate(ansi) : ansi);
 
   if (!stream.isTTY) {
-    stream.write(`${clingon.ansi}\n`);
+    stream.write(`${wrap(clingon.ansi)}\n`);
     resolveDone();
     return { stop() {}, done };
   }
@@ -316,10 +318,10 @@ export function animateClingon(options = {}) {
     ? composeParallel(clingon.pixels, moveList)
     : buildFrames(clingon.pixels, moveList);
   const renderedFrames = frames.map((frame) => ({
-    ansi: renderAnsi(frame.pixels, clingon.palette, { color }),
+    ansi: wrap(renderAnsi(frame.pixels, clingon.palette, { color })),
     duration: frame.duration
   }));
-  const height = clingon.pixels.length;
+  const height = renderedFrames[0].ansi.split('\n').length;
 
   let frameIndex = 0;
   let durationLeft = renderedFrames[0].duration;
