@@ -327,17 +327,34 @@ test('built-in look move alternates left and right for symmetric motion', () => 
   assert.equal(frames.length, 5);
 });
 
-test('lookLeft replaces EYE_*_RIGHT with EYE_*_LEFT', () => {
-  // EYE_DARK_RIGHT = 9, EYE_DARK_LEFT = 8
+test('lookLeft physically shifts the eye pair one column left', () => {
+  // EYE_DARK_RIGHT = 9, EYE_DARK_LEFT = 8, BODY = 1
+  // Tiny eye row: [BODY, EYE_DARK_RIGHT, EYE_DARK_LEFT, BODY]
   const pixels = [[1, 9, 8, 1]];
   const after = lookLeft(pixels);
-  assert.deepEqual(after, [[1, 8, 8, 1]]);
+  // Eye pair slides left; body fills the vacated rightmost eye position
+  assert.deepEqual(after, [[9, 8, 1, 1]]);
 });
 
-test('lookRight replaces EYE_*_LEFT with EYE_*_RIGHT', () => {
+test('lookRight physically shifts the eye pair one column right', () => {
   const pixels = [[1, 9, 8, 1]];
   const after = lookRight(pixels);
-  assert.deepEqual(after, [[1, 9, 9, 1]]);
+  assert.deepEqual(after, [[1, 1, 9, 8]]);
+});
+
+test('lookLeft preserves spacing between paired eyes', () => {
+  // Eyes with a gap between: [BODY, EYE_DARK_RIGHT, BODY, EYE_DARK_LEFT, BODY]
+  const pixels = [[1, 9, 1, 8, 1]];
+  const after = lookLeft(pixels);
+  // Both eyes shift left by 1 — gap between them preserved
+  assert.deepEqual(after, [[9, 1, 8, 1, 1]]);
+});
+
+test('lookLeft refuses to shift if it would go off-grid', () => {
+  // Eye already at column 0 — cannot shift further left
+  const pixels = [[9, 8, 1, 1]];
+  const after = lookLeft(pixels);
+  assert.deepEqual(after, [[9, 8, 1, 1]]);
 });
 
 test('lookLeft / lookRight do not mutate input', () => {

@@ -76,20 +76,44 @@ export function walk(pixels, phase) {
   });
 }
 
+function shiftEyes(pixels, delta) {
+  return pixels.map((row) => {
+    const eyeIndexes = [];
+    for (let i = 0; i < row.length; i += 1) {
+      if (isEye(row[i])) eyeIndexes.push(i);
+    }
+    if (eyeIndexes.length === 0) return row.slice();
+
+    const newPositions = eyeIndexes.map((i) => i + delta);
+    if (newPositions.some((i) => i < 0 || i >= row.length)) {
+      return row.slice();
+    }
+
+    const newSet = new Set(newPositions);
+    const oldSet = new Set(eyeIndexes);
+    for (const newIdx of newPositions) {
+      if (oldSet.has(newIdx)) continue;
+      if (row[newIdx] !== BODY) return row.slice();
+    }
+
+    const newRow = row.slice();
+    const ordered = delta < 0 ? [...eyeIndexes] : [...eyeIndexes].reverse();
+    for (const idx of ordered) {
+      newRow[idx + delta] = row[idx];
+    }
+    for (const idx of eyeIndexes) {
+      if (!newSet.has(idx)) newRow[idx] = BODY;
+    }
+    return newRow;
+  });
+}
+
 export function lookLeft(pixels) {
-  return pixels.map((row) => row.map((cell) => {
-    if (cell === EYE_DARK_RIGHT) return EYE_DARK_LEFT;
-    if (cell === EYE_LIGHT_RIGHT) return EYE_LIGHT_LEFT;
-    return cell;
-  }));
+  return shiftEyes(pixels, -1);
 }
 
 export function lookRight(pixels) {
-  return pixels.map((row) => row.map((cell) => {
-    if (cell === EYE_DARK_LEFT) return EYE_DARK_RIGHT;
-    if (cell === EYE_LIGHT_LEFT) return EYE_LIGHT_RIGHT;
-    return cell;
-  }));
+  return shiftEyes(pixels, 1);
 }
 
 const moveRegistry = new Map();
