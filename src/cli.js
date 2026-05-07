@@ -34,6 +34,7 @@ Options:
       --in-sequence     Play the listed behaviors in order, looping.
                         Without this flag, behaviors layer on one timeline
                         as random events.
+      --once            Play one full animation cycle and exit.
       --fps <n>         Animation frames per second (1-30). Default 8.
       --seconds <n>     Run animation for N seconds then exit.
       --pad <n>       Add padding around terminal output
@@ -84,6 +85,7 @@ export async function runCli(args, io) {
           frames: moveList,
           mode,
           fps: options.fps,
+          loops: options.animateOnce ? 1 : Infinity,
           seconds: options.seconds,
           stream: io.stdout,
           signal: controller.signal
@@ -204,6 +206,7 @@ function parseArgs(args) {
     animate: false,
     animateMoves: undefined,
     animateInSequence: false,
+    animateOnce: false,
     color: true,
     fps: 8,
     help: false,
@@ -293,6 +296,8 @@ function parseArgs(args) {
       options.animateMoves = parseFramesList(arg.slice('--animate='.length));
     } else if (arg === '--in-sequence') {
       options.animateInSequence = true;
+    } else if (arg === '--once') {
+      options.animateOnce = true;
     } else if (arg === '--fps') {
       index += 1;
       options.fps = parseFps(args[index]);

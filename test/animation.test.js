@@ -522,6 +522,21 @@ test('cli --animate accepts --in-sequence flag', async () => {
   assert.equal(stderr.output, '');
 });
 
+test('animateClingon with loops=1 stops after one full cycle', async () => {
+  const stream = fakeTtyStream();
+  const scheduler = fakeScheduler();
+  const handle = animateClingon({
+    name: 'orlando-reginald-morris-junior', size: 'tiny', color: false,
+    frames: ['idle'], mode: 'sequence', fps: 8,
+    loops: 1, stream, scheduler
+  });
+  // idle (sequence) has 5 frames totaling 9 ticks; tick well past one cycle
+  scheduler.tick(20);
+  await handle.done;
+  // Cursor should be restored after the single cycle completes
+  assert.match(stream.writes.join(''), /\[\?25h/);
+});
+
 test('cli --animate --inline errors', async () => {
   const stdout = createWritable();
   const stderr = createWritable();
