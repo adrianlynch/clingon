@@ -1,6 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { basename, resolve as resolvePath } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { basename } from 'node:path';
 import { generateClingon, nameLists, snippetFor, renderAnsi, composeParallel } from './index.js';
 import { hideCursor, showCursor, cursorUp } from './terminal.js';
 
@@ -45,13 +44,11 @@ Options:
       --moves <list>    Comma-separated list of behaviors. Built-ins:
                         idle, blink, look, wiggle, walk.
                         Default: idle,blink,look,wiggle,walk.
-                        Custom moves can be added via --load.
+                        For custom moves, use the JavaScript API.
       --in-sequence     Play the listed behaviors in order, looping.
                         Without this flag, behaviors layer on one timeline
                         as random events.
       --once            Play one full animation cycle and exit.
-      --load <file>     Import a JS module that registers custom moves
-                        via defineMove(). May be passed multiple times.
       --fps <n>         Animation frames per second (1-30). Default 8.
       --seconds <n>     Run animation for N seconds then exit.
       --pad <n>       Add padding around terminal output
@@ -92,7 +89,7 @@ export async function runCli(args, io) {
         await runAnimatedGallery({
           ...galleryOptions,
           stream: io.stdout,
-          fps: options.fps,
+          fps: options.fps ?? 8,
           seconds: options.seconds,
           once: options.animateOnce
         });
@@ -115,19 +112,16 @@ export async function runCli(args, io) {
       return;
     }
 
-    if (options.animate) validateAnimateConflicts(options);
-    if (options.inline) validateInlineConflicts(options);
 
     const useColor = options.color && shouldUseColor(io);
     options.useColor = useColor;
 
-    for (const path of options.loadModules) {
-      await import(pathToFileURL(resolvePath(path)).href);
-    }
+    validateModeAndFlags(options);
 
     if (options.animate) {
       const moveList = options.animateMoves ?? ['idle', 'blink', 'look', 'wiggle', 'walk'];
       const mode = options.animateInSequence ? 'sequence' : 'parallel';
+      const fps = options.fps ?? 8;
 
       const baseClingon = generateClingon({
         name: options.inputName,
@@ -163,7 +157,7 @@ export async function runCli(args, io) {
           color: useColor,
           frames: moveList,
           mode,
-          fps: options.fps,
+          fps,
           loops: options.animateOnce ? 1 : Infinity,
           seconds: options.seconds,
           stream: io.stdout,
@@ -225,19 +219,35 @@ function writeTerminalOutput(stdout, output) {
   stdout.write(`${output}\n`);
 }
 
-function validateInlineConflicts(options) {
-  if (options.animate) throw new Error('--inline cannot be combined with --animate.');
-  if (options.json) throw new Error('--inline cannot be combined with --json.');
-  if (options.script) throw new Error('--inline cannot be combined with --script.');
-  if (options.infoItems.length > 0) {
+function validateModeAndFlags(options) {
+  // Output / utility modes are mutually exclusive, except --animate, which composes with --gallery.
+  const exclusiveModes = [];
+  if (options.inline) exclusiveModes.push('--inline');
+  if (options.json) exclusiveModes.push('--json');
+  if (options.script) exclusiveModes.push('--script');
+  if (options.listNames) exclusiveModes.push('--list-names');
+  if (options.gallery) exclusiveModes.push('--gallery');
+  if (options.animate && !options.gallery) exclusiveModes.push('--animate');
+  if (exclusiveModes.length > 1) {
+    throw new Error(`Cannot combine ${exclusiveModes.slice(0, -1).join(', ')} with ${exclusiveModes.at(-1)}.`);
+  }
+
+  // Animation knobs require --animate.
+  const animateOnly = [];
+  if (options.animateMoves !== undefined) animateOnly.push('--moves');
+  if (options.animateInSequence) animateOnly.push('--in-sequence');
+  if (options.animateOnce) animateOnly.push('--once');
+  if (options.fps !== undefined) animateOnly.push('--fps');
+  if (options.seconds !== undefined) animateOnly.push('--seconds');
+  if (animateOnly.length > 0 && !options.animate) {
+    const verb = animateOnly.length === 1 ? 'requires' : 'require';
+    throw new Error(`${animateOnly.join(', ')} ${verb} --animate.`);
+  }
+
+  // --inline cannot host the info panel — it's a single-line render.
+  if (options.inline && options.infoItems.length > 0) {
     throw new Error('--inline cannot be combined with --welcome, --message, --date, --cwd, --git, or --name.');
   }
-}
-
-function validateAnimateConflicts(options) {
-  if (options.inline) throw new Error('--animate cannot be combined with --inline.');
-  if (options.json) throw new Error('--animate cannot be combined with --json.');
-  if (options.script) throw new Error('--animate cannot be combined with --script.');
 }
 
 function writeInline(stdout, clingon, options) {
@@ -406,9 +416,8 @@ function parseArgs(args) {
     listNames: false,
     gallery: false,
     galleryCount: undefined,
-    loadModules: [],
     color: true,
-    fps: 8,
+    fps: undefined,
     help: false,
     inline: false,
     inputName: undefined,
@@ -496,11 +505,6 @@ function parseArgs(args) {
       options.animateInSequence = true;
     } else if (arg === '--once') {
       options.animateOnce = true;
-    } else if (arg === '--load') {
-      index += 1;
-      options.loadModules.push(requireValue(args[index], arg));
-    } else if (arg.startsWith('--load=')) {
-      options.loadModules.push(requireValue(arg.slice('--load='.length), '--load'));
     } else if (arg === '--list-names') {
       options.listNames = true;
     } else if (arg === '--gallery') {
