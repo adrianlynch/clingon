@@ -19,6 +19,8 @@ Options:
                       *-reginald-*-junior   fix palette, random shape
                       *-*-morris-*          fix only the family word
       --list-names    Print the available word lists for composing names
+      --gallery [n]   Show n random clingons (default 8) with their names,
+                      laid out as a grid that auto-fits the terminal width
       --name        Show the clingon name beside the art
   -r, --recolor     Keep the shape from --with-name but choose new colors
       --large         Render the largest clingon
@@ -71,6 +73,18 @@ export async function runCli(args, io) {
 
     if (options.version) {
       io.stdout.write('0.2.0\n');
+      return;
+    }
+
+    if (options.gallery) {
+      const useColor = options.color && shouldUseColor(io);
+      io.stdout.write(renderGallery({
+        count: options.galleryCount ?? 8,
+        size: options.size,
+        color: useColor,
+        termColumns: io.stdout.columns ?? 80
+      }));
+      io.stdout.write('\n');
       return;
     }
 
@@ -240,6 +254,33 @@ function parseFps(value) {
   return n;
 }
 
+function renderGallery({ count, size, color, termColumns }) {
+  const clingons = [];
+  for (let i = 0; i < count; i += 1) {
+    clingons.push(generateClingon({ size, color }));
+  }
+  const slotWidth = clingons.reduce((max, c) => {
+    const artWidth = c.pixels[0].length * 2;
+    return Math.max(max, artWidth, c.name.length);
+  }, 0);
+  const gap = 2;
+  const perRow = Math.max(1, Math.floor((termColumns + gap) / (slotWidth + gap)));
+
+  const out = [];
+  for (let i = 0; i < clingons.length; i += perRow) {
+    const row = clingons.slice(i, i + perRow);
+    const artBlocks = row.map((c) => c.ansi.split('\n'));
+    const height = Math.max(...artBlocks.map((b) => b.length));
+    for (let y = 0; y < height; y += 1) {
+      const line = artBlocks.map((b) => padVisibleEnd(b[y] ?? '', slotWidth)).join(' '.repeat(gap));
+      out.push(line);
+    }
+    out.push(row.map((c) => padVisibleEnd(c.name, slotWidth)).join(' '.repeat(gap)));
+    if (i + perRow < clingons.length) out.push('');
+  }
+  return out.join('\n');
+}
+
 function expandWildcardName(name) {
   const parts = name.split('-');
   if (parts.length !== 4) {
@@ -269,6 +310,8 @@ function parseArgs(args) {
     animateInSequence: false,
     animateOnce: false,
     listNames: false,
+    gallery: false,
+    galleryCount: undefined,
     loadModules: [],
     color: true,
     fps: 8,
@@ -366,6 +409,15 @@ function parseArgs(args) {
       options.loadModules.push(requireValue(arg.slice('--load='.length), '--load'));
     } else if (arg === '--list-names') {
       options.listNames = true;
+    } else if (arg === '--gallery') {
+      options.gallery = true;
+      if (hasOptionalValue(args[index + 1])) {
+        index += 1;
+        options.galleryCount = parseCount(args[index], '--gallery');
+      }
+    } else if (arg.startsWith('--gallery=')) {
+      options.gallery = true;
+      options.galleryCount = parseCount(arg.slice('--gallery='.length), '--gallery');
     } else if (arg === '--normal') {
       options.size = 'normal';
     } else if (arg === '--fps') {
