@@ -213,13 +213,6 @@ Regenerate a specific clingon:
 clingon --with-name orlando-reginald-morris-junior
 ```
 
-Show the clingon name beside the art:
-
-```sh
-clingon --name
-clingon --with-name orlando-reginald-morris-junior --name
-```
-
 Keep the same shape, but choose a new random palette:
 
 ```sh
@@ -236,12 +229,6 @@ Print structured output:
 
 ```sh
 clingon --small --json
-```
-
-Print only the character art, useful in shell startup files:
-
-```sh
-clingon --tiny
 ```
 
 Show up to five lines of text beside the clingon:
@@ -267,55 +254,69 @@ clingon --tiny --pad-h=2 --pad-v=1
 ## Options
 
 ```txt
-clingon [options]
+clingon
 
-Identity:
-  -w, --with-name <name>  Regenerate a specific clingon. 4 or 5 words separated
-                          by hyphens. '*' wildcards any slot.
-  -r, --recolor           Keep shape, reroll palette (with --with-name).
+Usage:
+  clingon [options]
 
-Size:
-      --tiny              4x4 grid
-      --small             5x5 grid
-      --normal            7x6 grid (default)
-      --large             11x8 grid
+  *-- Identity ---------------------------------------------------------------
+    -w, --with-name <name>  Regenerate a specific clingon. 4 or 5 hyphen-separated
+                            words: <first>-<middle>-<family>-<suffix>[-<rhythm>].
+                            Use '*' as a wildcard for any slot to randomize it.
+                            Examples:
+                              orlando-*-morris-*           fix shape, random palette
+                              *-reginald-*-junior          fix palette, random shape
+                              orlando-*-morris-*-bouncy    fix shape and rhythm
+                              *-*-*-*-*                    fully random 5-word
+    -r, --recolor           Keep the shape from --with-name but choose new colors
 
-Output mode (mutually exclusive):
-      (default)           Multi-line ANSI art
-  -i, --inline            Single-line glyph (for statuslines, prompts)
-  -j, --json              JSON output
-  -s, --script            Print the JS code that recreates this clingon
-  -g, --gallery [n]       Show n random clingons in a grid (default 8)
-      --list-names        Print the available word lists for composing names
+  *-- Size -------------------------------------------------------------------
+        --tiny              4x4 grid
+        --small             5x5 grid
+        --normal            7x6 grid (default)
+        --large             11x8 grid
 
-Animation (require --animate):
-  -a, --animate           Animate in place, loops until Ctrl-C
-      --moves <list>      Behaviors: idle,blink,look,wiggle,walk (default: all)
-      --in-sequence       Play moves in order vs. layered (default: layered)
-      --once              Play one cycle and exit
-      --fps <n>           Frames per second (1-30, default 8)
-      --seconds <n>       Run for n seconds and exit
+  *-- Output mode (mutually exclusive) -----------------------------------------
+    -i, --inline            Single-line glyph (for statuslines, prompts)
+    -j, --json              JSON output
+    -s, --script            Print the JS code that recreates this clingon
+    -g, --gallery [n]       Show n random clingons (default 8) with their names,
+                            laid out as a grid that auto-fits the terminal width.
+                            Combine with --animate to see them all moving.
+        --list-names        Print the available word lists for composing names
 
-Info panel:
-  -n, --name              Show the clingon's name
-      --welcome           Time-aware greeting
-      --message <msg>     Custom message (repeatable)
-      --date              Today's date
-      --cwd               Current directory name
-      --git               Current git branch
+  *-- Animation --------------------------------------------------------------
+    -a, --animate           Animate the creature in place. Loops until Ctrl-C.
+                            The flags below all require --animate.
+        --moves <list>      Comma-separated list of behaviors. Built-ins:
+                            idle, blink, look, wiggle, walk.
+                            Default: idle,blink,look,wiggle,walk.
+                            For custom moves, use the JavaScript API.
+        --in-sequence       Play behaviors in order vs. layered (default: layered)
+        --once              Play one full animation cycle and exit
+        --fps <n>           Animation frames per second (1-30). Default 8.
+        --seconds <n>       Run animation for N seconds then exit
 
-Padding:
-  -p, --pad <n>           Padding around output
-      --pad-h <n>         Left padding only
-      --pad-v <n>         Vertical padding only
+  *-- Info panel -------------------------------------------------------------
+    -n, --name              Show the clingon's name beside the art
+        --welcome           Show a time-aware greeting beside the art
+        --message <msg>     Show a custom message beside the art
+        --date              Show today's date beside the art
+        --cwd               Show the current directory beside the art
+        --git               Show the current git branch beside the art
 
-Style:
-      --no-color          Plain text glyphs, no ANSI escapes
-  -l, --light             Darker palette for light terminal backgrounds
+  *-- Padding ----------------------------------------------------------------
+    -p, --pad <n>           Add padding around terminal output
+        --pad-h <n>         Add spaces before each terminal output line
+        --pad-v <n>         Add blank lines before and after terminal output
 
-Other:
-  -h, --help              Show help
-  -v, --version           Show version
+  *-- Style ------------------------------------------------------------------
+        --no-color          Render without ANSI color
+    -l, --light             Use a darker palette tuned for light terminals
+
+  *-- Other ------------------------------------------------------------------
+    -h, --help              Show help
+    -v, --version           Show version
 ```
 
 ## JavaScript API
