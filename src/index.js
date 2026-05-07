@@ -1,8 +1,24 @@
 import { randomBytes } from 'node:crypto';
+import {
+  EMPTY, BODY, ACCENT, DARK,
+  ACCENT_NARROW, DARK_NARROW,
+  ACCENT_NARROW_RIGHT, DARK_NARROW_RIGHT,
+  EYE_DARK_LEFT, EYE_DARK_RIGHT,
+  EYE_LIGHT_LEFT, EYE_LIGHT_RIGHT,
+  isCompositeEye, isNarrowLeft, isNarrowRight
+} from './cells.js';
+
+export {
+  EMPTY, BODY, ACCENT, DARK,
+  ACCENT_NARROW, DARK_NARROW,
+  ACCENT_NARROW_RIGHT, DARK_NARROW_RIGHT,
+  EYE_DARK_LEFT, EYE_DARK_RIGHT,
+  EYE_LIGHT_LEFT, EYE_LIGHT_RIGHT
+} from './cells.js';
 
 export {
   animateClingon, buildFrames, composeParallel,
-  defineMove, resolveMove, seedFromClingon,
+  defineMove, resolveMove, clearMoves, seedFromClingon,
   blink, bob, wiggle, walk, lookLeft, lookRight
 } from './animation.js';
 
@@ -16,18 +32,6 @@ const SMALL_HEIGHT = 5;
 const TINY_WIDTH = 4;
 const TINY_HEIGHT = 4;
 const DEFAULT_SIZE = 'normal';
-export const EMPTY = 0;
-export const BODY = 1;
-export const ACCENT = 2;
-export const DARK = 3;
-export const ACCENT_NARROW = 4;
-export const DARK_NARROW = 5;
-export const ACCENT_NARROW_RIGHT = 6;
-export const DARK_NARROW_RIGHT = 7;
-export const EYE_DARK_LEFT = 8;
-export const EYE_DARK_RIGHT = 9;
-export const EYE_LIGHT_LEFT = 10;
-export const EYE_LIGHT_RIGHT = 11;
 
 const FIRST_NAMES = [
   'orlando', 'mabel', 'winston', 'poppy', 'felix', 'juniper', 'otto', 'nora',
@@ -101,7 +105,7 @@ export function generateClingon(options = {}) {
     ? formatClassicCode(shapeSeed, paletteSeed)
     : formatCode(shapeSeed, paletteSeed, rhythmSeed);
   const shape = createShape(shapeSeed, size);
-  const palette = createPalette(paletteSeed);
+  const palette = createPalette(paletteSeed, { lightMode: options.lightMode === true });
 
   return {
     name: code,
@@ -408,16 +412,36 @@ function addCompactFeet(pixels, rng, center, halfWidths) {
   }
 }
 
-function createPalette(seed) {
+function createPalette(seed, options = {}) {
   const rng = mulberry32(seed);
   const base = PALETTES[int(rng, 0, PALETTES.length - 1)];
   const hueShift = int(rng, -18, 18);
 
-  return {
+  const palette = {
     body: shiftHex(base[0], hueShift),
     accent: shiftHex(base[1], -hueShift),
     dark: base[2]
   };
+  return options.lightMode ? toLightModePalette(palette) : palette;
+}
+
+// On light terminal backgrounds, the bright body/accent colors look washed-out
+// or invisible. Darken them so the creature reads as a silhouette against white.
+function toLightModePalette(palette) {
+  return {
+    body: scaleHex(palette.body, 0.55),
+    accent: scaleHex(palette.accent, 0.55),
+    dark: scaleHex(palette.dark, 0.7)
+  };
+}
+
+function scaleHex(hex, factor) {
+  const [r, g, b] = hexToRgb(hex);
+  return rgbToHex(
+    Math.max(0, Math.floor(r * factor)),
+    Math.max(0, Math.floor(g * factor)),
+    Math.max(0, Math.floor(b * factor))
+  );
 }
 
 function addEyes(pixels, rng, center, y, halfWidth) {
@@ -658,20 +682,6 @@ function renderTextCell(cell) {
   return '[]';
 }
 
-function isNarrowLeft(cell) {
-  return cell === ACCENT_NARROW || cell === DARK_NARROW;
-}
-
-function isNarrowRight(cell) {
-  return cell === ACCENT_NARROW_RIGHT || cell === DARK_NARROW_RIGHT;
-}
-
-function isCompositeEye(cell) {
-  return cell === EYE_DARK_LEFT
-    || cell === EYE_DARK_RIGHT
-    || cell === EYE_LIGHT_LEFT
-    || cell === EYE_LIGHT_RIGHT;
-}
 
 function renderCompositeEye(cell, palette) {
   const detail = cell === EYE_LIGHT_LEFT || cell === EYE_LIGHT_RIGHT

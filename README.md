@@ -309,6 +309,7 @@ Layout:
       --pad-h <n>         Left padding only
       --pad-v <n>         Vertical padding only
       --no-color          Plain text glyphs, no ANSI escapes
+      --light             Darker palette for light terminal backgrounds
 
 Other:
   -h, --help              Show help

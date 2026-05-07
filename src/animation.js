@@ -3,16 +3,10 @@ import {
   DARK_NARROW, DARK_NARROW_RIGHT,
   EYE_DARK_LEFT, EYE_DARK_RIGHT,
   EYE_LIGHT_LEFT, EYE_LIGHT_RIGHT,
-  generateClingon, renderAnsi, mulberry32
-} from './index.js';
+  isEye
+} from './cells.js';
+import { generateClingon, renderAnsi, mulberry32 } from './index.js';
 import { hideCursor, showCursor, cursorUp } from './terminal.js';
-
-function isEye(cell) {
-  return cell === EYE_DARK_LEFT
-    || cell === EYE_DARK_RIGHT
-    || cell === EYE_LIGHT_LEFT
-    || cell === EYE_LIGHT_RIGHT;
-}
 
 function isDarkLike(cell) {
   return cell === DARK || cell === DARK_NARROW || cell === DARK_NARROW_RIGHT;
@@ -134,6 +128,13 @@ export function defineMove(name, move) {
   moveRegistry.set(name, { name, sequence: move.sequence });
 }
 
+// Reset the registry to just the built-in moves. Useful for tests that
+// register temporary moves and want to keep the registry clean.
+export function clearMoves() {
+  moveRegistry.clear();
+  registerBuiltInMoves();
+}
+
 export function resolveMove(input, basePixels, rng = Math.random) {
   const move = typeof input === 'string' ? moveRegistry.get(input) : input;
   if (!move) {
@@ -158,44 +159,69 @@ export function buildFrames(basePixels, moves, rng = Math.random) {
   return frames;
 }
 
-defineMove('idle', {
-  sequence: (p) => [
-    { pixels: bob(p, 0), duration: 2 },
-    { pixels: bob(p, 1), duration: 1 },
-    { pixels: bob(p, 0), duration: 1 },
-    { pixels: bob(p, 1), duration: 1 },
-    { pixels: bob(p, 0), duration: 4 }
-  ]
-});
+function registerBuiltInMoves() {
+  defineMove('idle', {
+    sequence: (p) => [
+      { pixels: bob(p, 0), duration: 2 },
+      { pixels: bob(p, 1), duration: 1 },
+      { pixels: bob(p, 0), duration: 1 },
+      { pixels: bob(p, 1), duration: 1 },
+      { pixels: bob(p, 0), duration: 4 }
+    ]
+  });
 
-defineMove('blink', {
-  sequence: (p) => [
-    { pixels: p.map((row) => row.slice()), duration: 6 },
-    { pixels: blink(p), duration: 1 },
-    { pixels: p.map((row) => row.slice()), duration: 3 },
-    { pixels: blink(p), duration: 1 },
-    { pixels: p.map((row) => row.slice()), duration: 3 }
-  ]
-});
+  defineMove('blink', {
+    sequence: (p) => [
+      { pixels: p.map((row) => row.slice()), duration: 6 },
+      { pixels: blink(p), duration: 1 },
+      { pixels: p.map((row) => row.slice()), duration: 3 },
+      { pixels: blink(p), duration: 1 },
+      { pixels: p.map((row) => row.slice()), duration: 3 }
+    ]
+  });
 
-defineMove('wiggle', {
-  sequence: (p) => [
-    { pixels: wiggle(p, 0), duration: 2 },
-    { pixels: wiggle(p, 1), duration: 1 },
-    { pixels: wiggle(p, 0), duration: 1 },
-    { pixels: wiggle(p, 1), duration: 1 },
-    { pixels: wiggle(p, 0), duration: 2 }
-  ]
-});
+  defineMove('wiggle', {
+    sequence: (p) => [
+      { pixels: wiggle(p, 0), duration: 2 },
+      { pixels: wiggle(p, 1), duration: 1 },
+      { pixels: wiggle(p, 0), duration: 1 },
+      { pixels: wiggle(p, 1), duration: 1 },
+      { pixels: wiggle(p, 0), duration: 2 }
+    ]
+  });
 
-defineMove('walk', {
-  sequence: (p) => [
-    { pixels: walk(p, 0), duration: 2 },
-    { pixels: walk(p, 1), duration: 2 },
-    { pixels: walk(p, 0), duration: 2 },
-    { pixels: walk(p, 1), duration: 2 }
-  ]
-});
+  defineMove('walk', {
+    sequence: (p) => [
+      { pixels: walk(p, 0), duration: 2 },
+      { pixels: walk(p, 1), duration: 2 },
+      { pixels: walk(p, 0), duration: 2 },
+      { pixels: walk(p, 1), duration: 2 }
+    ]
+  });
+
+  defineMove('look', {
+    sequence: (p, rng = Math.random) => {
+      const forward = () => ({ pixels: p.map((row) => row.slice()), duration: 6 + Math.floor(rng() * 4) });
+      const numGlances = 1 + Math.floor(rng() * 3);
+      let goLeft = rng() < 0.5;
+      const frames = [forward()];
+      for (let i = 0; i < numGlances; i += 1) {
+        // Brief blink masks the asymmetric forward → look transition.
+        frames.push({ pixels: blink(p), duration: 1 });
+        frames.push({
+          pixels: goLeft ? lookLeft(p) : lookRight(p),
+          duration: 6 + Math.floor(rng() * 3)
+        });
+        frames.push({ pixels: blink(p), duration: 1 });
+        frames.push(forward());
+        goLeft = !goLeft;
+      }
+      return frames;
+    }
+  });
+}
+
+registerBuiltInMoves();
 
 // Derive a 32-bit animation seed from a clingon's identity. Same identity always
 // produces the same seed, so the same name plays the same animation pattern.
@@ -290,27 +316,6 @@ export function composeParallel(basePixels, moveNames, cycleLength = 160, seed =
   return frames;
 }
 
-defineMove('look', {
-  sequence: (p, rng = Math.random) => {
-    const forward = () => ({ pixels: p.map((row) => row.slice()), duration: 6 + Math.floor(rng() * 4) });
-    const numGlances = 1 + Math.floor(rng() * 3);
-    let goLeft = rng() < 0.5;
-    const frames = [forward()];
-    for (let i = 0; i < numGlances; i += 1) {
-      // Brief blink masks the asymmetric forward → look transition.
-      frames.push({ pixels: blink(p), duration: 1 });
-      frames.push({
-        pixels: goLeft ? lookLeft(p) : lookRight(p),
-        duration: 6 + Math.floor(rng() * 3)
-      });
-      frames.push({ pixels: blink(p), duration: 1 });
-      frames.push(forward());
-      goLeft = !goLeft;
-    }
-    return frames;
-  }
-});
-
 function defaultScheduler() {
   return {
     setInterval: (fn, ms) => globalThis.setInterval(fn, ms),
@@ -321,6 +326,7 @@ function defaultScheduler() {
 export function animateClingon(options = {}) {
   const {
     name, size, color = true,
+    lightMode = false,
     frames: moveList = ['idle', 'blink', 'look', 'wiggle', 'walk'],
     mode = 'parallel',
     fps = 8,
@@ -332,7 +338,7 @@ export function animateClingon(options = {}) {
     scheduler = defaultScheduler()
   } = options;
 
-  const clingon = generateClingon({ name, size, color });
+  const clingon = generateClingon({ name, size, color, lightMode });
   const animationSeed = seedFromClingon(clingon);
   const frames = mode === 'parallel'
     ? composeParallel(clingon.pixels, moveList, 160, animationSeed)

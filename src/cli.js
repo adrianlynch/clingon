@@ -54,6 +54,7 @@ Options:
       --pad-h <n>     Add spaces before each terminal output line
       --pad-v <n>     Add blank lines before and after terminal output
       --no-color      Render without ANSI color
+      --light         Use a darker palette tuned for light terminal backgrounds
   -h, --help          Show help
   -v, --version       Show version
 
@@ -82,6 +83,7 @@ export async function runCli(args, io) {
         count: options.galleryCount ?? 8,
         size: options.size,
         color: useColor,
+        lightMode: options.lightMode,
         termColumns: io.stdout.columns ?? 80
       };
       if (options.animate) {
@@ -126,7 +128,8 @@ export async function runCli(args, io) {
         name: options.inputName,
         recolor: options.recolor,
         size: options.size,
-        color: useColor
+        color: useColor,
+        lightMode: options.lightMode
       });
       options.useColor = useColor;
       const details = infoLines(options, baseClingon);
@@ -154,6 +157,7 @@ export async function runCli(args, io) {
           name: options.inputName,
           size: options.size,
           color: useColor,
+          lightMode: options.lightMode,
           frames: moveList,
           mode,
           fps,
@@ -174,7 +178,8 @@ export async function runCli(args, io) {
       name: options.inputName,
       recolor: options.recolor,
       size: options.size,
-      color: useColor
+      color: useColor,
+      lightMode: options.lightMode
     });
 
     if (options.json) {
@@ -309,9 +314,9 @@ function composeGalleryFrame(clingons, framesPerClingon, t, color, layout) {
   return out.join('\n');
 }
 
-async function runAnimatedGallery({ count, size, color, termColumns, stream, fps = 8, seconds, once }) {
+async function runAnimatedGallery({ count, size, color, lightMode, termColumns, stream, fps = 8, seconds, once }) {
   const clingons = [];
-  for (let i = 0; i < count; i += 1) clingons.push(generateClingon({ size, color }));
+  for (let i = 0; i < count; i += 1) clingons.push(generateClingon({ size, color, lightMode }));
   const moves = ['idle', 'blink', 'look', 'wiggle', 'walk'];
   const framesPerClingon = clingons.map((c) => composeParallel(c.pixels, moves, 160, seedFromClingon(c)));
   const cycleLength = framesPerClingon[0].length;
@@ -359,10 +364,10 @@ async function runAnimatedGallery({ count, size, color, termColumns, stream, fps
   });
 }
 
-function renderGallery({ count, size, color, termColumns }) {
+function renderGallery({ count, size, color, lightMode, termColumns }) {
   const clingons = [];
   for (let i = 0; i < count; i += 1) {
-    clingons.push(generateClingon({ size, color }));
+    clingons.push(generateClingon({ size, color, lightMode }));
   }
   const { slotWidth, gap, perRow } = buildGalleryLayout(clingons, termColumns);
   const out = [];
@@ -411,6 +416,7 @@ function parseArgs(args) {
     gallery: false,
     galleryCount: undefined,
     color: true,
+    lightMode: false,
     fps: undefined,
     help: false,
     inline: false,
@@ -479,6 +485,8 @@ function parseArgs(args) {
       options.size = 'tiny';
     } else if (arg === '--no-color') {
       options.color = false;
+    } else if (arg === '--light') {
+      options.lightMode = true;
     } else if (arg === '--inline') {
       options.inline = true;
     } else if (arg === '--animate') {
