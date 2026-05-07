@@ -83,3 +83,110 @@ test('setRawMode toggles when supported', () => {
   setRawMode(input, false);
   assert.equal(last, false);
 });
+
+import { blink, bob, wiggle, walk } from '../src/animation.js';
+import { generateClingon } from '../src/index.js';
+
+test('blink replaces eye cells in eye rows with BODY', () => {
+  const clingon = generateClingon({ name: 'orlando-reginald-morris-junior', size: 'tiny', color: false });
+  const before = clingon.pixels;
+  const after = blink(before);
+
+  assert.equal(after.length, before.length);
+  assert.equal(after[0].length, before[0].length);
+  assert.notEqual(after, before);
+  assert.deepEqual(before, generateClingon({ name: 'orlando-reginald-morris-junior', size: 'tiny', color: false }).pixels);
+
+  for (let y = 0; y < before.length; y += 1) {
+    for (let x = 0; x < before[y].length; x += 1) {
+      const cell = before[y][x];
+      if (cell >= 8 && cell <= 11) {
+        assert.equal(after[y][x], 1, `expected BODY at (${y}, ${x}), got ${after[y][x]}`);
+      }
+    }
+  }
+});
+
+test('blink leaves rows without eye cells untouched', () => {
+  const pixels = [
+    [1, 1, 1, 1],
+    [3, 3, 3, 3],
+    [1, 1, 1, 1]
+  ];
+  const after = blink(pixels);
+  assert.deepEqual(after[0], [1, 1, 1, 1]);
+  assert.deepEqual(after[1], [3, 3, 3, 3]);
+  assert.deepEqual(after[2], [1, 1, 1, 1]);
+});
+
+test('blink replaces ACCENT/DARK in the same row as eyes with BODY', () => {
+  const pixels = [
+    [1, 8, 9, 1],
+    [3, 2, 2, 3],
+    [1, 1, 1, 1]
+  ];
+  const after = blink(pixels);
+  assert.deepEqual(after[0], [1, 1, 1, 1]);
+  assert.deepEqual(after[1], [3, 2, 2, 3]);
+});
+
+test('bob phase 0 returns input pixels unchanged in value', () => {
+  const pixels = [[1, 1], [2, 3]];
+  const after = bob(pixels, 0);
+  assert.deepEqual(after, pixels);
+  assert.notEqual(after, pixels);
+});
+
+test('bob phase 1 prepends an empty row and drops the last row', () => {
+  const pixels = [[1, 1, 1], [2, 2, 2], [3, 3, 3]];
+  const after = bob(pixels, 1);
+  assert.deepEqual(after, [[0, 0, 0], [1, 1, 1], [2, 2, 2]]);
+  assert.equal(after.length, pixels.length);
+  assert.equal(after[0].length, pixels[0].length);
+});
+
+test('wiggle phase 0 returns input unchanged in value', () => {
+  const pixels = [[1, 1, 1], [5, 1, 7], [1, 1, 1]];
+  const after = wiggle(pixels, 0);
+  assert.deepEqual(after, pixels);
+  assert.notEqual(after, pixels);
+});
+
+test('wiggle phase 1 swaps DARK_NARROW with DARK_NARROW_RIGHT on arm row', () => {
+  const pixels = [[1, 1, 1], [5, 1, 7], [1, 1, 1]];
+  const after = wiggle(pixels, 1);
+  assert.deepEqual(after[1], [7, 1, 5]);
+  assert.deepEqual(after[0], [1, 1, 1]);
+  assert.deepEqual(after[2], [1, 1, 1]);
+});
+
+test('wiggle returns input unchanged when no arm row exists', () => {
+  const pixels = [[1, 1], [1, 1], [3, 3]];
+  const after = wiggle(pixels, 1);
+  assert.deepEqual(after, pixels);
+});
+
+test('walk phase 0 returns input unchanged in value', () => {
+  const pixels = [[1, 1, 1], [1, 1, 1], [3, 0, 3]];
+  const after = walk(pixels, 0);
+  assert.deepEqual(after, pixels);
+  assert.notEqual(after, pixels);
+});
+
+test('walk phase 1 shifts DARK cells in foot row left by one column', () => {
+  const pixels = [[1, 1, 1], [1, 1, 1], [0, 3, 3]];
+  const after = walk(pixels, 1);
+  assert.deepEqual(after[2], [3, 3, 0]);
+});
+
+test('walk leaves cells at the left edge unshifted', () => {
+  const pixels = [[1, 1, 1], [3, 0, 3]];
+  const after = walk(pixels, 1);
+  assert.deepEqual(after[1], [3, 3, 0]);
+});
+
+test('walk returns input unchanged when no foot row exists', () => {
+  const pixels = [[1, 1], [1, 1], [1, 1]];
+  const after = walk(pixels, 1);
+  assert.deepEqual(after, pixels);
+});
