@@ -199,7 +199,7 @@ export function animateClingon(options = {}) {
       frameIndex = 0;
     }
     durationLeft = renderedFrames[frameIndex].duration;
-    cursorUp(stream, height);
+    cursorUp(stream, height - 1);
     stream.write(renderedFrames[frameIndex].ansi);
   }, 1000 / fps);
 
