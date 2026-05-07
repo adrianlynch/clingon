@@ -123,6 +123,28 @@ clingon --with-name orlando-reginald-morris-junior --tiny --welcome --date --cwd
 Clingon names are hidden by default. Add `--name` where you want the name to appear beside it.
 `--pad=1` adds a blank line above and below the character plus one space of left padding.
 
+## Animation
+
+Animate the creature in place — gentle bob and blink. Loops until interrupted.
+
+```sh
+clingon --animate --tiny
+clingon --animate --frames idle,blink,wiggle --fps 8
+clingon --animate --seconds 5
+```
+
+Animation requires a TTY. Piping to a file or another command writes a single static frame and exits.
+
+## Inline mode
+
+Render a compact single-line glyph for statuslines, prompts, and tmux status bars.
+
+```sh
+clingon --inline --tiny --with-name orlando-reginald-morris-junior
+```
+
+Output is one line, width matching the size (4 chars for tiny, up to 11 for large). See [docs/integrations.md](docs/integrations.md) for tmux, starship, oh-my-posh, and Claude Code examples.
+
 ## CLI
 
 Generate a random clingon:
