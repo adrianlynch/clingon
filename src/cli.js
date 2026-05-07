@@ -1,5 +1,6 @@
 import { execFileSync } from 'node:child_process';
-import { basename } from 'node:path';
+import { basename, resolve as resolvePath } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { generateClingon, snippetFor } from './index.js';
 
 const MAX_INFO_LINES = 5;
@@ -15,6 +16,7 @@ Options:
       --name        Show the clingon name beside the art
   -r, --recolor     Keep the shape from --with-name but choose new colors
       --large         Render the largest clingon
+      --normal        Render a normal-sized clingon (default)
       --small         Render a smaller clingon
       --tiny          Render the tiniest clingon
       --size <size>   Render size: tiny, small, normal, or large
@@ -27,14 +29,17 @@ Options:
       --git           Show the current git branch beside the clingon
       --inline        Render a compact single-line glyph (one character per cell).
                       Suitable for statuslines, prompts, and tmux status bars.
-      --animate [list]  Animate the creature in place. Loops until Ctrl-C.
-                        Optional comma-separated list of behaviors:
+      --animate         Animate the creature in place. Loops until Ctrl-C.
+      --moves <list>    Comma-separated list of behaviors. Built-ins:
                         idle, blink, look, wiggle, walk.
                         Default: idle,blink,look,wiggle.
+                        Custom moves can be added via --load.
       --in-sequence     Play the listed behaviors in order, looping.
                         Without this flag, behaviors layer on one timeline
                         as random events.
       --once            Play one full animation cycle and exit.
+      --load <file>     Import a JS module that registers custom moves
+                        via defineMove(). May be passed multiple times.
       --fps <n>         Animation frames per second (1-30). Default 8.
       --seconds <n>     Run animation for N seconds then exit.
       --pad <n>       Add padding around terminal output
@@ -68,6 +73,10 @@ export async function runCli(args, io) {
 
     const useColor = options.color && shouldUseColor(io);
     options.useColor = useColor;
+
+    for (const path of options.loadModules) {
+      await import(pathToFileURL(resolvePath(path)).href);
+    }
 
     if (options.animate) {
       const moveList = options.animateMoves ?? ['idle', 'blink', 'look', 'wiggle'];
@@ -214,14 +223,10 @@ function parseFps(value) {
   return n;
 }
 
-function parseFramesList(value) {
-  if (!value) throw new Error('move list requires a comma-separated value.');
+function parseMovesList(value) {
+  if (!value) throw new Error('--moves requires a comma-separated list.');
   const moves = value.split(',').map((s) => s.trim()).filter(Boolean);
-  for (const m of moves) {
-    if (!BUILT_IN_MOVES.includes(m)) {
-      throw new Error(`Unknown move "${m}". Built-in moves: ${BUILT_IN_MOVES.join(', ')}.`);
-    }
-  }
+  if (moves.length === 0) throw new Error('--moves requires at least one move name.');
   return moves;
 }
 
@@ -231,6 +236,7 @@ function parseArgs(args) {
     animateMoves: undefined,
     animateInSequence: false,
     animateOnce: false,
+    loadModules: [],
     color: true,
     fps: 8,
     help: false,
@@ -311,17 +317,22 @@ function parseArgs(args) {
       options.inline = true;
     } else if (arg === '--animate') {
       options.animate = true;
-      if (hasOptionalValue(args[index + 1])) {
-        index += 1;
-        options.animateMoves = parseFramesList(args[index]);
-      }
-    } else if (arg.startsWith('--animate=')) {
-      options.animate = true;
-      options.animateMoves = parseFramesList(arg.slice('--animate='.length));
+    } else if (arg === '--moves') {
+      index += 1;
+      options.animateMoves = parseMovesList(args[index]);
+    } else if (arg.startsWith('--moves=')) {
+      options.animateMoves = parseMovesList(arg.slice('--moves='.length));
     } else if (arg === '--in-sequence') {
       options.animateInSequence = true;
     } else if (arg === '--once') {
       options.animateOnce = true;
+    } else if (arg === '--load') {
+      index += 1;
+      options.loadModules.push(requireValue(args[index], arg));
+    } else if (arg.startsWith('--load=')) {
+      options.loadModules.push(requireValue(arg.slice('--load='.length), '--load'));
+    } else if (arg === '--normal') {
+      options.size = 'normal';
     } else if (arg === '--fps') {
       index += 1;
       options.fps = parseFps(args[index]);

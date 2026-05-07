@@ -1,5 +1,11 @@
 import { randomBytes } from 'node:crypto';
 
+export {
+  animateClingon, buildFrames, composeParallel,
+  defineMove, resolveMove,
+  blink, bob, wiggle, walk, lookLeft, lookRight
+} from './animation.js';
+
 const CODE_PREFIX = 'clg';
 const LARGE_WIDTH = 11;
 const LARGE_HEIGHT = 8;

@@ -76,56 +76,24 @@ export function walk(pixels, phase) {
   });
 }
 
-// Shifts composite eye cells by `delta` character columns (each grid cell renders
-// as 2 character columns, so delta=1 moves the eye dark-spot by half a grid cell).
-function shiftEyes(pixels, delta) {
-  return pixels.map((row) => {
-    const eyes = [];
-    for (let i = 0; i < row.length; i += 1) {
-      const cell = row[i];
-      if (cell === EYE_DARK_LEFT) eyes.push({ cell: i, char: i * 2, kind: 'dark' });
-      else if (cell === EYE_DARK_RIGHT) eyes.push({ cell: i, char: i * 2 + 1, kind: 'dark' });
-      else if (cell === EYE_LIGHT_LEFT) eyes.push({ cell: i, char: i * 2, kind: 'light' });
-      else if (cell === EYE_LIGHT_RIGHT) eyes.push({ cell: i, char: i * 2 + 1, kind: 'light' });
-    }
-    if (eyes.length === 0) return row.slice();
-
-    const maxChar = row.length * 2;
-    const newChars = eyes.map((e) => e.char + delta);
-    if (newChars.some((c) => c < 0 || c >= maxChar)) return row.slice();
-
-    const placements = newChars.map((c, idx) => {
-      const cellIdx = Math.floor(c / 2);
-      const isRight = (c % 2) === 1;
-      const kind = eyes[idx].kind;
-      const cellType = kind === 'dark'
-        ? (isRight ? EYE_DARK_RIGHT : EYE_DARK_LEFT)
-        : (isRight ? EYE_LIGHT_RIGHT : EYE_LIGHT_LEFT);
-      return { cellIdx, cellType };
-    });
-
-    const newCellSet = new Set(placements.map((p) => p.cellIdx));
-    if (newCellSet.size !== placements.length) return row.slice();
-
-    const oldCellSet = new Set(eyes.map((e) => e.cell));
-    for (const p of placements) {
-      if (oldCellSet.has(p.cellIdx)) continue;
-      if (row[p.cellIdx] !== BODY) return row.slice();
-    }
-
-    const newRow = row.slice();
-    for (const e of eyes) newRow[e.cell] = BODY;
-    for (const p of placements) newRow[p.cellIdx] = p.cellType;
-    return newRow;
-  });
-}
-
+// Both eyes look LEFT: every composite eye becomes EYE_*_LEFT
+// (pupil on the left half of its cell, regardless of original orientation).
 export function lookLeft(pixels) {
-  return shiftEyes(pixels, -1);
+  return pixels.map((row) => row.map((cell) => {
+    if (cell === EYE_DARK_RIGHT) return EYE_DARK_LEFT;
+    if (cell === EYE_LIGHT_RIGHT) return EYE_LIGHT_LEFT;
+    return cell;
+  }));
 }
 
+// Both eyes look RIGHT: every composite eye becomes EYE_*_RIGHT
+// (pupil on the right half of its cell).
 export function lookRight(pixels) {
-  return shiftEyes(pixels, 1);
+  return pixels.map((row) => row.map((cell) => {
+    if (cell === EYE_DARK_LEFT) return EYE_DARK_RIGHT;
+    if (cell === EYE_LIGHT_LEFT) return EYE_LIGHT_RIGHT;
+    return cell;
+  }));
 }
 
 const moveRegistry = new Map();
@@ -304,6 +272,11 @@ export function animateClingon(options = {}) {
   } = options;
 
   const clingon = generateClingon({ name, size, color });
+  // Resolve frames eagerly so unknown moves surface as errors before any output.
+  const frames = mode === 'parallel'
+    ? composeParallel(clingon.pixels, moveList)
+    : buildFrames(clingon.pixels, moveList);
+
   let resolveDone;
   const done = new Promise((r) => { resolveDone = r; });
   const wrap = (ansi) => (decorate ? decorate(ansi) : ansi);
@@ -313,10 +286,6 @@ export function animateClingon(options = {}) {
     resolveDone();
     return { stop() {}, done };
   }
-
-  const frames = mode === 'parallel'
-    ? composeParallel(clingon.pixels, moveList)
-    : buildFrames(clingon.pixels, moveList);
   const renderedFrames = frames.map((frame) => ({
     ansi: wrap(renderAnsi(frame.pixels, clingon.palette, { color })),
     duration: frame.duration

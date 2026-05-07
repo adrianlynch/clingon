@@ -331,41 +331,32 @@ test('built-in look move starts and ends at forward and contains at least one gl
   assert.ok(hasShift, 'expected at least one shifted glance');
 });
 
-test('lookLeft sub-cell shifts the eye dark-spots one character column left', () => {
-  // EYE_DARK_RIGHT = 9, EYE_DARK_LEFT = 8, BODY = 1
-  // Tiny eye row: [BODY, EYE_DARK_LEFT, EYE_DARK_RIGHT, BODY]
-  // Dark spots are at character columns 2 (left half of cell 1) and 5 (right half of cell 2).
+test('lookLeft puts both pupils on the LEFT half of their cells', () => {
+  // EYE_DARK_LEFT = 8, EYE_DARK_RIGHT = 9, BODY = 1
+  // Forward eye row (pinched): left eye DARK_LEFT, right eye DARK_RIGHT.
   const pixels = [[1, 8, 9, 1]];
   const after = lookLeft(pixels);
-  // Dark spots shift to char columns 1, 4:
-  //   char 1 = right half of cell 0 → cell 0 becomes EYE_DARK_RIGHT
-  //   char 4 = left half of cell 2 → cell 2 becomes EYE_DARK_LEFT
-  // Old eye cells (1 and 2) get reset to BODY.
-  assert.deepEqual(after, [[9, 1, 8, 1]]);
+  // Both eyes converted to DARK_LEFT — pupils on left half of each cell.
+  assert.deepEqual(after, [[1, 8, 8, 1]]);
 });
 
-test('lookRight sub-cell shifts the eye dark-spots one character column right', () => {
+test('lookRight puts both pupils on the RIGHT half of their cells', () => {
   const pixels = [[1, 8, 9, 1]];
   const after = lookRight(pixels);
-  // Dark spots shift to char columns 3, 6:
-  //   char 3 = right half of cell 1 → cell 1 becomes EYE_DARK_RIGHT
-  //   char 6 = left half of cell 3 → cell 3 becomes EYE_DARK_LEFT
-  assert.deepEqual(after, [[1, 9, 1, 8]]);
+  assert.deepEqual(after, [[1, 9, 9, 1]]);
 });
 
 test('lookLeft preserves the eye color (LIGHT vs DARK)', () => {
   // EYE_LIGHT_LEFT = 10, EYE_LIGHT_RIGHT = 11
   const pixels = [[1, 10, 11, 1]];
   const after = lookLeft(pixels);
-  assert.deepEqual(after, [[11, 1, 10, 1]]);
+  assert.deepEqual(after, [[1, 10, 10, 1]]);
 });
 
-test('lookLeft refuses to shift if a dark-spot would go off-grid', () => {
-  // Dark spots already at char columns 0 and 3 — char 0 cannot move left.
-  // Eye row: [EYE_DARK_LEFT, EYE_DARK_RIGHT, BODY, BODY] — darks at chars 0, 3.
-  const pixels = [[8, 9, 1, 1]];
-  const after = lookLeft(pixels);
-  assert.deepEqual(after, [[8, 9, 1, 1]]);
+test('lookLeft / lookRight do not mutate cells that are not eyes', () => {
+  const pixels = [[3, 8, 9, 3]];
+  assert.deepEqual(lookLeft(pixels), [[3, 8, 8, 3]]);
+  assert.deepEqual(lookRight(pixels), [[3, 9, 9, 3]]);
 });
 
 test('lookLeft / lookRight do not mutate input', () => {
@@ -493,32 +484,45 @@ test('cli --animate --json errors', async () => {
   process.exitCode = 0;
 });
 
-test('cli --animate accepts a comma-separated move list as its value', async () => {
-  // Non-TTY stdout makes the animator write a single static frame and exit.
+test('cli --animate --moves accepts a comma-separated move list', async () => {
   const stdout = { isTTY: false, output: '', write(c) { this.output += c; } };
   const stderr = createWritable();
-  await runCli(['--animate', 'idle,blink', '--with-name', 'orlando-reginald-morris-junior', '--tiny', '--no-color'], {
+  await runCli(['--animate', '--moves', 'idle,blink', '--with-name', 'orlando-reginald-morris-junior', '--tiny', '--no-color'], {
     stdout, stderr, env: {}
   });
   assert.match(stdout.output, /\[\]/);
   assert.equal(stderr.output, '');
 });
 
-test('cli --animate with bogus moves errors', async () => {
-  const stdout = createWritable();
+test('cli --animate --moves bogus errors', async () => {
+  const stdout = { isTTY: false, output: '', write(c) { this.output += c; } };
   const stderr = createWritable();
-  await runCli(['--animate', 'bogus'], { stdout, stderr, env: {} });
-  assert.match(stderr.output, /move|bogus/i);
+  await runCli(['--animate', '--moves', 'bogus', '--with-name', 'orlando-reginald-morris-junior', '--tiny', '--no-color'], {
+    stdout, stderr, env: {}
+  });
+  assert.match(stderr.output, /bogus|move/i);
   process.exitCode = 0;
 });
 
-test('cli --animate accepts --in-sequence flag', async () => {
+test('cli --animate accepts --in-sequence with --moves', async () => {
   const stdout = { isTTY: false, output: '', write(c) { this.output += c; } };
   const stderr = createWritable();
-  await runCli(['--animate', 'idle,blink', '--in-sequence', '--with-name', 'orlando-reginald-morris-junior', '--tiny', '--no-color'], {
+  await runCli(['--animate', '--moves', 'idle,blink', '--in-sequence', '--with-name', 'orlando-reginald-morris-junior', '--tiny', '--no-color'], {
     stdout, stderr, env: {}
   });
   assert.match(stdout.output, /\[\]/);
+  assert.equal(stderr.output, '');
+});
+
+test('cli --normal sets size to normal', async () => {
+  const stdout = createWritable();
+  const stderr = createWritable();
+  runCli(['--with-name', 'orlando-reginald-morris-junior', '--normal', '--no-color'], {
+    stdout, stderr, env: {}
+  });
+  // Normal-size creature is 6 lines tall.
+  const lines = stdout.output.trimEnd().split('\n');
+  assert.equal(lines.length, 6);
   assert.equal(stderr.output, '');
 });
 
