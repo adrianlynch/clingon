@@ -72,12 +72,12 @@ Animation requires a TTY. Piping to a file or another command writes a single st
 ## Option Examples
 
 <p>
-  <img src="./assets/orlando-reginald-morris-junior-animated.svg" width="260" alt="animated clingon">
-  <img src="./assets/example-welcome-context.svg" width="360" alt="clingon with welcome, date, cwd, and git branch">
+  <img src="./assets/orlando-reginald-morris-junior-animated.svg" width="260" alt="animated clingon, --animate">
+  <img src="./assets/example-animated-welcome-context.svg" width="360" alt="animated clingon with welcome, date, cwd, and git branch">
 </p>
 <p>
-  <img src="./assets/example-message.svg" width="360" alt="clingon with custom message">
-  <img src="./assets/example-padded-startup.svg" width="360" alt="clingon with padded startup output">
+  <img src="./assets/example-message.svg" width="360" alt="clingon with --message Ready">
+  <img src="./assets/example-padded-startup.svg" width="360" alt="clingon with --pad=1 startup output">
 </p>
 
 ## Install

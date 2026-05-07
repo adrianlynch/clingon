@@ -58,18 +58,6 @@ const characterExamples = [
 
 const examples = [
   {
-    file: 'assets/example-welcome-context.svg',
-    title: 'welcome + date + cwd + git',
-    name: 'orlando-reginald-morris-junior',
-    size: 'tiny',
-    details: ({ palette }) => [
-      { text: 'Good evening', fill: palette.body, weight: '700' },
-      { text: 'Wed, May 6, 2026', fill: MUTED },
-      { text: '~ clingon', fill: TEXT },
-      { text: '* main', fill: TEXT }
-    ]
-  },
-  {
     file: 'assets/example-message.svg',
     title: '--message "Ready"',
     name: 'mabel-waffles-wigglesworth-tiny',
@@ -94,9 +82,21 @@ const examples = [
 const animatedExamples = [
   {
     file: 'assets/orlando-reginald-morris-junior-animated.svg',
-    title: 'orlando-reginald-morris-junior (animated)',
+    title: '--animate',
     name: 'orlando-reginald-morris-junior',
     size: 'normal'
+  },
+  {
+    file: 'assets/example-animated-welcome-context.svg',
+    title: '--animate --welcome --date --cwd --git',
+    name: 'orlando-reginald-morris-junior',
+    size: 'tiny',
+    details: ({ palette }) => [
+      { text: 'Good evening', fill: palette.body, weight: '700' },
+      { text: 'Wed, May 6, 2026', fill: MUTED },
+      { text: '~ clingon', fill: TEXT },
+      { text: '* main', fill: TEXT }
+    ]
   }
 ];
 
@@ -205,16 +205,27 @@ function renderAnimatedExample(example) {
   );
   const totalDur = (cycleLength / fps).toFixed(2);
 
-  const width = 300;
-  const height = 210;
+  const hasDetails = typeof example.details === 'function';
+  const details = hasDetails ? example.details(clingon).slice(0, 5) : [];
+  const pad = example.pad ?? 0;
+
+  const artWidth = clingon.pixels[0].length * CELL;
+  const artHeight = clingon.pixels.length * CELL;
+
+  const width = hasDetails ? 430 : 300;
+  const height = hasDetails ? 190 : 210;
   const terminalX = 20;
   const terminalY = 18;
   const terminalWidth = width - 40;
-  const terminalHeight = 146;
-  const artWidth = clingon.pixels[0].length * CELL;
-  const artHeight = clingon.pixels.length * CELL;
-  const artX = terminalX + Math.floor((terminalWidth - artWidth) / 2);
+  const terminalHeight = hasDetails ? 132 : 146;
+  const titleY = hasDetails ? 174 : 194;
+
+  const artX = hasDetails
+    ? terminalX + 22 + pad * 12 + 8
+    : terminalX + Math.floor((terminalWidth - artWidth) / 2);
   const artY = terminalY + Math.floor((terminalHeight - artHeight) / 2);
+  const detailX = artX + artWidth + 34;
+  const firstDetailY = terminalY + Math.floor((terminalHeight - details.length * 20) / 2) + 14;
 
   // Deduplicate frames so identical pixel grids share a single SVG group.
   const uniqueFrames = new Map();
@@ -245,9 +256,16 @@ function renderAnimatedExample(example) {
     `  <rect width="${width}" height="${height}" rx="8" fill="${CARD_FILL}"/>`,
     `  <rect x="${terminalX}" y="${terminalY}" width="${terminalWidth}" height="${terminalHeight}" rx="6" fill="${TERMINAL_FILL}" stroke="${BORDER}"/>`,
     ...frameGroups,
+    ...details.map((detail, index) => renderText({
+      x: detailX,
+      y: firstDetailY + index * 20,
+      text: detail.text,
+      fill: detail.fill,
+      weight: detail.weight
+    })),
     renderText({
       x: width / 2,
-      y: 194,
+      y: titleY,
       text: example.title,
       fill: TEXT,
       anchor: 'middle',
