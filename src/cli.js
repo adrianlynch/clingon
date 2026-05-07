@@ -30,7 +30,7 @@ Options:
       --animate         Animate the creature in place. Loops until Ctrl-C.
       --fps <n>         Animation frames per second (1-30). Default 6.
       --frames <list>   Comma-separated moves: idle, blink, look, wiggle, walk.
-                        Default 'idle,blink,look,idle' for naturalistic mix.
+                        Default 'idle,blink,look,wiggle,idle' for variety.
       --seconds <n>     Run animation for N seconds then exit.
       --pad <n>       Add padding around terminal output
       --pad-h <n>     Add spaces before each terminal output line
@@ -66,16 +66,24 @@ export async function runCli(args, io) {
 
     if (options.animate) {
       const { animateClingon } = await import('./animation.js');
-      const handle = animateClingon({
-        name: options.inputName,
-        size: options.size,
-        color: useColor,
-        frames: options.animateFrames,
-        fps: options.fps,
-        seconds: options.seconds,
-        stream: io.stdout
-      });
-      await handle.done;
+      const controller = new AbortController();
+      const onSigint = () => controller.abort();
+      process.on('SIGINT', onSigint);
+      try {
+        const handle = animateClingon({
+          name: options.inputName,
+          size: options.size,
+          color: useColor,
+          frames: options.animateFrames,
+          fps: options.fps,
+          seconds: options.seconds,
+          stream: io.stdout,
+          signal: controller.signal
+        });
+        await handle.done;
+      } finally {
+        process.off('SIGINT', onSigint);
+      }
       return;
     }
 
@@ -186,7 +194,7 @@ function parseFramesList(value) {
 function parseArgs(args) {
   const options = {
     animate: false,
-    animateFrames: ['idle', 'blink', 'look', 'idle'],
+    animateFrames: ['idle', 'blink', 'look', 'wiggle', 'idle'],
     color: true,
     fps: 6,
     help: false,

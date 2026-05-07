@@ -118,11 +118,9 @@ export function buildFrames(basePixels, moves) {
 
 defineMove('idle', {
   sequence: (p) => [
-    { pixels: bob(p, 0), duration: 6 },
+    { pixels: bob(p, 0), duration: 12 },
     { pixels: bob(p, 1), duration: 1 },
-    { pixels: bob(p, 0), duration: 6 },
-    { pixels: bob(p, 1), duration: 1 },
-    { pixels: bob(p, 0), duration: 4 }
+    { pixels: bob(p, 0), duration: 8 }
   ]
 });
 
@@ -152,10 +150,9 @@ defineMove('walk', {
 
 defineMove('look', {
   sequence: (p) => [
-    { pixels: p.map((row) => row.slice()), duration: 8 },
-    { pixels: lookLeft(p), duration: 5 },
-    { pixels: p.map((row) => row.slice()), duration: 5 },
-    { pixels: lookRight(p), duration: 5 },
+    { pixels: lookLeft(p), duration: 6 },
+    { pixels: lookRight(p), duration: 6 },
+    { pixels: lookLeft(p), duration: 6 },
     { pixels: p.map((row) => row.slice()), duration: 8 }
   ]
 });
@@ -170,7 +167,7 @@ function defaultScheduler() {
 export function animateClingon(options = {}) {
   const {
     name, size, color = true,
-    frames: moveList = ['idle', 'blink', 'look', 'idle'],
+    frames: moveList = ['idle', 'blink', 'look', 'wiggle', 'idle'],
     fps = 6,
     loops = Infinity,
     seconds,

@@ -307,9 +307,10 @@ test('built-in idle move produces frames with rest-heavy timing', () => {
   const frames = resolveMove('idle', generateClingon({
     name: 'orlando-reginald-morris-junior', size: 'tiny', color: false
   }).pixels);
-  assert.equal(frames.length, 5);
+  assert.equal(frames.length, 3);
   // mostly resting at base position with brief lifts
-  assert.ok(frames[0].duration >= frames[1].duration);
+  assert.ok(frames[0].duration > frames[1].duration);
+  assert.ok(frames[2].duration > frames[1].duration);
 });
 
 test('built-in blink move has long open phase and brief blink', () => {
@@ -322,11 +323,13 @@ test('built-in blink move has long open phase and brief blink', () => {
   assert.equal(frames[1].duration, 1);
 });
 
-test('built-in look move produces 5 frames covering left and right', () => {
+test('built-in look move alternates left and right for symmetric motion', () => {
   const frames = resolveMove('look', generateClingon({
     name: 'orlando-reginald-morris-junior', size: 'tiny', color: false
   }).pixels);
-  assert.equal(frames.length, 5);
+  assert.equal(frames.length, 4);
+  // adjacent lookLeft and lookRight frames have BOTH eyes change
+  // (not asymmetric forward-to-side transitions)
 });
 
 test('lookLeft replaces EYE_*_RIGHT with EYE_*_LEFT', () => {
@@ -353,8 +356,8 @@ test('lookLeft / lookRight do not mutate input', () => {
 test('buildFrames concatenates frames from named moves', () => {
   const base = generateClingon({ name: 'orlando-reginald-morris-junior', size: 'tiny', color: false }).pixels;
   const frames = buildFrames(base, ['idle', 'blink']);
-  // idle (5) + blink (3) = 8
-  assert.equal(frames.length, 8);
+  // idle (3) + blink (3) = 6
+  assert.equal(frames.length, 6);
 });
 
 test('buildFrames accepts mixed strings and inline Move objects', () => {
@@ -414,8 +417,8 @@ test('animateClingon advances frames on tick with cursor-up between frames', () 
     frames: ['idle'], fps: 6, stream, scheduler
   });
   const before = stream.writes.length;
-  // idle's first frame holds for 6 ticks; tick enough to roll to the next
-  scheduler.tick(8);
+  // idle's first frame holds for 12 ticks; tick enough to roll to the next
+  scheduler.tick(14);
   const after = stream.writes.slice(before);
   assert.ok(after.some((w) => /\[\d+A\r/.test(w)), 'expected cursor-up sequence after tick');
   handle.stop();
