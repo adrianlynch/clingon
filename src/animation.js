@@ -212,11 +212,15 @@ function buildTrack(name, cycleLength) {
     return (frame, t) => bob(frame, bobSet.has(t) ? 1 : 0);
   }
   if (name === 'blink') {
-    const blinkAt = new Set(randomEventTicks(cycleLength, 50, 80));
-    return (frame, t) => blinkAt.has(t) ? blink(frame) : frame;
+    const blinkAt = randomEventTicks(cycleLength, 24, 44);
+    const blinkDuration = 2;
+    return (frame, t) => {
+      const active = blinkAt.some((start) => t >= start && t < start + blinkDuration);
+      return active ? blink(frame) : frame;
+    };
   }
   if (name === 'look') {
-    const lookAt = randomEventTicks(cycleLength, 60, 90);
+    const lookAt = randomEventTicks(cycleLength, 40, 70);
     const directions = [];
     let goLeft = Math.random() < 0.5;
     for (let i = 0; i < lookAt.length; i += 1) {
