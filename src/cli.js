@@ -445,8 +445,6 @@ function parseArgs(args) {
       options.script = true;
     } else if (arg === '-j' || arg === '--json') {
       options.json = true;
-    } else if (arg === '-q' || arg === '--quiet' || arg === '--no-code' || arg === '--no-name') {
-      // Legacy flags are accepted as no-ops so existing shell startup snippets do not fail.
     } else if (arg === '--welcome') {
       options.infoItems.push({ type: 'welcome' });
     } else if (arg === '--message') {
@@ -535,16 +533,6 @@ function parseArgs(args) {
       options.inputName = expandWildcardName(requireValue(args[index], arg));
     } else if (arg.startsWith('--with-name=')) {
       options.inputName = expandWildcardName(requireValue(arg.slice('--with-name='.length), '--with-name'));
-    } else if (arg === '-c' || arg === '--code') {
-      if (hasOptionalValue(args[index + 1])) {
-        index += 1;
-      }
-    } else if (arg.startsWith('--name=')) {
-      // Legacy value form is accepted as a no-op. Use --with-name to regenerate.
-    } else if (arg.startsWith('--code=')) {
-      // Legacy option is accepted as a no-op.
-    } else if (!arg.startsWith('-')) {
-      // Legacy positional values are accepted as no-ops.
     } else {
       throw new Error(`Unknown option "${arg}".`);
     }

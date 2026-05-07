@@ -355,35 +355,6 @@ test('cli label flags render in the provided order', () => {
   assert.equal(stderr.output, '');
 });
 
-test('cli legacy code and quiet flags are accepted as no-ops', () => {
-  const stdout = createWritable();
-  const stderr = createWritable();
-
-  runCli(['--code', 'orlando-reginald-morris-junior', '--quiet', '--tiny', '--no-color'], {
-    stdout,
-    stderr,
-    env: {}
-  });
-
-  assert.match(stdout.output, /\[\]|\.\.|##/);
-  assert.doesNotMatch(stdout.output, /orlando-reginald-morris-junior/);
-  assert.equal(stderr.output, '');
-});
-
-test('cli legacy name value form is accepted as a no-op', () => {
-  const stdout = createWritable();
-  const stderr = createWritable();
-
-  runCli(['--name', 'orlando-reginald-morris-junior', '--tiny', '--no-color'], {
-    stdout,
-    stderr,
-    env: {}
-  });
-
-  assert.match(stdout.output, /  [a-z]+-[a-z]+-[a-z]+-[a-z]+/);
-  assert.equal(stderr.output, '');
-});
-
 test('cli info lines respect output padding', () => {
   const stdout = createWritable();
   const stderr = createWritable();
