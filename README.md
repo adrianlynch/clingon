@@ -49,25 +49,34 @@ Animate the creature in place — bob, blink, look, wiggle, walk. Loops until Ct
 
 ```sh
 clingon --animate --tiny
+```
+
+Animation requires a TTY. Piping to a file or another command writes a single static frame and exits.
+
+### More options
+
+Pick which behaviors run, change pacing, run for a finite duration, or combine with info-panel flags:
+
+```sh
 clingon --animate --moves idle,blink --tiny             # only the listed behaviors
 clingon --animate --moves walk --in-sequence --tiny     # play behaviors in order, looping
 clingon --animate --tiny --once                         # one cycle then exit
 clingon --animate --tiny --seconds 5                    # finite duration
-clingon --animate --tiny --fps 12                       # speed (1-30, default 8)
+clingon --animate --tiny --fps 12                       # animation speed (1-30, default 8)
 clingon --animate --large --welcome --date --git --pad=1
 ```
 
-Animation behaviors layer on a single timeline by default — bob runs continuously while blinks/looks/wiggles/walks fire as random events. Pass `--in-sequence` to play the listed moves one-at-a-time in a loop instead.
+Behaviors layer on a single timeline by default — bob runs continuously while blinks, looks, wiggles, and walks fire as random events. `--in-sequence` plays the listed moves one-at-a-time in a loop instead.
 
-Animation rhythm is **deterministic from the name** — same name always produces the same pattern of bobs and blinks. Add an optional 5th word for explicit rhythm control:
+### Deterministic rhythm
+
+Animation rhythm is derived from the name — the same name always produces the same pattern of bobs and blinks. Add an optional 5th word for explicit rhythm control:
 
 ```sh
 clingon --animate --with-name orlando-reginald-morris-junior --tiny           # rhythm derived
 clingon --animate --with-name orlando-reginald-morris-junior-bouncy --tiny    # explicit rhythm
 clingon --animate --with-name orlando-reginald-morris-junior-snoozy --tiny    # different rhythm, same creature
 ```
-
-Animation requires a TTY. Piping to a file or another command writes a single static frame and exits.
 
 ## Option Examples
 
