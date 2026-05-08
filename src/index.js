@@ -427,9 +427,9 @@ function createPalette(seed, options = {}) {
 // because the blue channel is already low and gets crushed further).
 function toLightModePalette(palette) {
   return {
-    body: capLightness(palette.body, 0.40),
-    accent: capLightness(palette.accent, 0.42),
-    dark: capLightness(palette.dark, 0.22)
+    body: capLightness(palette.body, 0.50),
+    accent: capLightness(palette.accent, 0.50),
+    dark: capLightness(palette.dark, 0.32)
   };
 }
 
