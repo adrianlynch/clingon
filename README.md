@@ -78,6 +78,28 @@ clingon --animate --with-name orlando-reginald-morris-junior-bouncy --tiny    # 
 clingon --animate --with-name orlando-reginald-morris-junior-snoozy --tiny    # different rhythm, same creature
 ```
 
+## More examples
+
+A custom message beside the art:
+
+```sh
+clingon --tiny --message "Ready"
+```
+
+<p>
+  <img src="./assets/example-message.svg" width="430" alt="clingon with --message Ready">
+</p>
+
+A time-aware greeting and current directory, with one line of padding around the output:
+
+```sh
+clingon --tiny --welcome --cwd --pad=1
+```
+
+<p>
+  <img src="./assets/example-padded-startup.svg" width="430" alt="clingon with welcome, cwd, and --pad=1">
+</p>
+
 ## Inline mode
 
 Render a compact single-line glyph for statuslines, prompts, and tmux status bars.

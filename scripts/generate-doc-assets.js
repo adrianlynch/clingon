@@ -56,7 +56,28 @@ const characterExamples = [
   }
 ];
 
-const examples = [];
+const examples = [
+  {
+    file: 'assets/example-message.svg',
+    title: '--message "Ready"',
+    name: 'mabel-waffles-wigglesworth-tiny',
+    size: 'tiny',
+    details: () => [
+      { text: 'Ready', fill: TEXT }
+    ]
+  },
+  {
+    file: 'assets/example-padded-startup.svg',
+    title: '--welcome --cwd --pad=1',
+    name: 'otto-beans-moonbeam-excellent',
+    size: 'tiny',
+    pad: 1,
+    details: ({ palette }) => [
+      { text: 'Konbanwa', fill: palette.body, weight: '700' },
+      { text: '~ clingon', fill: TEXT }
+    ]
+  }
+];
 
 const animatedExamples = [
   {
