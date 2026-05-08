@@ -211,16 +211,38 @@ test('walk phase 0 returns input unchanged in value', () => {
   assert.notEqual(after, pixels);
 });
 
-test('walk phase 1 shifts DARK cells in foot row left by one column', () => {
-  const pixels = [[1, 1, 1], [1, 1, 1], [0, 3, 3]];
+test('walk phase 1 lifts the leftmost foot only', () => {
+  const pixels = [[1, 1, 1, 1], [1, 1, 1, 1], [3, 0, 0, 3]];
   const after = walk(pixels, 1);
-  assert.deepEqual(after[2], [3, 3, 0]);
+  assert.deepEqual(after[2], [0, 0, 0, 3]);
+  assert.deepEqual(after[0], [1, 1, 1, 1]);
 });
 
-test('walk leaves cells at the left edge unshifted', () => {
-  const pixels = [[1, 1, 1], [3, 0, 3]];
-  const after = walk(pixels, 1);
-  assert.deepEqual(after[1], [3, 3, 0]);
+test('walk phase 2 lifts the rightmost foot only', () => {
+  const pixels = [[1, 1, 1, 1], [1, 1, 1, 1], [3, 0, 0, 3]];
+  const after = walk(pixels, 2);
+  assert.deepEqual(after[2], [3, 0, 0, 0]);
+});
+
+test('walk groups adjacent foot cells so multi-cell feet lift together', () => {
+  // Two feet, each two cells wide, separated by an empty gap.
+  const pixels = [[1, 1, 1, 1, 1, 1, 1], [3, 3, 0, 0, 0, 3, 3]];
+  const lifted0 = walk(pixels, 1);
+  assert.deepEqual(lifted0[1], [0, 0, 0, 0, 0, 3, 3]);
+  const lifted1 = walk(pixels, 2);
+  assert.deepEqual(lifted1[1], [3, 3, 0, 0, 0, 0, 0]);
+});
+
+test('walk both feet animate on tiny grids (regression for left-foot pin)', () => {
+  // Tiny clingons have feet at x=0 and the rightmost column. The old walk
+  // shifted both feet left, which pinned the x=0 foot against the edge so
+  // only the right leg appeared to move.
+  const tinyFeet = [[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [3, 0, 0, 3]];
+  const left = walk(tinyFeet, 1);
+  const right = walk(tinyFeet, 2);
+  assert.notDeepEqual(left[3], tinyFeet[3]);
+  assert.notDeepEqual(right[3], tinyFeet[3]);
+  assert.notDeepEqual(left[3], right[3]);
 });
 
 test('walk returns input unchanged when no foot row exists', () => {

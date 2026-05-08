@@ -82,6 +82,15 @@ export function wiggle(pixels, phase) {
   });
 }
 
+// Walk lifts one foot at a time so creatures with feet at the edges
+// (tiny is 4 wide with feet at x=0 and x=3) actually animate both legs
+// instead of pinning the leftmost one against the edge.
+//
+// Phase 0: rest (both feet down).
+// Phase 1: lift the left foot (clear the leftmost foot group).
+// Phase 2: lift the right foot (clear the rightmost foot group).
+// Adjacent foot cells are grouped into one "foot" so multi-cell feet
+// (large and normal sizes) lift together.
 export function walk(pixels, phase) {
   let footRow = -1;
   for (let y = pixels.length - 1; y >= 0; y -= 1) {
@@ -90,13 +99,29 @@ export function walk(pixels, phase) {
   if (phase === 0 || footRow === -1) {
     return pixels.map((row) => row.slice());
   }
+
+  // Group adjacent dark cells into feet.
+  const feet = [];
+  let group = [];
+  for (let x = 0; x < pixels[footRow].length; x += 1) {
+    if (isDarkLike(pixels[footRow][x])) {
+      group.push(x);
+    } else if (group.length > 0) {
+      feet.push(group);
+      group = [];
+    }
+  }
+  if (group.length > 0) feet.push(group);
+  if (feet.length === 0) return pixels.map((row) => row.slice());
+
+  const liftIndex = phase === 1 ? 0 : phase === 2 ? feet.length - 1 : -1;
+  if (liftIndex < 0) return pixels.map((row) => row.slice());
+
+  const liftCells = new Set(feet[liftIndex]);
   return pixels.map((row, y) => {
-    if (y !== footRow) return row.slice();
-    const next = new Array(row.length).fill(EMPTY);
-    for (let x = 0; x < row.length; x += 1) {
-      if (!isDarkLike(row[x])) continue;
-      const target = x === 0 ? 0 : x - 1;
-      next[target] = row[x];
+    const next = row.slice();
+    if (y === footRow) {
+      for (const x of liftCells) next[x] = EMPTY;
     }
     return next;
   });
@@ -215,9 +240,9 @@ function registerBuiltInMoves() {
   defineMove('walk', {
     sequence: (p) => [
       { pixels: walk(p, 0), duration: 2 },
-      { pixels: walk(p, 1), duration: 2 },
+      { pixels: walk(p, 1), duration: 2 },   // left foot lifted
       { pixels: walk(p, 0), duration: 2 },
-      { pixels: walk(p, 1), duration: 2 }
+      { pixels: walk(p, 2), duration: 2 }    // right foot lifted
     ]
   });
 
@@ -314,11 +339,14 @@ function buildTrack(name, cycleLength, rng) {
   }
   if (name === 'walk') {
     const walkAt = randomEventTicks(cycleLength, 35, 55, rng);
-    const walkDuration = 4;
+    // 8-tick window: rest, left up, rest, right up — each held for 2 ticks.
+    const walkDuration = 8;
+    const phaseSeq = [0, 1, 0, 2];
     return (frame, t) => {
       const start = walkAt.find((s) => t >= s && t < s + walkDuration);
       if (start === undefined) return frame;
-      return walk(frame, (t - start) % 2);
+      const offset = t - start;
+      return walk(frame, phaseSeq[Math.floor(offset / 2)]);
     };
   }
   throw new Error(`Move "${name}" cannot run in parallel mode. Built-in parallel-mode moves: idle, blink, look, wiggle, walk.`);

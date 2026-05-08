@@ -91,6 +91,21 @@ const animatedExamples = [
       { text: '~ clingon', fill: TEXT },
       { text: '* main', fill: TEXT }
     ]
+  },
+  {
+    file: 'assets/example-animated.svg',
+    title: '--animate',
+    name: 'cosmo-pickle-toebean-cosmic',
+    size: 'normal'
+  }
+];
+
+const inlineExamples = [
+  {
+    file: 'assets/example-inline.svg',
+    title: '--inline',
+    name: 'orlando-reginald-morris-junior',
+    size: 'tiny'
   }
 ];
 
@@ -104,6 +119,10 @@ for (const example of examples) {
 
 for (const example of animatedExamples) {
   writeFileSync(example.file, renderAnimatedExample(example));
+}
+
+for (const example of inlineExamples) {
+  writeFileSync(example.file, renderInlineExample(example));
 }
 
 function renderCharacterExample(example) {
@@ -260,6 +279,65 @@ function renderAnimatedExample(example) {
     renderText({
       x: width / 2,
       y: titleY,
+      text: example.title,
+      fill: TEXT,
+      anchor: 'middle',
+      size: 13
+    }),
+    '</svg>'
+  ].join('\n');
+}
+
+// Render a single-line glyph example: one row of cells (the eye row, or
+// row 1 as fallback), each rendered as a colored block (body) or a small
+// circle (eye) — mirroring the unicode '█' / '◉' the inline mode emits.
+function renderInlineExample(example) {
+  const clingon = generateClingon({ name: example.name, size: example.size, color: false });
+  const eyeRow = clingon.pixels.find((row) => row.some((c) => c >= 8 && c <= 11))
+    || clingon.pixels[Math.min(1, clingon.pixels.length - 1)];
+
+  const cellSize = 28;
+  const stripWidth = eyeRow.length * cellSize;
+  const width = 300;
+  const height = 130;
+  const stripX = Math.floor((width - stripWidth) / 2);
+  const stripY = 36;
+  const terminalX = 20;
+  const terminalY = 18;
+  const terminalWidth = width - 40;
+  const terminalHeight = 70;
+
+  const inlineCellColor = (cell, palette) => {
+    if (cell === 1) return palette.body;
+    if (cell === 2 || cell === 4 || cell === 6) return palette.accent;
+    if (cell === 3 || cell === 5 || cell === 7) return palette.dark;
+    if (cell === 8 || cell === 9) return palette.dark;     // eye-dark-* → palette.dark
+    if (cell === 10 || cell === 11) return palette.accent; // eye-light-* → palette.accent
+    return palette.body;
+  };
+
+  const cells = eyeRow.map((cell, i) => {
+    if (cell === 0) return null;
+    const x = stripX + i * cellSize;
+    const y = stripY;
+    const color = inlineCellColor(cell, clingon.palette);
+    const isEye = cell >= 8 && cell <= 11;
+    if (isEye) {
+      const cx = x + cellSize / 2;
+      const cy = y + cellSize / 2;
+      return `  <circle cx="${cx}" cy="${cy}" r="${cellSize * 0.36}" fill="${color}"/>`;
+    }
+    return `  <rect x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" fill="${color}"/>`;
+  }).filter(Boolean);
+
+  return [
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="inline ${escapeText(example.title)} clingon">`,
+    `  <rect width="${width}" height="${height}" rx="8" fill="${CARD_FILL}"/>`,
+    `  <rect x="${terminalX}" y="${terminalY}" width="${terminalWidth}" height="${terminalHeight}" rx="6" fill="${TERMINAL_FILL}" stroke="${BORDER}"/>`,
+    ...cells,
+    renderText({
+      x: width / 2,
+      y: 114,
       text: example.title,
       fill: TEXT,
       anchor: 'middle',

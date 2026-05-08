@@ -80,6 +80,16 @@ clingon --animate --with-name orlando-reginald-morris-junior-snoozy --tiny    # 
 
 ## More examples
 
+Animation on its own — bob, blink, look, wiggle, walk on a single timeline:
+
+```sh
+clingon --animate
+```
+
+<p>
+  <img src="./assets/example-animated.svg" width="300" alt="bare animated clingon">
+</p>
+
 A custom message beside the art:
 
 ```sh
@@ -107,6 +117,10 @@ Render a compact single-line glyph for statuslines, prompts, and tmux status bar
 ```sh
 clingon --inline --tiny --with-name orlando-reginald-morris-junior
 ```
+
+<p>
+  <img src="./assets/example-inline.svg" width="300" alt="clingon inline glyph">
+</p>
 
 Output is one line, width matching the size (4 chars for tiny, up to 11 for large). See [docs/integrations.md](docs/integrations.md) for tmux, starship, oh-my-posh, and Claude Code examples.
 
