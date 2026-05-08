@@ -15,7 +15,7 @@ Each clingon is created from a readable name. Save the name and you can render t
   . .    . .  
 ```
 
-**Jump to:** [Install ↓](#install) · [Animation](#animation) · [JavaScript API](#javascript-api) · [Custom moves](#custom-moves)
+**Jump to:** [Install ↓](#install) · [Examples](#examples) · [Use in zsh](#use-in-zsh) · [All flags](#options) · [JavaScript API](#javascript-api)
 
 ## Screenshots
 
@@ -40,6 +40,49 @@ Each clingon is created from a readable name. Save the name and you can render t
 </p>
 
 Terminal dimensions are `large` 22x8, `normal` 14x6, `small` 10x5, and `tiny` 8x4.
+
+## Examples
+
+A custom message beside the art:
+
+```sh
+clingon --tiny --message "Ready"
+```
+
+<p>
+  <img src="./assets/example-message.svg" width="430" alt="clingon with --message Ready">
+</p>
+
+A startup-style line with greeting, date, current directory, git branch, and one line of padding:
+
+```sh
+clingon --tiny --welcome --date --cwd --git --pad=1
+```
+
+<p>
+  <img src="./assets/example-padded-startup.svg" width="430" alt="clingon with welcome, date, cwd, git, and --pad=1">
+</p>
+
+The same creature with a different palette — `--recolor` keeps the shape from the name and rerolls just the colors:
+
+```sh
+clingon --with-name orlando-reginald-morris-junior --recolor
+```
+
+<p>
+  <img src="./assets/orlando-reginald-morris-junior.svg" width="220" alt="orlando-reginald-morris-junior, original palette">
+  <img src="./assets/orlando-waffleton-morris-jolly.svg" width="220" alt="same shape, recolored">
+</p>
+
+Animation on its own — bob, blink, look, wiggle, walk on a single timeline:
+
+```sh
+clingon --animate
+```
+
+<p>
+  <img src="./assets/example-animated.svg" width="300" alt="bare animated clingon">
+</p>
 
 ## Animation
 
@@ -79,49 +122,6 @@ clingon --animate --with-name orlando-reginald-morris-junior --tiny           # 
 clingon --animate --with-name orlando-reginald-morris-junior-bouncy --tiny    # explicit rhythm
 clingon --animate --with-name orlando-reginald-morris-junior-snoozy --tiny    # different rhythm, same creature
 ```
-
-## More examples
-
-Animation on its own — bob, blink, look, wiggle, walk on a single timeline:
-
-```sh
-clingon --animate
-```
-
-<p>
-  <img src="./assets/example-animated.svg" width="300" alt="bare animated clingon">
-</p>
-
-A custom message beside the art:
-
-```sh
-clingon --tiny --message "Ready"
-```
-
-<p>
-  <img src="./assets/example-message.svg" width="430" alt="clingon with --message Ready">
-</p>
-
-A time-aware greeting and current directory, with one line of padding around the output:
-
-```sh
-clingon --tiny --welcome --cwd --pad=1
-```
-
-<p>
-  <img src="./assets/example-padded-startup.svg" width="430" alt="clingon with welcome, cwd, and --pad=1">
-</p>
-
-The same creature with a different palette — `--recolor` keeps the shape from the name and rerolls just the colors:
-
-```sh
-clingon --with-name orlando-reginald-morris-junior --recolor
-```
-
-<p>
-  <img src="./assets/orlando-reginald-morris-junior.svg" width="220" alt="orlando-reginald-morris-junior, original palette">
-  <img src="./assets/orlando-waffleton-morris-jolly.svg" width="220" alt="same shape, recolored">
-</p>
 
 ## Inline mode
 
