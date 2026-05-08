@@ -3,10 +3,16 @@ import { generateClingon, composeParallel, seedFromClingon } from '../src/index.
 
 const CELL = 16;
 const CARD_FILL = '#f6f8fa';
-const TERMINAL_FILL = '#ffffff';
-const BORDER = '#d0d7de';
-const TEXT = '#24292f';
+// Inner panel uses dark-terminal bg so default-palette creatures render in
+// their intended environment. Pale accents (mint, cream-yellow, pale lime)
+// were designed to pop on dark bg; on a white panel they had ~1.2:1
+// contrast and visibly faded.
+const TERMINAL_FILL = '#1f2328';
+const BORDER = '#0d1117';
+const TEXT = '#24292f';            // for labels OUTSIDE the panel (on card bg)
 const MUTED = '#6e7781';
+const PANEL_TEXT = '#c9d1d9';      // for text INSIDE the dark panel
+const PANEL_MUTED = '#8b949e';     // muted text inside dark panel
 
 const characterExamples = [
   {
@@ -70,7 +76,7 @@ const examples = [
     name: 'mabel-waffles-wigglesworth-tiny',
     size: 'tiny',
     details: () => [
-      { text: 'Ready', fill: TEXT }
+      { text: 'Ready', fill: PANEL_TEXT }
     ]
   },
   {
@@ -81,9 +87,9 @@ const examples = [
     pad: 1,
     details: ({ palette }) => [
       { text: 'Konbanwa', fill: palette.body, weight: '700' },
-      { text: 'Wed, May 6, 2026', fill: MUTED },
-      { text: '~ clingon', fill: TEXT },
-      { text: '* main', fill: TEXT }
+      { text: 'Wed, May 6, 2026', fill: PANEL_MUTED },
+      { text: '~ clingon', fill: PANEL_TEXT },
+      { text: '* main', fill: PANEL_TEXT }
     ]
   }
 ];
@@ -96,9 +102,9 @@ const animatedExamples = [
     size: 'tiny',
     details: ({ palette }) => [
       { text: 'Good evening', fill: palette.body, weight: '700' },
-      { text: 'Wed, May 6, 2026', fill: MUTED },
-      { text: '~ clingon', fill: TEXT },
-      { text: '* main', fill: TEXT }
+      { text: 'Wed, May 6, 2026', fill: PANEL_MUTED },
+      { text: '~ clingon', fill: PANEL_TEXT },
+      { text: '* main', fill: PANEL_TEXT }
     ]
   },
   {

@@ -32,7 +32,7 @@
   <rect x="111" y="123" width="8" height="16" fill="#170410"/>
   <rect x="151" y="123" width="8" height="16" fill="#170410"/>
   <rect x="167" y="123" width="8" height="16" fill="#170410"/>
-  <rect x="270" y="18" width="230" height="146" rx="6" fill="#ffffff" stroke="#d0d7de"/>
+  <rect x="270" y="18" width="230" height="146" rx="6" fill="#1f2328" stroke="#0d1117"/>
   <rect x="377" y="43" width="8" height="16" fill="#a8ff00"/>
   <rect x="329" y="59" width="8" height="16" fill="#170410"/>
   <rect x="345" y="59" width="16" height="16" fill="#c91565"/>
