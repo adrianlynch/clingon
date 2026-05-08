@@ -3,16 +3,21 @@ import { generateClingon, composeParallel, seedFromClingon } from '../src/index.
 
 const CELL = 16;
 const CARD_FILL = '#f6f8fa';
-// Inner panel uses dark-terminal bg so default-palette creatures render in
-// their intended environment. Pale accents (mint, cream-yellow, pale lime)
-// were designed to pop on dark bg; on a white panel they had ~1.2:1
-// contrast and visibly faded.
-const TERMINAL_FILL = '#1f2328';
-const BORDER = '#0d1117';
-const TEXT = '#24292f';            // for labels OUTSIDE the panel (on card bg)
+// Two inner-panel options. The hero showcase uses LIGHT_PANEL so the README
+// has a soft, approachable visual at the top — at the cost of some pale
+// accents (mint, cream-yellow) reading less vividly there. The
+// terminal-context renderings (Examples with shell text, Animation hero,
+// the dark side of the light/dark comparison) use DARK_PANEL since those
+// are explicitly emulating a dark terminal where pale accents were
+// designed to pop.
+const LIGHT_PANEL = '#ffffff';
+const DARK_PANEL = '#1f2328';
+const LIGHT_BORDER = '#d0d7de';
+const DARK_BORDER = '#0d1117';
+const TEXT = '#24292f';            // labels OUTSIDE the panel (on card bg)
 const MUTED = '#6e7781';
-const PANEL_TEXT = '#c9d1d9';      // for text INSIDE the dark panel
-const PANEL_MUTED = '#8b949e';     // muted text inside dark panel
+const PANEL_TEXT = '#c9d1d9';      // text INSIDE a dark panel
+const PANEL_MUTED = '#8b949e';     // muted text INSIDE a dark panel
 
 const characterExamples = [
   {
@@ -172,7 +177,7 @@ function renderCharacterExample(example) {
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeText(example.title)} clingon">`,
     `  <rect width="${width}" height="${height}" rx="8" fill="${CARD_FILL}"/>`,
-    `  <rect x="${terminalX}" y="${terminalY}" width="${terminalWidth}" height="${terminalHeight}" rx="6" fill="${TERMINAL_FILL}" stroke="${BORDER}"/>`,
+    `  <rect x="${terminalX}" y="${terminalY}" width="${terminalWidth}" height="${terminalHeight}" rx="6" fill="${LIGHT_PANEL}" stroke="${LIGHT_BORDER}"/>`,
     ...renderPixels(clingon, artX, artY),
     renderText({
       x: width / 2,
@@ -211,7 +216,7 @@ function renderExample(example) {
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeText(example.title)} clingon option example">`,
     `  <rect width="${width}" height="${height}" rx="8" fill="${CARD_FILL}"/>`,
-    `  <rect x="${terminalX}" y="${terminalY}" width="${terminalWidth}" height="${terminalHeight}" rx="6" fill="${TERMINAL_FILL}" stroke="${BORDER}"/>`,
+    `  <rect x="${terminalX}" y="${terminalY}" width="${terminalWidth}" height="${terminalHeight}" rx="6" fill="${DARK_PANEL}" stroke="${DARK_BORDER}"/>`,
     ...renderPixels(clingon, artX, artY),
     ...details.map((detail, index) => renderText({
       x: detailX,
@@ -294,7 +299,7 @@ function renderAnimatedExample(example) {
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="animated ${escapeText(example.title)} clingon">`,
     `  <rect width="${width}" height="${height}" rx="8" fill="${CARD_FILL}"/>`,
-    `  <rect x="${terminalX}" y="${terminalY}" width="${terminalWidth}" height="${terminalHeight}" rx="6" fill="${TERMINAL_FILL}" stroke="${BORDER}"/>`,
+    `  <rect x="${terminalX}" y="${terminalY}" width="${terminalWidth}" height="${terminalHeight}" rx="6" fill="${DARK_PANEL}" stroke="${DARK_BORDER}"/>`,
     ...frameGroups,
     ...details.map((detail, index) => renderText({
       x: detailX,
@@ -360,7 +365,7 @@ function renderInlineExample(example) {
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="inline ${escapeText(example.title)} clingon">`,
     `  <rect width="${width}" height="${height}" rx="8" fill="${CARD_FILL}"/>`,
-    `  <rect x="${terminalX}" y="${terminalY}" width="${terminalWidth}" height="${terminalHeight}" rx="6" fill="${TERMINAL_FILL}" stroke="${BORDER}"/>`,
+    `  <rect x="${terminalX}" y="${terminalY}" width="${terminalWidth}" height="${terminalHeight}" rx="6" fill="${LIGHT_PANEL}" stroke="${LIGHT_BORDER}"/>`,
     ...cells,
     renderText({
       x: width / 2,
@@ -402,9 +407,9 @@ function renderLightDarkExample(example) {
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="default and --light mode clingons side by side">`,
     `  <rect width="${width}" height="${height}" rx="8" fill="${CARD_FILL}"/>`,
-    `  <rect x="${leftPanelX}" y="${panelY}" width="${panelWidth}" height="${panelHeight}" rx="6" fill="#1f2328"/>`,
+    `  <rect x="${leftPanelX}" y="${panelY}" width="${panelWidth}" height="${panelHeight}" rx="6" fill="${DARK_PANEL}"/>`,
     ...renderPixels({ pixels: dark.pixels, palette: dark.palette }, leftArtX, leftArtY),
-    `  <rect x="${rightPanelX}" y="${panelY}" width="${panelWidth}" height="${panelHeight}" rx="6" fill="${TERMINAL_FILL}" stroke="${BORDER}"/>`,
+    `  <rect x="${rightPanelX}" y="${panelY}" width="${panelWidth}" height="${panelHeight}" rx="6" fill="${LIGHT_PANEL}" stroke="${LIGHT_BORDER}"/>`,
     ...renderPixels({ pixels: light.pixels, palette: light.palette }, rightArtX, rightArtY),
     renderText({ x: leftPanelX + panelWidth / 2, y: 194, text: 'default', fill: TEXT, anchor: 'middle', size: 13 }),
     renderText({ x: rightPanelX + panelWidth / 2, y: 194, text: '--light', fill: TEXT, anchor: 'middle', size: 13 }),
