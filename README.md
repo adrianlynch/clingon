@@ -42,7 +42,7 @@ Terminal dimensions are `large` 22x8, `normal` 14x6, `small` 10x5, and `tiny` 8x
 ## Animation
 
 <p>
-  <img src="./assets/orlando-reginald-morris-junior-animated.svg" width="260" alt="animated orlando-reginald-morris-junior clingon">
+  <img src="./assets/example-animated-welcome-context.svg" width="430" alt="animated clingon with welcome, date, cwd, and git branch">
 </p>
 
 Animate the creature in place — bob, blink, look, wiggle, walk. Loops until Ctrl-C.
@@ -111,17 +111,6 @@ clingon --with-name orlando-*-morris-*           # fix shape, random palette
 clingon --with-name *-reginald-*-junior          # fix palette, random shape
 clingon --with-name orlando-*-morris-*-bouncy    # fix shape and rhythm
 ```
-
-## Option Examples
-
-<p>
-  <img src="./assets/orlando-reginald-morris-junior-animated.svg" width="260" alt="animated clingon, --animate">
-  <img src="./assets/example-animated-welcome-context.svg" width="360" alt="animated clingon with welcome, date, cwd, and git branch">
-</p>
-<p>
-  <img src="./assets/example-message.svg" width="360" alt="clingon with --message Ready">
-  <img src="./assets/example-padded-startup.svg" width="360" alt="clingon with --pad=1 startup output">
-</p>
 
 ## Install
 
