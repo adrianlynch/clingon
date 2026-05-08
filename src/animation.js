@@ -3,7 +3,7 @@ import {
   DARK_NARROW, DARK_NARROW_RIGHT,
   EYE_DARK_LEFT, EYE_DARK_RIGHT,
   EYE_LIGHT_LEFT, EYE_LIGHT_RIGHT,
-  isEye
+  isEye, kindOf, idOfKind
 } from './cells.js';
 import { generateClingon, renderAnsi, mulberry32 } from './index.js';
 import { hideCursor, showCursor, cursorUp } from './terminal.js';
@@ -119,6 +119,28 @@ export function lookRight(pixels) {
     if (cell === EYE_DARK_LEFT) return EYE_DARK_RIGHT;
     if (cell === EYE_LIGHT_LEFT) return EYE_LIGHT_RIGHT;
     return cell;
+  }));
+}
+
+// Convenience builder for a single sequence entry. Replaces the verbose
+// `{ pixels, duration }` object form with a positional call:
+//   frame(blink(p), 6)   ===   { pixels: blink(p), duration: 6 }
+export function frame(pixels, duration = 1) {
+  return { pixels, duration };
+}
+
+// Per-cell transform with stable string names. The mapper receives
+// `{ kind, x, y }` and may return:
+//   - a kind string ('body', 'eye-dark-left', etc.) to replace the cell
+//   - null / undefined to leave the cell unchanged
+// Lets users compose transformations the built-in mutators don't cover
+// without needing to know how cells are encoded internally.
+export function mapCells(pixels, mapper) {
+  return pixels.map((row, y) => row.map((cell, x) => {
+    const kind = kindOf(cell);
+    const result = mapper({ kind, x, y });
+    if (result == null) return cell;
+    return idOfKind(result);
   }));
 }
 

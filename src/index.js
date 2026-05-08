@@ -8,18 +8,13 @@ import {
   isCompositeEye, isNarrowLeft, isNarrowRight
 } from './cells.js';
 
-export {
-  EMPTY, BODY, ACCENT, DARK,
-  ACCENT_NARROW, DARK_NARROW,
-  ACCENT_NARROW_RIGHT, DARK_NARROW_RIGHT,
-  EYE_DARK_LEFT, EYE_DARK_RIGHT,
-  EYE_LIGHT_LEFT, EYE_LIGHT_RIGHT
-} from './cells.js';
+export { CELL_KINDS } from './cells.js';
 
 export {
   animateClingon, buildFrames, composeParallel,
   defineMove, resolveMove, clearMoves, seedFromClingon,
-  blink, bob, wiggle, walk, lookLeft, lookRight
+  blink, bob, wiggle, walk, lookLeft, lookRight,
+  frame, mapCells
 } from './animation.js';
 
 const CODE_PREFIX = 'clg';

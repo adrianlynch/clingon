@@ -395,14 +395,14 @@ generateClingon({ code: 'clg-00000rs-00000rt' });
 Built-in moves cover most uses. For custom animations, use the JavaScript API:
 
 ```js
-import { animateClingon, defineMove, blink, bob } from '@adrianlynch/clingon';
+import { animateClingon, defineMove, blink, bob, frame } from '@adrianlynch/clingon';
 
 defineMove('peek', {
   sequence: (basePixels) => [
-    { pixels: bob(basePixels, 1), duration: 6 },
-    { pixels: bob(basePixels, 0), duration: 3 },
-    { pixels: blink(bob(basePixels, 0)), duration: 1 },
-    { pixels: bob(basePixels, 0), duration: 4 }
+    frame(bob(basePixels, 1), 6),
+    frame(bob(basePixels, 0), 3),
+    frame(blink(bob(basePixels, 0)), 1),
+    frame(bob(basePixels, 0), 4)
   ]
 });
 
@@ -415,7 +415,20 @@ await animateClingon({
 }).done;
 ```
 
-Built-in mutators (`blink`, `bob`, `wiggle`, `walk`, `lookLeft`, `lookRight`) and cell-ID constants (`BODY`, `ACCENT`, `DARK`, `EMPTY`, `EYE_*`, etc.) are exported for use inside custom moves. See [docs/examples/custom-moves.js](docs/examples/custom-moves.js) for a runnable example.
+Built-in mutators take a pixel grid and return a transformed one — `blink`, `bob`, `wiggle`, `walk`, `lookLeft`, `lookRight`. Each `frame(pixels, duration)` becomes one entry in the sequence.
+
+For transformations the built-ins don't cover, `mapCells(pixels, mapper)` lets you rewrite cells by stable string kind (`'body'`, `'eye-dark-left'`, etc.) without depending on internal cell-ID numbers:
+
+```js
+import { mapCells } from '@adrianlynch/clingon';
+
+// Replace eyes with body cells (a manual blink, the long way).
+const closed = mapCells(basePixels, ({ kind }) => (
+  kind.startsWith('eye-') ? 'body' : null
+));
+```
+
+The full kind list is exported as `CELL_KINDS`. See [docs/examples/custom-moves.js](docs/examples/custom-moves.js) for a runnable example.
 
 ## Development
 

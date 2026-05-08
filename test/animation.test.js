@@ -1,13 +1,16 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { generateClingon, renderInline, CELL_KINDS, frame, mapCells } from '../src/index.js';
+// Cell-ID integers are an internal detail and not part of the public API.
+// Tests that need to check pixel data structurally import them directly
+// from cells.js; user-facing tests should never need this.
 import {
   EMPTY, BODY, ACCENT, DARK,
   ACCENT_NARROW, DARK_NARROW,
   ACCENT_NARROW_RIGHT, DARK_NARROW_RIGHT,
   EYE_DARK_LEFT, EYE_DARK_RIGHT,
-  EYE_LIGHT_LEFT, EYE_LIGHT_RIGHT,
-  generateClingon, renderInline
-} from '../src/index.js';
+  EYE_LIGHT_LEFT, EYE_LIGHT_RIGHT
+} from '../src/cells.js';
 import {
   hideCursor, showCursor, cursorUp,
   enterAltBuffer, leaveAltBuffer,
@@ -21,19 +24,54 @@ function fakeStream() {
   return { writes: [], write(chunk) { this.writes.push(chunk); } };
 }
 
-test('cell-ID constants are exported with expected values', () => {
-  assert.equal(EMPTY, 0);
-  assert.equal(BODY, 1);
-  assert.equal(ACCENT, 2);
-  assert.equal(DARK, 3);
-  assert.equal(ACCENT_NARROW, 4);
-  assert.equal(DARK_NARROW, 5);
-  assert.equal(ACCENT_NARROW_RIGHT, 6);
-  assert.equal(DARK_NARROW_RIGHT, 7);
-  assert.equal(EYE_DARK_LEFT, 8);
-  assert.equal(EYE_DARK_RIGHT, 9);
-  assert.equal(EYE_LIGHT_LEFT, 10);
-  assert.equal(EYE_LIGHT_RIGHT, 11);
+test('CELL_KINDS lists every supported cell kind in stable order', () => {
+  assert.deepEqual(CELL_KINDS, [
+    'empty',
+    'body',
+    'accent',
+    'dark',
+    'accent-narrow-left',
+    'dark-narrow-left',
+    'accent-narrow-right',
+    'dark-narrow-right',
+    'eye-dark-left',
+    'eye-dark-right',
+    'eye-light-left',
+    'eye-light-right'
+  ]);
+  // Frozen so users cannot mutate the public list.
+  assert.equal(Object.isFrozen(CELL_KINDS), true);
+});
+
+test('frame() builds a sequence entry with the given duration', () => {
+  const pixels = [[1, 1], [2, 3]];
+  assert.deepEqual(frame(pixels, 6), { pixels, duration: 6 });
+  assert.deepEqual(frame(pixels), { pixels, duration: 1 });
+});
+
+test('mapCells replaces cells whose mapper returns a kind name', () => {
+  const pixels = [
+    [BODY, EYE_DARK_LEFT, EYE_DARK_RIGHT, BODY],
+    [DARK, BODY, BODY, DARK]
+  ];
+  const after = mapCells(pixels, ({ kind }) => (kind === 'eye-dark-left' || kind === 'eye-dark-right' ? 'body' : null));
+  assert.deepEqual(after, [
+    [BODY, BODY, BODY, BODY],
+    [DARK, BODY, BODY, DARK]
+  ]);
+  // Original pixels untouched.
+  assert.equal(pixels[0][1], EYE_DARK_LEFT);
+});
+
+test('mapCells passes x and y to the mapper', () => {
+  const pixels = [[BODY, BODY], [BODY, BODY]];
+  const after = mapCells(pixels, ({ x, y }) => ((x + y) % 2 === 0 ? 'dark' : null));
+  assert.deepEqual(after, [[DARK, BODY], [BODY, DARK]]);
+});
+
+test('mapCells throws on unknown kind names so typos surface immediately', () => {
+  const pixels = [[BODY]];
+  assert.throws(() => mapCells(pixels, () => 'bod-y'), /Unknown cell kind "bod-y"/);
 });
 
 test('hideCursor / showCursor write the right escape sequences', () => {
@@ -189,6 +227,26 @@ test('walk returns input unchanged when no foot row exists', () => {
   const pixels = [[1, 1], [1, 1], [1, 1]];
   const after = walk(pixels, 1);
   assert.deepEqual(after, pixels);
+});
+
+test('animation rhythm is deterministic from the clingon name', async () => {
+  const { composeParallel, seedFromClingon } = await import('../src/animation.js');
+  const a = generateClingon({ name: 'orlando-reginald-morris-junior', size: 'tiny', color: false });
+  const b = generateClingon({ name: 'orlando-reginald-morris-junior', size: 'tiny', color: false });
+  const framesA = composeParallel(a.pixels, ['idle', 'blink', 'look', 'wiggle', 'walk'], 64, seedFromClingon(a));
+  const framesB = composeParallel(b.pixels, ['idle', 'blink', 'look', 'wiggle', 'walk'], 64, seedFromClingon(b));
+  assert.deepEqual(framesA, framesB);
+});
+
+test('different rhythm words produce different animation patterns', async () => {
+  const { composeParallel, seedFromClingon } = await import('../src/animation.js');
+  const bouncy = generateClingon({ name: 'orlando-reginald-morris-junior-bouncy', size: 'tiny', color: false });
+  const snoozy = generateClingon({ name: 'orlando-reginald-morris-junior-snoozy', size: 'tiny', color: false });
+  const framesBouncy = composeParallel(bouncy.pixels, ['idle', 'blink', 'look', 'wiggle', 'walk'], 64, seedFromClingon(bouncy));
+  const framesSnoozy = composeParallel(snoozy.pixels, ['idle', 'blink', 'look', 'wiggle', 'walk'], 64, seedFromClingon(snoozy));
+  // Same shape (4 of 4 words match) but different rhythm should yield a different timeline.
+  assert.deepEqual(bouncy.pixels, snoozy.pixels);
+  assert.notDeepEqual(framesBouncy, framesSnoozy);
 });
 
 test('renderInline (text mode) produces a single line with creature width', () => {
