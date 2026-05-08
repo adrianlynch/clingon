@@ -18,6 +18,7 @@
   ],
   "scripts": {
     "docs:assets": "node scripts/generate-doc-assets.js",
+    "check:contrast": "node scripts/check-contrast.js",
     "start": "node ./bin/clingon.js",
     "test": "node --test"
   },

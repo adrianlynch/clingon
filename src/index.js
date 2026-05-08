@@ -68,15 +68,25 @@ const RHYTHM_NAMES = [
   'frisky', 'calm'
 ];
 
+// Curated to pass WCAG 1.4.11 (3:1 non-text contrast) on the criteria
+// that matter for pixel-art pop: body↔accent (eyes vs body), body↔dark
+// (silhouette boundary), body↔bg-dark and accent↔bg-dark (visibility on
+// terminal). Pattern: 500/600 bodies (mid luminance), 300 accents (high
+// luminance), 950 darks (near-black). The luminance staircase gives
+// genuine eye contrast instead of relying on hue alone — a single-hue
+// viewer (or anyone with reduced color vision) still sees the eyes.
+// dark↔bg-dark intentionally falls below 3:1: dark cells are silhouette
+// anchors, meant to blend slightly with terminal bg, not pop against it.
+// scripts/check-contrast.js audits this in detail.
 const PALETTES = [
-  ['#0891b2', '#c026d3', '#155e75'],
-  ['#f97316', '#22c55e', '#7c2d12'],
-  ['#8b5cf6', '#facc15', '#3730a3'],
-  ['#ef4444', '#14b8a6', '#7f1d1d'],
-  ['#0ea5e9', '#eab308', '#0f172a'],
-  ['#84cc16', '#ec4899', '#365314'],
-  ['#f43f5e', '#38bdf8', '#881337'],
-  ['#10b981', '#a855f7', '#064e3b']
+  ['#8b5cf6', '#fde047', '#1e1b4b'], // violet  / yellow / indigo
+  ['#dc2626', '#67e8f9', '#450a0a'], // red     / cyan   / dark red
+  ['#db2777', '#bef264', '#500724'], // pink    / lime   / dark pink
+  ['#2563eb', '#fcd34d', '#020617'], // blue    / amber  / near-black
+  ['#c026d3', '#67e8f9', '#4a044e'], // fuchsia / cyan   / dark fuchsia
+  ['#c2410c', '#7dd3fc', '#431407'], // orange  / sky    / dark orange
+  ['#a855f7', '#bbf7d0', '#3b0764'], // purple  / mint   / dark purple
+  ['#e11d48', '#a3e635', '#4c0519']  // rose    / lime   / dark rose
 ];
 
 export function nameLists() {
