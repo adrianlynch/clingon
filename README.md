@@ -74,6 +74,16 @@ clingon --with-name orlando-reginald-morris-junior --recolor
   <img src="./assets/orlando-waffleton-morris-jolly.svg" width="220" alt="same shape, recolored">
 </p>
 
+Default colors are tuned for dark terminals. `--light` darkens the palette so the creature stays readable on a light background:
+
+```sh
+clingon --with-name orlando-reginald-morris-junior --light
+```
+
+<p>
+  <img src="./assets/example-light-dark.svg" width="520" alt="default palette on dark terminal next to --light palette on light terminal">
+</p>
+
 Animation on its own — bob, blink, look, wiggle, walk on a single timeline:
 
 ```sh

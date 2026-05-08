@@ -118,6 +118,14 @@ const inlineExamples = [
   }
 ];
 
+const lightDarkExamples = [
+  {
+    file: 'assets/example-light-dark.svg',
+    title: 'default vs --light',
+    name: 'orlando-reginald-morris-junior'
+  }
+];
+
 for (const example of characterExamples) {
   writeFileSync(example.file, renderCharacterExample(example));
 }
@@ -132,6 +140,10 @@ for (const example of animatedExamples) {
 
 for (const example of inlineExamples) {
   writeFileSync(example.file, renderInlineExample(example));
+}
+
+for (const example of lightDarkExamples) {
+  writeFileSync(example.file, renderLightDarkExample(example));
 }
 
 function renderCharacterExample(example) {
@@ -352,6 +364,44 @@ function renderInlineExample(example) {
       anchor: 'middle',
       size: 13
     }),
+    '</svg>'
+  ].join('\n');
+}
+
+// Side-by-side comparison of default and --light palettes, each shown in
+// a terminal panel matching its intended background — dark terminal for
+// the default (bright) palette, white terminal for --light (darker palette).
+// This makes the contrast meaningful: same creature, two environments.
+function renderLightDarkExample(example) {
+  const dark = generateClingon({ name: example.name, size: example.size, color: false });
+  const light = generateClingon({ name: example.name, size: example.size, color: false, lightMode: true });
+
+  const width = 520;
+  const height = 210;
+  const panelWidth = 230;
+  const panelHeight = 146;
+  const panelY = 18;
+  const padding = 20;
+  const gap = 20;
+  const leftPanelX = padding;
+  const rightPanelX = padding + panelWidth + gap;
+
+  const artWidth = dark.pixels[0].length * CELL;
+  const artHeight = dark.pixels.length * CELL;
+  const leftArtX = leftPanelX + Math.floor((panelWidth - artWidth) / 2);
+  const leftArtY = panelY + Math.floor((panelHeight - artHeight) / 2);
+  const rightArtX = rightPanelX + Math.floor((panelWidth - artWidth) / 2);
+  const rightArtY = panelY + Math.floor((panelHeight - artHeight) / 2);
+
+  return [
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="default and --light mode clingons side by side">`,
+    `  <rect width="${width}" height="${height}" rx="8" fill="${CARD_FILL}"/>`,
+    `  <rect x="${leftPanelX}" y="${panelY}" width="${panelWidth}" height="${panelHeight}" rx="6" fill="#1f2328"/>`,
+    ...renderPixels({ pixels: dark.pixels, palette: dark.palette }, leftArtX, leftArtY),
+    `  <rect x="${rightPanelX}" y="${panelY}" width="${panelWidth}" height="${panelHeight}" rx="6" fill="${TERMINAL_FILL}" stroke="${BORDER}"/>`,
+    ...renderPixels({ pixels: light.pixels, palette: light.palette }, rightArtX, rightArtY),
+    renderText({ x: leftPanelX + panelWidth / 2, y: 194, text: 'default', fill: TEXT, anchor: 'middle', size: 13 }),
+    renderText({ x: rightPanelX + panelWidth / 2, y: 194, text: '--light', fill: TEXT, anchor: 'middle', size: 13 }),
     '</svg>'
   ].join('\n');
 }
