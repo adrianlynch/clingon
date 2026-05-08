@@ -2,8 +2,8 @@
   <rect width="300" height="130" rx="8" fill="#f6f8fa"/>
   <rect x="20" y="18" width="260" height="70" rx="6" fill="#ffffff" stroke="#d0d7de"/>
   <rect x="94" y="36" width="28" height="28" fill="#c91565"/>
-  <circle cx="136" cy="50" r="10.08" fill="#500724"/>
-  <circle cx="164" cy="50" r="10.08" fill="#500724"/>
+  <circle cx="136" cy="50" r="10.08" fill="#170410"/>
+  <circle cx="164" cy="50" r="10.08" fill="#170410"/>
   <rect x="178" y="36" width="28" height="28" fill="#c91565"/>
   <text x="150" y="114" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" font-weight="400" fill="#24292f">--inline</text>
 </svg>

@@ -72,23 +72,25 @@ const RHYTHM_NAMES = [
 // that matter for pixel-art pop: body↔accent (eyes vs body), body↔dark
 // (silhouette boundary), body↔bg-dark and accent↔bg-dark (visibility on
 // terminal). Pattern: 500/600 bodies (mid luminance), 300 accents (high
-// luminance), 950-class darks tinted to each palette's hue family.
-//
-// dark↔bg-dark intentionally falls below 3:1: dark cells are silhouette
-// anchors, meant to blend slightly with terminal bg, not pop against it.
-// Tinted darks reinforce palette identity at the silhouette and in the
-// --light vs default comparison — a neutral near-black flattened the
-// per-palette character. scripts/check-contrast.js audits this in detail.
+// luminance), ultra-dark tinted darks (each palette's hue family pushed
+// below typical dark-terminal luminance so feet read as silhouette
+// against the bg rather than blending with it). 950-class Tailwind shades
+// sat in the dead zone L≈0.02-0.03, which matches typical dark-terminal
+// bg luminance — the legs literally vanished. These ultra-dark variants
+// (L≈0.002-0.005) appear nearly black to the eye but retain a subtle
+// hue, contrasting both with the body (huge luminance gap) and the
+// terminal bg (darker than bg, so visible as silhouette).
+// scripts/check-contrast.js audits this in detail.
 const PALETTES = [
-  ['#8b5cf6', '#fde047', '#1e1b4b'], // violet  / yellow / indigo
-  ['#dc2626', '#67e8f9', '#450a0a'], // red     / cyan   / dark red
-  ['#db2777', '#bef264', '#500724'], // pink    / lime   / dark pink
+  ['#8b5cf6', '#fde047', '#0a0816'], // violet  / yellow / ultra-dark indigo
+  ['#dc2626', '#67e8f9', '#160203'], // red     / cyan   / ultra-dark red
+  ['#db2777', '#bef264', '#170410'], // pink    / lime   / ultra-dark pink
   ['#2563eb', '#fcd34d', '#020617'], // blue    / amber  / near-black
-  ['#c026d3', '#67e8f9', '#4a044e'], // fuchsia / cyan   / dark fuchsia
-  ['#c2410c', '#7dd3fc', '#431407'], // orange  / sky    / dark orange
-  ['#a855f7', '#bbf7d0', '#3b0764'], // purple  / mint   / dark purple
-  ['#e11d48', '#a3e635', '#4c0519'], // rose    / lime   / dark rose
-  ['#059669', '#fef08a', '#022c22']  // emerald / pale yellow / dark emerald
+  ['#c026d3', '#67e8f9', '#160218'], // fuchsia / cyan   / ultra-dark fuchsia
+  ['#c2410c', '#7dd3fc', '#170703'], // orange  / sky    / ultra-dark orange
+  ['#a855f7', '#bbf7d0', '#0e0218'], // purple  / mint   / ultra-dark purple
+  ['#e11d48', '#a3e635', '#170307'], // rose    / lime   / ultra-dark rose
+  ['#059669', '#fef08a', '#021711']  // emerald / pale yellow / ultra-dark emerald
 ];
 
 export function nameLists() {
