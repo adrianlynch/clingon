@@ -78,6 +78,40 @@ clingon --animate --with-name orlando-reginald-morris-junior-bouncy --tiny    # 
 clingon --animate --with-name orlando-reginald-morris-junior-snoozy --tiny    # different rhythm, same creature
 ```
 
+## Inline mode
+
+Render a compact single-line glyph for statuslines, prompts, and tmux status bars.
+
+```sh
+clingon --inline --tiny --with-name orlando-reginald-morris-junior
+```
+
+Output is one line, width matching the size (4 chars for tiny, up to 11 for large). See [docs/integrations.md](docs/integrations.md) for tmux, starship, oh-my-posh, and Claude Code examples.
+
+## Discovery
+
+Browse a grid of random creatures with their names — useful for picking one to save:
+
+```sh
+clingon --gallery               # 8 random clingons (default)
+clingon --gallery 12 --tiny     # 12 tiny ones, more per row
+clingon --gallery --animate     # animated grid, all moving at once
+```
+
+List all the words you can compose names from:
+
+```sh
+clingon --list-names
+```
+
+Names are 4 hyphen-separated words by default (`<first>-<middle>-<family>-<suffix>`). The 1st and 3rd words drive the shape; the 2nd and 4th drive the palette. An optional 5th word picks an animation rhythm. Use `*` as a wildcard in any slot:
+
+```sh
+clingon --with-name orlando-*-morris-*           # fix shape, random palette
+clingon --with-name *-reginald-*-junior          # fix palette, random shape
+clingon --with-name orlando-*-morris-*-bouncy    # fix shape and rhythm
+```
+
 ## Option Examples
 
 <p>
@@ -162,40 +196,6 @@ clingon --with-name orlando-reginald-morris-junior --tiny --welcome --date --cwd
 `--welcome` picks a time-aware greeting from English, Spanish, or romanized Japanese.
 Clingon names are hidden by default. Add `--name` where you want the name to appear beside it.
 `--pad=1` adds a blank line above and below the character plus one space of left padding.
-
-## Inline mode
-
-Render a compact single-line glyph for statuslines, prompts, and tmux status bars.
-
-```sh
-clingon --inline --tiny --with-name orlando-reginald-morris-junior
-```
-
-Output is one line, width matching the size (4 chars for tiny, up to 11 for large). See [docs/integrations.md](docs/integrations.md) for tmux, starship, oh-my-posh, and Claude Code examples.
-
-## Discovery
-
-Browse a grid of random creatures with their names — useful for picking one to save:
-
-```sh
-clingon --gallery               # 8 random clingons (default)
-clingon --gallery 12 --tiny     # 12 tiny ones, more per row
-clingon --gallery --animate     # animated grid, all moving at once
-```
-
-List all the words you can compose names from:
-
-```sh
-clingon --list-names
-```
-
-Names are 4 hyphen-separated words by default (`<first>-<middle>-<family>-<suffix>`). The 1st and 3rd words drive the shape; the 2nd and 4th drive the palette. An optional 5th word picks an animation rhythm. Use `*` as a wildcard in any slot:
-
-```sh
-clingon --with-name orlando-*-morris-*           # fix shape, random palette
-clingon --with-name *-reginald-*-junior          # fix palette, random shape
-clingon --with-name orlando-*-morris-*-bouncy    # fix shape and rhythm
-```
 
 ## CLI
 
