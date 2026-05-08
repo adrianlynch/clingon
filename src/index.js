@@ -86,7 +86,8 @@ const PALETTES = [
   ['#c026d3', '#67e8f9', '#4a044e'], // fuchsia / cyan   / dark fuchsia
   ['#c2410c', '#7dd3fc', '#431407'], // orange  / sky    / dark orange
   ['#a855f7', '#bbf7d0', '#3b0764'], // purple  / mint   / dark purple
-  ['#e11d48', '#a3e635', '#4c0519']  // rose    / lime   / dark rose
+  ['#e11d48', '#a3e635', '#4c0519'], // rose    / lime   / dark rose
+  ['#059669', '#fef08a', '#022c22']  // emerald / pale yellow / dark emerald
 ];
 
 export function nameLists() {
