@@ -72,22 +72,28 @@ const RHYTHM_NAMES = [
 // that matter for pixel-art pop: body↔accent (eyes vs body), body↔dark
 // (silhouette boundary), body↔bg-dark and accent↔bg-dark (visibility on
 // terminal). Pattern: 500/600 bodies (mid luminance), 300 accents (high
-// luminance), 950 darks (near-black). The luminance staircase gives
-// genuine eye contrast instead of relying on hue alone — a single-hue
-// viewer (or anyone with reduced color vision) still sees the eyes.
+// luminance), unified near-black darks.
+//
+// Why every dark is the same near-black: when shapes use EYE_DARK_*
+// cells (about half the creatures), the eye color IS palette.dark.
+// Tinted darks (e.g., dark purple on a purple body) pass 3:1 contrast
+// arithmetically but fail visually — same hue means the eyes register
+// as "shaded body" instead of "eyes". A neutral near-black always reads
+// as eyes regardless of body color.
+//
 // dark↔bg-dark intentionally falls below 3:1: dark cells are silhouette
 // anchors, meant to blend slightly with terminal bg, not pop against it.
 // scripts/check-contrast.js audits this in detail.
 const PALETTES = [
-  ['#8b5cf6', '#fde047', '#1e1b4b'], // violet  / yellow / indigo
-  ['#dc2626', '#67e8f9', '#450a0a'], // red     / cyan   / dark red
-  ['#db2777', '#bef264', '#500724'], // pink    / lime   / dark pink
+  ['#8b5cf6', '#fde047', '#020617'], // violet  / yellow / near-black
+  ['#dc2626', '#67e8f9', '#020617'], // red     / cyan   / near-black
+  ['#db2777', '#bef264', '#020617'], // pink    / lime   / near-black
   ['#2563eb', '#fcd34d', '#020617'], // blue    / amber  / near-black
-  ['#c026d3', '#67e8f9', '#4a044e'], // fuchsia / cyan   / dark fuchsia
-  ['#c2410c', '#7dd3fc', '#431407'], // orange  / sky    / dark orange
-  ['#a855f7', '#bbf7d0', '#3b0764'], // purple  / mint   / dark purple
-  ['#e11d48', '#a3e635', '#4c0519'], // rose    / lime   / dark rose
-  ['#059669', '#fef08a', '#022c22']  // emerald / pale yellow / dark emerald
+  ['#c026d3', '#67e8f9', '#020617'], // fuchsia / cyan   / near-black
+  ['#c2410c', '#7dd3fc', '#020617'], // orange  / sky    / near-black
+  ['#a855f7', '#bbf7d0', '#020617'], // purple  / mint   / near-black
+  ['#e11d48', '#a3e635', '#020617'], // rose    / lime   / near-black
+  ['#059669', '#fef08a', '#020617']  // emerald / pale yellow / near-black
 ];
 
 export function nameLists() {

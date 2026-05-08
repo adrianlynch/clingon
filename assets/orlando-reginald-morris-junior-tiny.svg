@@ -6,16 +6,16 @@
   <rect x="150" y="59" width="16" height="16" fill="#c91565"/>
   <rect x="166" y="59" width="16" height="16" fill="#c91565"/>
   <rect x="118" y="75" width="16" height="16" fill="#c91565"/>
-  <rect x="134" y="75" width="8" height="16" fill="#500724"/>
+  <rect x="134" y="75" width="8" height="16" fill="#020617"/>
   <rect x="142" y="75" width="8" height="16" fill="#c91565"/>
   <rect x="150" y="75" width="8" height="16" fill="#c91565"/>
-  <rect x="158" y="75" width="8" height="16" fill="#500724"/>
+  <rect x="158" y="75" width="8" height="16" fill="#020617"/>
   <rect x="166" y="75" width="16" height="16" fill="#c91565"/>
   <rect x="118" y="91" width="16" height="16" fill="#c91565"/>
   <rect x="134" y="91" width="16" height="16" fill="#c91565"/>
-  <rect x="150" y="91" width="16" height="16" fill="#500724"/>
+  <rect x="150" y="91" width="16" height="16" fill="#020617"/>
   <rect x="166" y="91" width="16" height="16" fill="#c91565"/>
-  <rect x="118" y="107" width="16" height="16" fill="#500724"/>
-  <rect x="166" y="107" width="16" height="16" fill="#500724"/>
+  <rect x="118" y="107" width="16" height="16" fill="#020617"/>
+  <rect x="166" y="107" width="16" height="16" fill="#020617"/>
   <text x="150" y="194" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" font-weight="400" fill="#24292f">tiny</text>
 </svg>
