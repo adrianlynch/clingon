@@ -425,15 +425,16 @@ function createPalette(seed, options = {}) {
 // so colors stay vibrant — just darker. Channel-scaling in RGB would lose
 // saturation for unequal-channel colors (a bright yellow becomes mustard
 // because the blue channel is already low and gets crushed further).
+// --light is tuned exclusively for light terminal backgrounds. The default
+// palette is the dark-background story (vibrant, pops on black). --light is
+// the same shape, retuned: enough darkening that body and accent don't read
+// as washed-out neon on white, with the dark cell taken further down so it
+// silhouettes as the creature's outline.
 function toLightModePalette(palette) {
   return {
     body: capLightness(palette.body, 0.50),
     accent: capLightness(palette.accent, 0.50),
-    // Outline cells: dark enough to silhouette on white, but not so dark
-    // they vanish on a dark background (e.g., README in GitHub dark mode,
-    // or someone running --light in a dark terminal). 0.40 keeps them
-    // clearly the darkest cell without crushing into black.
-    dark: capLightness(palette.dark, 0.40)
+    dark: capLightness(palette.dark, 0.32)
   };
 }
 
