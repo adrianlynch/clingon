@@ -6,17 +6,17 @@
   <rect x="82" y="52" width="16" height="16" fill="#ee3838"/>
   <rect x="98" y="52" width="16" height="16" fill="#ee3838"/>
   <rect x="50" y="68" width="16" height="16" fill="#ee3838"/>
-  <rect x="66" y="68" width="8" height="16" fill="#020617"/>
+  <rect x="66" y="68" width="8" height="16" fill="#450a0a"/>
   <rect x="74" y="68" width="8" height="16" fill="#ee3838"/>
   <rect x="82" y="68" width="8" height="16" fill="#ee3838"/>
-  <rect x="90" y="68" width="8" height="16" fill="#020617"/>
+  <rect x="90" y="68" width="8" height="16" fill="#450a0a"/>
   <rect x="98" y="68" width="16" height="16" fill="#ee3838"/>
   <rect x="50" y="84" width="16" height="16" fill="#ee3838"/>
   <rect x="66" y="84" width="16" height="16" fill="#55d6e7"/>
   <rect x="82" y="84" width="16" height="16" fill="#55d6e7"/>
   <rect x="98" y="84" width="16" height="16" fill="#ee3838"/>
-  <rect x="50" y="100" width="8" height="16" fill="#020617"/>
-  <rect x="106" y="100" width="8" height="16" fill="#020617"/>
+  <rect x="50" y="100" width="8" height="16" fill="#450a0a"/>
+  <rect x="106" y="100" width="8" height="16" fill="#450a0a"/>
   <text x="148" y="88" text-anchor="start" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" font-weight="400" fill="#24292f">Ready</text>
   <text x="215" y="174" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" font-weight="400" fill="#24292f">--message &quot;Ready&quot;</text>
 </svg>

@@ -28,15 +28,15 @@
   <rect x="190" y="75" width="16" height="16" fill="#c91565"/>
   <rect x="206" y="75" width="16" height="16" fill="#c91565"/>
   <rect x="62" y="91" width="16" height="16" fill="#c91565"/>
-  <rect x="78" y="91" width="8" height="16" fill="#020617"/>
+  <rect x="78" y="91" width="8" height="16" fill="#500724"/>
   <rect x="94" y="91" width="16" height="16" fill="#c91565"/>
   <rect x="110" y="91" width="16" height="16" fill="#c91565"/>
-  <rect x="126" y="91" width="16" height="16" fill="#020617"/>
+  <rect x="126" y="91" width="16" height="16" fill="#500724"/>
   <rect x="142" y="91" width="16" height="16" fill="#c91565"/>
-  <rect x="158" y="91" width="16" height="16" fill="#020617"/>
+  <rect x="158" y="91" width="16" height="16" fill="#500724"/>
   <rect x="174" y="91" width="16" height="16" fill="#c91565"/>
   <rect x="190" y="91" width="16" height="16" fill="#c91565"/>
-  <rect x="214" y="91" width="8" height="16" fill="#020617"/>
+  <rect x="214" y="91" width="8" height="16" fill="#500724"/>
   <rect x="222" y="91" width="16" height="16" fill="#c91565"/>
   <rect x="78" y="107" width="16" height="16" fill="#c91565"/>
   <rect x="94" y="107" width="16" height="16" fill="#c91565"/>
@@ -47,9 +47,9 @@
   <rect x="174" y="107" width="16" height="16" fill="#c91565"/>
   <rect x="190" y="107" width="16" height="16" fill="#c91565"/>
   <rect x="206" y="107" width="16" height="16" fill="#c91565"/>
-  <rect x="78" y="123" width="8" height="16" fill="#020617"/>
-  <rect x="94" y="123" width="8" height="16" fill="#020617"/>
-  <rect x="198" y="123" width="8" height="16" fill="#020617"/>
-  <rect x="214" y="123" width="8" height="16" fill="#020617"/>
+  <rect x="78" y="123" width="8" height="16" fill="#500724"/>
+  <rect x="94" y="123" width="8" height="16" fill="#500724"/>
+  <rect x="198" y="123" width="8" height="16" fill="#500724"/>
+  <rect x="214" y="123" width="8" height="16" fill="#500724"/>
   <text x="150" y="194" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" font-weight="400" fill="#24292f">large</text>
 </svg>
