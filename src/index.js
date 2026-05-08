@@ -425,16 +425,20 @@ function createPalette(seed, options = {}) {
 // so colors stay vibrant — just darker. Channel-scaling in RGB would lose
 // saturation for unequal-channel colors (a bright yellow becomes mustard
 // because the blue channel is already low and gets crushed further).
-// --light is tuned exclusively for light terminal backgrounds. The default
-// palette is the dark-background story (vibrant, pops on black). --light is
-// the same shape, retuned: enough darkening that body and accent don't read
-// as washed-out neon on white, with the dark cell taken further down so it
-// silhouettes as the creature's outline.
+// --light is for light terminal backgrounds. The default palette mostly
+// reads fine on white already — purple bodies, blue/teal/red darks, etc.
+// have decent contrast against white. The cells that genuinely struggle
+// are the very brightest ones (yellow especially: high lightness AND a
+// hue close to white). So --light is a permissive cap, not a uniform
+// darkening: a body at L=55% or an accent at L=50% passes through
+// unchanged, but a yellow at L=58% gets brought down to L=50% where it
+// reads as gold instead of washed-out neon. Dark cells aren't touched
+// (cap=0.50 is above every dark we have), preserving outline definition.
 function toLightModePalette(palette) {
   return {
-    body: capLightness(palette.body, 0.50),
+    body: capLightness(palette.body, 0.55),
     accent: capLightness(palette.accent, 0.50),
-    dark: capLightness(palette.dark, 0.32)
+    dark: capLightness(palette.dark, 0.50)
   };
 }
 
