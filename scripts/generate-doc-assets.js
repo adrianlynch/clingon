@@ -53,6 +53,13 @@ const characterExamples = [
     title: 'tiny',
     name: 'orlando-reginald-morris-junior',
     size: 'tiny'
+  },
+  // Same shape as orlando-reginald-morris-junior (1st & 3rd words match) but
+  // different palette (2nd & 4th words differ) — used to demonstrate --recolor.
+  {
+    file: 'assets/orlando-waffleton-morris-jolly.svg',
+    title: 'orlando-waffleton-morris-jolly',
+    name: 'orlando-waffleton-morris-jolly'
   }
 ];
 

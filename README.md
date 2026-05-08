@@ -2,6 +2,8 @@
 
 Generate tiny deterministic terminal characters.
 
+**Jump to:** [Install ↓](#install) · [Animation](#animation) · [JavaScript API](#javascript-api) · [Custom moves](#custom-moves)
+
 100% created by AI. Use at your own risk. Obviously.
 
 Each clingon is created from a readable name. Save the name and you can render the same character again later, or keep the same shape and generate a new set of colors.
@@ -108,6 +110,17 @@ clingon --tiny --welcome --cwd --pad=1
 
 <p>
   <img src="./assets/example-padded-startup.svg" width="430" alt="clingon with welcome, cwd, and --pad=1">
+</p>
+
+The same creature with a different palette — `--recolor` keeps the shape from the name and rerolls just the colors:
+
+```sh
+clingon --with-name orlando-reginald-morris-junior --recolor
+```
+
+<p>
+  <img src="./assets/orlando-reginald-morris-junior.svg" width="220" alt="orlando-reginald-morris-junior, original palette">
+  <img src="./assets/orlando-waffleton-morris-jolly.svg" width="220" alt="same shape, recolored">
 </p>
 
 ## Inline mode
