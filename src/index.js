@@ -1,4 +1,21 @@
 import { randomBytes } from 'node:crypto';
+import {
+  EMPTY, BODY, ACCENT, DARK,
+  ACCENT_NARROW, DARK_NARROW,
+  ACCENT_NARROW_RIGHT, DARK_NARROW_RIGHT,
+  EYE_DARK_LEFT, EYE_DARK_RIGHT,
+  EYE_LIGHT_LEFT, EYE_LIGHT_RIGHT,
+  isCompositeEye, isNarrowLeft, isNarrowRight
+} from './cells.js';
+
+export { CELL_KINDS } from './cells.js';
+
+export {
+  animateClingon, buildFrames, composeParallel,
+  defineMove, resolveMove, clearMoves, seedFromClingon,
+  blink, bob, wiggle, walk, lookLeft, lookRight,
+  frame, mapCells
+} from './animation.js';
 
 const CODE_PREFIX = 'clg';
 const LARGE_WIDTH = 11;
@@ -10,18 +27,6 @@ const SMALL_HEIGHT = 5;
 const TINY_WIDTH = 4;
 const TINY_HEIGHT = 4;
 const DEFAULT_SIZE = 'normal';
-const EMPTY = 0;
-const BODY = 1;
-const ACCENT = 2;
-const DARK = 3;
-const ACCENT_NARROW = 4;
-const DARK_NARROW = 5;
-const ACCENT_NARROW_RIGHT = 6;
-const DARK_NARROW_RIGHT = 7;
-const EYE_DARK_LEFT = 8;
-const EYE_DARK_RIGHT = 9;
-const EYE_LIGHT_LEFT = 10;
-const EYE_LIGHT_RIGHT = 11;
 
 const FIRST_NAMES = [
   'orlando', 'mabel', 'winston', 'poppy', 'felix', 'juniper', 'otto', 'nora',
@@ -55,6 +60,24 @@ const SUFFIX_NAMES = [
   'deluxe'
 ];
 
+const RHYTHM_NAMES = [
+  'bouncy', 'dreamy', 'mellow', 'jumpy', 'snoozy', 'zippy', 'serene', 'jittery',
+  'breezy', 'wired', 'springy', 'antsy', 'groovy', 'spry', 'placid', 'fidgety',
+  'languid', 'spunky', 'tranquil', 'frenetic', 'spirited', 'sluggish', 'twitchy',
+  'lively', 'easygoing', 'perky', 'dapper', 'restless', 'peppy', 'lazy',
+  'frisky', 'calm'
+];
+
+// Vibrant complementary palettes — body and accent are saturated colors
+// at similar luminance, contrasting by hue rather than brightness. This
+// gives the classic 80s-arcade pop ("flat color blast") that defines the
+// project's visual identity. The trade-off: WCAG 1.4.11 body↔accent
+// contrast often falls well below 3:1, so eyes read as different-colored
+// regions rather than as luminance-distinct pop-out elements. Run
+// `npm run check:contrast` to see the full audit. The compromise was an
+// explicit aesthetic call — we tried strict WCAG re-curation and found
+// the resulting "deep body + pale accent" palettes lost the punch this
+// project is built around.
 const PALETTES = [
   ['#0891b2', '#c026d3', '#155e75'],
   ['#f97316', '#22c55e', '#7c2d12'],
@@ -66,17 +89,28 @@ const PALETTES = [
   ['#10b981', '#a855f7', '#064e3b']
 ];
 
+export function nameLists() {
+  return {
+    first: [...FIRST_NAMES],
+    middle: [...MIDDLE_NAMES],
+    family: [...FAMILY_NAMES],
+    suffix: [...SUFFIX_NAMES],
+    rhythm: [...RHYTHM_NAMES]
+  };
+}
+
 export function generateClingon(options = {}) {
   const requestedName = options.name ?? options.code;
   const requested = requestedName ? parseCode(requestedName) : randomCode();
   const size = normalizeSize(options.size);
   const shapeSeed = requested.shapeSeed;
   const paletteSeed = options.recolor ? randomPaletteSeed(requested.format) : requested.paletteSeed;
+  const rhythmSeed = requested.rhythmSeed ?? null;
   const code = requested.format === 'classic'
     ? formatClassicCode(shapeSeed, paletteSeed)
-    : formatCode(shapeSeed, paletteSeed);
+    : formatCode(shapeSeed, paletteSeed, rhythmSeed);
   const shape = createShape(shapeSeed, size);
-  const palette = createPalette(paletteSeed);
+  const palette = createPalette(paletteSeed, { lightMode: options.lightMode === true });
 
   return {
     name: code,
@@ -84,10 +118,12 @@ export function generateClingon(options = {}) {
     size,
     shapeSeed,
     paletteSeed,
+    rhythmSeed,
     palette,
     pixels: shape,
     ansi: renderAnsi(shape, palette, options),
-    text: renderText(shape)
+    text: renderText(shape),
+    inline: renderInline(shape, palette, options)
   };
 }
 
@@ -108,33 +144,40 @@ export function parseCode(code) {
     };
   }
 
-  const nameMatch = value.match(/^([a-z]+)-([a-z]+)-([a-z]+)-([a-z]+)$/);
+  const nameMatch = value.match(/^([a-z]+)-([a-z]+)-([a-z]+)-([a-z]+)(?:-([a-z]+))?$/);
 
   if (!nameMatch) {
-    throw new Error(`Invalid clingon code "${code}". Expected a name like orlando-reginald-morris-junior.`);
+    throw new Error(`Invalid clingon code "${code}". Expected a name like orlando-reginald-morris-junior-bouncy.`);
   }
 
   const firstIndex = wordIndex(FIRST_NAMES, nameMatch[1], 'first name');
   const middleIndex = wordIndex(MIDDLE_NAMES, nameMatch[2], 'middle name');
   const familyIndex = wordIndex(FAMILY_NAMES, nameMatch[3], 'family name');
   const suffixIndex = wordIndex(SUFFIX_NAMES, nameMatch[4], 'suffix');
+  const rhythmWord = nameMatch[5];
+  const rhythmSeed = rhythmWord != null
+    ? wordIndex(RHYTHM_NAMES, rhythmWord, 'rhythm')
+    : null;
 
   return {
     shapeSeed: firstIndex + familyIndex * FIRST_NAMES.length,
     paletteSeed: middleIndex + suffixIndex * MIDDLE_NAMES.length,
+    rhythmSeed,
     format: 'name'
   };
 }
 
-export function formatCode(shapeSeed, paletteSeed) {
+export function formatCode(shapeSeed, paletteSeed, rhythmSeed = null) {
   const shapeIndex = shapeSeed % (FIRST_NAMES.length * FAMILY_NAMES.length);
   const paletteIndex = paletteSeed % (MIDDLE_NAMES.length * SUFFIX_NAMES.length);
   const first = FIRST_NAMES[shapeIndex % FIRST_NAMES.length];
   const family = FAMILY_NAMES[Math.floor(shapeIndex / FIRST_NAMES.length)];
   const middle = MIDDLE_NAMES[paletteIndex % MIDDLE_NAMES.length];
   const suffix = SUFFIX_NAMES[Math.floor(paletteIndex / MIDDLE_NAMES.length)];
-
-  return `${first}-${middle}-${family}-${suffix}`;
+  const base = `${first}-${middle}-${family}-${suffix}`;
+  if (rhythmSeed == null) return base;
+  const rhythm = RHYTHM_NAMES[rhythmSeed % RHYTHM_NAMES.length];
+  return `${base}-${rhythm}`;
 }
 
 export function snippetFor(code, options = {}) {
@@ -157,6 +200,7 @@ function randomCode() {
   return {
     shapeSeed: randomShapeSeed(),
     paletteSeed: randomPaletteSeed('name'),
+    rhythmSeed: null,
     format: 'name'
   };
 }
@@ -373,16 +417,82 @@ function addCompactFeet(pixels, rng, center, halfWidths) {
   }
 }
 
-function createPalette(seed) {
+function createPalette(seed, options = {}) {
   const rng = mulberry32(seed);
   const base = PALETTES[int(rng, 0, PALETTES.length - 1)];
   const hueShift = int(rng, -18, 18);
 
-  return {
+  const palette = {
     body: shiftHex(base[0], hueShift),
     accent: shiftHex(base[1], -hueShift),
     dark: base[2]
   };
+  return options.lightMode ? toLightModePalette(palette) : palette;
+}
+
+// On light terminal backgrounds, the bright body/accent colors look washed-out
+// or invisible. Cap lightness in HSL space (preserving hue and saturation)
+// so colors stay vibrant — just darker. Channel-scaling in RGB would lose
+// saturation for unequal-channel colors (a bright yellow becomes mustard
+// because the blue channel is already low and gets crushed further).
+// --light is for light terminal backgrounds. The default palette mostly
+// reads fine on white already — purple bodies, blue/teal/red darks, etc.
+// have decent contrast against white. The cells that genuinely struggle
+// are the very brightest ones (yellow especially: high lightness AND a
+// hue close to white). So --light is a permissive cap, not a uniform
+// darkening: a body at L=55% or an accent at L=50% passes through
+// unchanged, but a yellow at L=58% gets brought down to L=50% where it
+// reads as gold instead of washed-out neon. Dark cells aren't touched
+// (cap=0.50 is above every dark we have), preserving outline definition.
+function toLightModePalette(palette) {
+  return {
+    body: capLightness(palette.body, 0.55),
+    accent: capLightness(palette.accent, 0.50),
+    dark: capLightness(palette.dark, 0.50)
+  };
+}
+
+function capLightness(hex, targetL) {
+  const [r, g, b] = hexToRgb(hex);
+  const [h, s, l] = rgbToHsl(r, g, b);
+  if (l <= targetL) return hex;
+  const [nr, ng, nb] = hslToRgb(h, s, targetL);
+  return rgbToHex(Math.round(nr), Math.round(ng), Math.round(nb));
+}
+
+function rgbToHsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  if (max === min) return [0, 0, l];
+  const d = max - min;
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  let h;
+  if (max === r) h = (g - b) / d + (g < b ? 6 : 0);
+  else if (max === g) h = (b - r) / d + 2;
+  else h = (r - g) / d + 4;
+  return [h / 6, s, l];
+}
+
+function hslToRgb(h, s, l) {
+  if (s === 0) return [l * 255, l * 255, l * 255];
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+  const p = 2 * l - q;
+  return [
+    hueToRgb(p, q, h + 1 / 3) * 255,
+    hueToRgb(p, q, h) * 255,
+    hueToRgb(p, q, h - 1 / 3) * 255
+  ];
+}
+
+function hueToRgb(p, q, t) {
+  if (t < 0) t += 1;
+  if (t > 1) t -= 1;
+  if (t < 1 / 6) return p + (q - p) * 6 * t;
+  if (t < 1 / 2) return q;
+  if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+  return p;
 }
 
 function addEyes(pixels, rng, center, y, halfWidth) {
@@ -493,7 +603,7 @@ function fillSymmetric(pixels, y, center, halfWidth, value) {
   }
 }
 
-function renderAnsi(shape, palette, options = {}) {
+export function renderAnsi(shape, palette, options = {}) {
   const useColor = options.color !== false;
   const rows = shape.map((row) => row.map((cell) => renderCell(cell, palette, useColor)).join(''));
   return rows.join('\n');
@@ -501,6 +611,56 @@ function renderAnsi(shape, palette, options = {}) {
 
 function renderText(shape) {
   return shape.map((row) => row.map(renderTextCell).join('')).join('\n');
+}
+
+export function renderInline(shape, palette, options = {}) {
+  const useColor = options.color !== false;
+  const row = pickInlineRow(shape);
+  return row.map((cell) => renderInlineCell(cell, palette, useColor)).join('');
+}
+
+function pickInlineRow(shape) {
+  for (let y = 0; y < shape.length; y += 1) {
+    if (shape[y].some((cell) => (
+      cell === EYE_DARK_LEFT || cell === EYE_DARK_RIGHT
+        || cell === EYE_LIGHT_LEFT || cell === EYE_LIGHT_RIGHT
+    ))) {
+      return shape[y];
+    }
+  }
+  return shape[Math.min(1, shape.length - 1)];
+}
+
+function renderInlineCell(cell, palette, useColor) {
+  if (cell === EMPTY) return ' ';
+  if (!useColor) return inlineTextGlyph(cell);
+  const color = inlineCellColor(cell, palette);
+  const glyph = inlineColorGlyph(cell);
+  return `${ansiColor(color)}${glyph}[0m`;
+}
+
+function inlineTextGlyph(cell) {
+  if (cell === BODY) return '[';
+  if (cell === ACCENT || cell === ACCENT_NARROW || cell === ACCENT_NARROW_RIGHT) return '#';
+  if (cell === DARK || cell === DARK_NARROW || cell === DARK_NARROW_RIGHT) return '.';
+  if (cell === EYE_DARK_LEFT || cell === EYE_DARK_RIGHT) return 'o';
+  if (cell === EYE_LIGHT_LEFT || cell === EYE_LIGHT_RIGHT) return 'O';
+  return ' ';
+}
+
+function inlineColorGlyph(cell) {
+  if (cell === EYE_DARK_LEFT || cell === EYE_DARK_RIGHT
+      || cell === EYE_LIGHT_LEFT || cell === EYE_LIGHT_RIGHT) return '◉';
+  return '█';
+}
+
+function inlineCellColor(cell, palette) {
+  if (cell === BODY) return palette.body;
+  if (cell === ACCENT || cell === ACCENT_NARROW || cell === ACCENT_NARROW_RIGHT) return palette.accent;
+  if (cell === DARK || cell === DARK_NARROW || cell === DARK_NARROW_RIGHT) return palette.dark;
+  if (cell === EYE_DARK_LEFT || cell === EYE_DARK_RIGHT) return palette.dark;
+  if (cell === EYE_LIGHT_LEFT || cell === EYE_LIGHT_RIGHT) return palette.accent;
+  return palette.body;
 }
 
 function renderCell(cell, palette, useColor) {
@@ -573,20 +733,6 @@ function renderTextCell(cell) {
   return '[]';
 }
 
-function isNarrowLeft(cell) {
-  return cell === ACCENT_NARROW || cell === DARK_NARROW;
-}
-
-function isNarrowRight(cell) {
-  return cell === ACCENT_NARROW_RIGHT || cell === DARK_NARROW_RIGHT;
-}
-
-function isCompositeEye(cell) {
-  return cell === EYE_DARK_LEFT
-    || cell === EYE_DARK_RIGHT
-    || cell === EYE_LIGHT_LEFT
-    || cell === EYE_LIGHT_RIGHT;
-}
 
 function renderCompositeEye(cell, palette) {
   const detail = cell === EYE_LIGHT_LEFT || cell === EYE_LIGHT_RIGHT
@@ -635,7 +781,7 @@ function int(rng, min, max) {
   return Math.floor(rng() * (max - min + 1)) + min;
 }
 
-function mulberry32(seed) {
+export function mulberry32(seed) {
   return function next() {
     let t = seed += 0x6d2b79f5;
     t = Math.imul(t ^ t >>> 15, t | 1);

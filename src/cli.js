@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { basename } from 'node:path';
-import { generateClingon, snippetFor } from './index.js';
+import { generateClingon, nameLists, snippetFor, renderAnsi, composeParallel, seedFromClingon } from './index.js';
+import { hideCursor, showCursor, cursorUp } from './terminal.js';
 
 const MAX_INFO_LINES = 5;
 
@@ -9,59 +10,216 @@ const HELP = `clingon
 Usage:
   clingon [options]
 
-Options:
-      --with-name <name>
-                    Regenerate a specific clingon name
-      --name        Show the clingon name beside the art
-  -r, --recolor     Keep the shape from --with-name but choose new colors
-      --large         Render the largest clingon
-      --small         Render a smaller clingon
-      --tiny          Render the tiniest clingon
-      --size <size>   Render size: tiny, small, normal, or large
-  -s, --script        Print the JavaScript needed to recreate the clingon
-  -j, --json          Print JSON data instead of terminal art
-      --welcome       Show a time-aware greeting beside the clingon
-      --message <msg> Show a custom message beside the clingon
-      --date          Show today's date beside the clingon
-      --cwd           Show the current directory beside the clingon
-      --git           Show the current git branch beside the clingon
-      --pad <n>       Add padding around terminal output
-      --pad-h <n>     Add spaces before each terminal output line
-      --pad-v <n>     Add blank lines before and after terminal output
-      --no-color      Render without ANSI color
-  -h, --help          Show help
-  -v, --version       Show version
+  *-- Identity ---------------------------------------------------------------
+    -w, --with-name <name>  Regenerate a specific clingon. 4 or 5 hyphen-separated
+                            words: <first>-<middle>-<family>-<suffix>[-<rhythm>].
+                            Use '*' as a wildcard for any slot to randomize it.
+                            Examples:
+                              orlando-*-morris-*           fix shape, random palette
+                              *-reginald-*-junior          fix palette, random shape
+                              orlando-*-morris-*-bouncy    fix shape and rhythm
+                              *-*-*-*-*                    fully random 5-word
+    -r, --recolor           Keep the shape from --with-name but choose new colors
+
+  *-- Size -------------------------------------------------------------------
+        --tiny              4x4 grid
+        --small             5x5 grid
+        --normal            7x6 grid (default)
+        --large             11x8 grid
+
+  *-- Output mode (mutually exclusive) -----------------------------------------
+    -i, --inline            Single-line glyph (for statuslines, prompts)
+    -j, --json              JSON output
+    -s, --script            Print the JS code that recreates this clingon
+    -g, --gallery [n]       Show n random clingons (default 8) with their names,
+                            laid out as a grid that auto-fits the terminal width.
+                            Combine with --animate to see them all moving.
+        --list-names        Print the available word lists for composing names
+
+  *-- Animation --------------------------------------------------------------
+    -a, --animate           Animate the creature in place. Loops until Ctrl-C.
+                            The flags below all require --animate.
+        --moves <list>      Comma-separated list of behaviors. Built-ins:
+                            idle, blink, look, wiggle, walk.
+                            Default: idle,blink,look,wiggle,walk.
+                            For custom moves, use the JavaScript API.
+        --in-sequence       Play behaviors in order vs. layered (default: layered)
+        --once              Play one full animation cycle and exit
+        --fps <n>           Animation frames per second (1-30). Default 8.
+        --seconds <n>       Run animation for N seconds then exit
+
+  *-- Info panel -------------------------------------------------------------
+    -n, --name              Show the clingon's name beside the art
+        --welcome           Show a time-aware greeting beside the art
+        --message <msg>     Show a custom message beside the art
+        --date              Show today's date beside the art
+        --cwd               Show the current directory beside the art
+        --git               Show the current git branch beside the art
+
+  *-- Padding ----------------------------------------------------------------
+    -p, --pad <n>           Add padding around terminal output
+        --pad-h <n>         Add spaces before each terminal output line
+        --pad-v <n>         Add blank lines before and after terminal output
+
+  *-- Style ------------------------------------------------------------------
+        --no-color          Render without ANSI color
+    -l, --light             Use a darker palette tuned for light terminals
+
+  *-- Other ------------------------------------------------------------------
+    -h, --help              Show help
+    -v, --version           Show version
 
 Examples:
   Add clingon to your terminal startup:
-    clingon --size small --welcome --name --date --cwd --git --pad=2
+    clingon --small --welcome --name --date --cwd --git --pad=2
 `;
 
-export function runCli(args, io) {
+export async function runCli(args, io) {
   try {
     const options = parseArgs(args);
 
     if (options.help) {
       io.stdout.write(HELP);
+      const useColor = options.color && shouldUseColor(io);
+      const exampleClingon = generateClingon({
+        size: 'small',
+        color: useColor,
+        lightMode: options.lightMode
+      });
+      const exampleOptions = {
+        padH: 2,
+        padV: 2,
+        useColor,
+        script: false,
+        infoItems: [
+          { type: 'welcome' },
+          { type: 'name' },
+          { type: 'date' },
+          { type: 'cwd' },
+          { type: 'git' }
+        ]
+      };
+      io.stdout.write('\n' + formatTerminalOutput(exampleClingon, exampleOptions) + '\n');
       return;
     }
 
     if (options.version) {
-      io.stdout.write('0.1.0\n');
+      io.stdout.write('0.2.0\n');
       return;
     }
 
+    if (options.gallery) {
+      const useColor = options.color && shouldUseColor(io);
+      const galleryOptions = {
+        count: options.galleryCount ?? 8,
+        size: options.size,
+        color: useColor,
+        lightMode: options.lightMode,
+        termColumns: io.stdout.columns ?? 80
+      };
+      if (options.animate) {
+        await runAnimatedGallery({
+          ...galleryOptions,
+          stream: io.stdout,
+          fps: options.fps ?? 8,
+          seconds: options.seconds,
+          once: options.animateOnce
+        });
+      } else {
+        io.stdout.write(renderGallery(galleryOptions));
+        io.stdout.write('\n');
+      }
+      return;
+    }
+
+    if (options.listNames) {
+      const lists = nameLists();
+      io.stdout.write(`First (shape, position 1):\n  ${lists.first.join(', ')}\n\n`);
+      io.stdout.write(`Middle (palette, position 2):\n  ${lists.middle.join(', ')}\n\n`);
+      io.stdout.write(`Family (shape, position 3):\n  ${lists.family.join(', ')}\n\n`);
+      io.stdout.write(`Suffix (palette, position 4):\n  ${lists.suffix.join(', ')}\n\n`);
+      io.stdout.write(`Rhythm (animation, position 5, optional):\n  ${lists.rhythm.join(', ')}\n\n`);
+      io.stdout.write(`Compose: <first>-<middle>-<family>-<suffix>[-<rhythm>]\n`);
+      io.stdout.write(`Use with: clingon --with-name <first>-<middle>-<family>-<suffix>[-<rhythm>]\n`);
+      return;
+    }
+
+
     const useColor = options.color && shouldUseColor(io);
+    options.useColor = useColor;
+
+    validateModeAndFlags(options);
+
+    if (options.animate) {
+      const moveList = options.animateMoves ?? ['idle', 'blink', 'look', 'wiggle', 'walk'];
+      const mode = options.animateInSequence ? 'sequence' : 'parallel';
+      const fps = options.fps ?? 8;
+
+      const baseClingon = generateClingon({
+        name: options.inputName,
+        recolor: options.recolor,
+        size: options.size,
+        color: useColor,
+        lightMode: options.lightMode
+      });
+      options.useColor = useColor;
+      const details = infoLines(options, baseClingon);
+      const hasDecoration = details.length > 0 || options.padH > 0 || options.padV > 0;
+      const decorate = hasDecoration
+        ? (ansi) => {
+            const lines = formatInfoBlock(ansi.split('\n'), details);
+            const paddedLines = options.padH > 0
+              ? lines.map((line) => `${' '.repeat(options.padH)}${line}`)
+              : lines;
+            if (options.padV > 0) {
+              const blanks = new Array(options.padV).fill('');
+              return [...blanks, ...paddedLines, ...blanks].join('\n');
+            }
+            return paddedLines.join('\n');
+          }
+        : undefined;
+
+      const { animateClingon } = await import('./animation.js');
+      const controller = new AbortController();
+      const onSigint = () => controller.abort();
+      process.on('SIGINT', onSigint);
+      try {
+        const handle = animateClingon({
+          name: options.inputName,
+          size: options.size,
+          color: useColor,
+          lightMode: options.lightMode,
+          frames: moveList,
+          mode,
+          fps,
+          loops: options.animateOnce ? 1 : Infinity,
+          seconds: options.seconds,
+          stream: io.stdout,
+          signal: controller.signal,
+          decorate
+        });
+        await handle.done;
+      } finally {
+        process.off('SIGINT', onSigint);
+      }
+      return;
+    }
+
     const clingon = generateClingon({
       name: options.inputName,
       recolor: options.recolor,
       size: options.size,
-      color: useColor
+      color: useColor,
+      lightMode: options.lightMode
     });
-    options.useColor = useColor;
 
     if (options.json) {
       io.stdout.write(`${JSON.stringify(toJson(clingon), null, 2)}\n`);
+      return;
+    }
+
+    if (options.inline) {
+      writeInline(io.stdout, clingon, options);
       return;
     }
 
@@ -96,6 +254,47 @@ function writeTerminalOutput(stdout, output) {
   stdout.write(`${output}\n`);
 }
 
+function validateModeAndFlags(options) {
+  // Output / utility modes are mutually exclusive, except --animate, which composes with --gallery.
+  const exclusiveModes = [];
+  if (options.inline) exclusiveModes.push('--inline');
+  if (options.json) exclusiveModes.push('--json');
+  if (options.script) exclusiveModes.push('--script');
+  if (options.listNames) exclusiveModes.push('--list-names');
+  if (options.gallery) exclusiveModes.push('--gallery');
+  if (options.animate && !options.gallery) exclusiveModes.push('--animate');
+  if (exclusiveModes.length > 1) {
+    throw new Error(`Cannot combine ${exclusiveModes.slice(0, -1).join(', ')} with ${exclusiveModes.at(-1)}.`);
+  }
+
+  // Animation knobs require --animate.
+  const animateOnly = [];
+  if (options.animateMoves !== undefined) animateOnly.push('--moves');
+  if (options.animateInSequence) animateOnly.push('--in-sequence');
+  if (options.animateOnce) animateOnly.push('--once');
+  if (options.fps !== undefined) animateOnly.push('--fps');
+  if (options.seconds !== undefined) animateOnly.push('--seconds');
+  if (animateOnly.length > 0 && !options.animate) {
+    const verb = animateOnly.length === 1 ? 'requires' : 'require';
+    throw new Error(`${animateOnly.join(', ')} ${verb} --animate.`);
+  }
+
+  // --inline cannot host the info panel — it's a single-line render.
+  if (options.inline && options.infoItems.length > 0) {
+    throw new Error('--inline cannot be combined with --welcome, --message, --date, --cwd, --git, or --name.');
+  }
+}
+
+function writeInline(stdout, clingon, options) {
+  const padded = options.padH > 0 ? ' '.repeat(options.padH) + clingon.inline : clingon.inline;
+  if (options.padV > 0) {
+    const blanks = Array(options.padV).fill('').join('\n');
+    stdout.write(`${blanks}\n${padded}\n${blanks}\n`);
+  } else {
+    stdout.write(`${padded}\n`);
+  }
+}
+
 function parseCount(value, option) {
   const count = Number.parseInt(requireValue(value, option), 10);
 
@@ -106,10 +305,152 @@ function parseCount(value, option) {
   return count;
 }
 
+const BUILT_IN_MOVES = ['idle', 'blink', 'look', 'wiggle', 'walk'];
+
+function parseFps(value) {
+  const n = Number.parseInt(value, 10);
+  if (!Number.isFinite(n) || n < 1 || n > 30) {
+    throw new Error('--fps must be an integer between 1 and 30.');
+  }
+  return n;
+}
+
+function buildGalleryLayout(clingons, termColumns) {
+  const slotWidth = clingons.reduce((max, c) => {
+    const artWidth = c.pixels[0].length * 2;
+    return Math.max(max, artWidth, c.name.length);
+  }, 0);
+  const gap = 2;
+  const perRow = Math.max(1, Math.floor((termColumns + gap) / (slotWidth + gap)));
+  return { slotWidth, gap, perRow };
+}
+
+function composeGalleryFrame(clingons, framesPerClingon, t, color, layout) {
+  const { slotWidth, gap, perRow } = layout;
+  const out = [];
+  for (let i = 0; i < clingons.length; i += perRow) {
+    const row = clingons.slice(i, i + perRow);
+    const artBlocks = row.map((c, idx) => {
+      const set = framesPerClingon[i + idx];
+      const frame = set[t % set.length];
+      return renderAnsi(frame.pixels, c.palette, { color }).split('\n');
+    });
+    const height = Math.max(...artBlocks.map((b) => b.length));
+    for (let y = 0; y < height; y += 1) {
+      out.push(artBlocks.map((b) => padVisibleEnd(b[y] ?? '', slotWidth)).join(' '.repeat(gap)));
+    }
+    out.push(row.map((c) => padVisibleEnd(c.name, slotWidth)).join(' '.repeat(gap)));
+    if (i + perRow < clingons.length) out.push('');
+  }
+  return out.join('\n');
+}
+
+async function runAnimatedGallery({ count, size, color, lightMode, termColumns, stream, fps = 8, seconds, once }) {
+  const clingons = [];
+  for (let i = 0; i < count; i += 1) clingons.push(generateClingon({ size, color, lightMode }));
+  const moves = ['idle', 'blink', 'look', 'wiggle', 'walk'];
+  const framesPerClingon = clingons.map((c) => composeParallel(c.pixels, moves, 160, seedFromClingon(c)));
+  const cycleLength = framesPerClingon[0].length;
+  const layout = buildGalleryLayout(clingons, termColumns);
+
+  const renderAt = (t) => composeGalleryFrame(clingons, framesPerClingon, t, color, layout);
+
+  if (!stream.isTTY) {
+    stream.write(`${renderAt(0)}\n`);
+    return;
+  }
+
+  const controller = new AbortController();
+  const onSigint = () => controller.abort();
+  process.on('SIGINT', onSigint);
+
+  hideCursor(stream);
+  const firstFrame = renderAt(0);
+  stream.write(firstFrame);
+  const totalHeight = firstFrame.split('\n').length;
+
+  const stopAt = Number.isFinite(seconds) ? Date.now() + seconds * 1000 : null;
+  let t = 0;
+  let stopped = false;
+
+  await new Promise((resolve) => {
+    const interval = setInterval(() => {
+      if (stopped) return;
+      const aborted = controller.signal.aborted;
+      const finiteDone = stopAt !== null && Date.now() >= stopAt;
+      const cycleDone = once && t >= cycleLength - 1;
+      if (aborted || finiteDone || cycleDone) {
+        stopped = true;
+        clearInterval(interval);
+        showCursor(stream);
+        stream.write('\n');
+        process.off('SIGINT', onSigint);
+        resolve();
+        return;
+      }
+      t += 1;
+      cursorUp(stream, totalHeight - 1);
+      stream.write(renderAt(t));
+    }, 1000 / fps);
+  });
+}
+
+function renderGallery({ count, size, color, lightMode, termColumns }) {
+  const clingons = [];
+  for (let i = 0; i < count; i += 1) {
+    clingons.push(generateClingon({ size, color, lightMode }));
+  }
+  const { slotWidth, gap, perRow } = buildGalleryLayout(clingons, termColumns);
+  const out = [];
+  for (let i = 0; i < clingons.length; i += perRow) {
+    const row = clingons.slice(i, i + perRow);
+    const artBlocks = row.map((c) => c.ansi.split('\n'));
+    const height = Math.max(...artBlocks.map((b) => b.length));
+    for (let y = 0; y < height; y += 1) {
+      out.push(artBlocks.map((b) => padVisibleEnd(b[y] ?? '', slotWidth)).join(' '.repeat(gap)));
+    }
+    out.push(row.map((c) => padVisibleEnd(c.name, slotWidth)).join(' '.repeat(gap)));
+    if (i + perRow < clingons.length) out.push('');
+  }
+  return out.join('\n');
+}
+
+function expandWildcardName(name) {
+  const parts = name.split('-');
+  if (parts.length !== 4 && parts.length !== 5) {
+    throw new Error(`Invalid clingon name "${name}". Expected four or five hyphen-separated words.`);
+  }
+  if (!parts.includes('*')) return name;
+  const lists = nameLists();
+  const slotLists = [lists.first, lists.middle, lists.family, lists.suffix, lists.rhythm];
+  return parts.map((part, i) => {
+    if (part !== '*') return part;
+    const list = slotLists[i];
+    return list[Math.floor(Math.random() * list.length)];
+  }).join('-');
+}
+
+function parseMovesList(value) {
+  if (!value) throw new Error('--moves requires a comma-separated list.');
+  const moves = value.split(',').map((s) => s.trim()).filter(Boolean);
+  if (moves.length === 0) throw new Error('--moves requires at least one move name.');
+  return moves;
+}
+
 function parseArgs(args) {
   const options = {
+    animate: false,
+    animateMoves: undefined,
+    animateInSequence: false,
+    animateOnce: false,
+    listNames: false,
+    gallery: false,
+    galleryCount: undefined,
     color: true,
+    lightMode: false,
+    fps: undefined,
     help: false,
+    inline: false,
     inputName: undefined,
     infoItems: [],
     json: false,
@@ -117,6 +458,7 @@ function parseArgs(args) {
     padV: 0,
     recolor: false,
     script: false,
+    seconds: undefined,
     size: 'normal',
     version: false
   };
@@ -134,8 +476,6 @@ function parseArgs(args) {
       options.script = true;
     } else if (arg === '-j' || arg === '--json') {
       options.json = true;
-    } else if (arg === '-q' || arg === '--quiet' || arg === '--no-code' || arg === '--no-name') {
-      // Legacy flags are accepted as no-ops so existing shell startup snippets do not fail.
     } else if (arg === '--welcome') {
       options.infoItems.push({ type: 'welcome' });
     } else if (arg === '--message') {
@@ -149,7 +489,7 @@ function parseArgs(args) {
       options.infoItems.push({ type: 'cwd' });
     } else if (arg === '--git') {
       options.infoItems.push({ type: 'git' });
-    } else if (arg === '--pad') {
+    } else if (arg === '-p' || arg === '--pad') {
       index += 1;
       const padding = parseCount(args[index], arg);
       options.padH = padding;
@@ -174,30 +514,53 @@ function parseArgs(args) {
       options.size = 'small';
     } else if (arg === '--tiny') {
       options.size = 'tiny';
-    } else if (arg === '--size') {
-      index += 1;
-      options.size = requireValue(args[index], arg);
-    } else if (arg.startsWith('--size=')) {
-      options.size = requireValue(arg.slice('--size='.length), '--size');
     } else if (arg === '--no-color') {
       options.color = false;
-    } else if (arg === '-n' || arg === '--name') {
-      options.infoItems.push({ type: 'name' });
-    } else if (arg === '--with-name') {
+    } else if (arg === '-l' || arg === '--light') {
+      options.lightMode = true;
+    } else if (arg === '-i' || arg === '--inline') {
+      options.inline = true;
+    } else if (arg === '-a' || arg === '--animate') {
+      options.animate = true;
+    } else if (arg === '--moves') {
       index += 1;
-      options.inputName = requireValue(args[index], arg);
-    } else if (arg.startsWith('--with-name=')) {
-      options.inputName = requireValue(arg.slice('--with-name='.length), '--with-name');
-    } else if (arg === '-c' || arg === '--code') {
+      options.animateMoves = parseMovesList(args[index]);
+    } else if (arg.startsWith('--moves=')) {
+      options.animateMoves = parseMovesList(arg.slice('--moves='.length));
+    } else if (arg === '--in-sequence') {
+      options.animateInSequence = true;
+    } else if (arg === '--once') {
+      options.animateOnce = true;
+    } else if (arg === '--list-names') {
+      options.listNames = true;
+    } else if (arg === '-g' || arg === '--gallery') {
+      options.gallery = true;
       if (hasOptionalValue(args[index + 1])) {
         index += 1;
+        options.galleryCount = parseCount(args[index], '--gallery');
       }
-    } else if (arg.startsWith('--name=')) {
-      // Legacy value form is accepted as a no-op. Use --with-name to regenerate.
-    } else if (arg.startsWith('--code=')) {
-      // Legacy option is accepted as a no-op.
-    } else if (!arg.startsWith('-')) {
-      // Legacy positional values are accepted as no-ops.
+    } else if (arg.startsWith('--gallery=')) {
+      options.gallery = true;
+      options.galleryCount = parseCount(arg.slice('--gallery='.length), '--gallery');
+    } else if (arg === '--normal') {
+      options.size = 'normal';
+    } else if (arg === '--fps') {
+      index += 1;
+      options.fps = parseFps(args[index]);
+    } else if (arg.startsWith('--fps=')) {
+      options.fps = parseFps(arg.slice('--fps='.length));
+    } else if (arg === '--seconds') {
+      index += 1;
+      options.seconds = parseCount(args[index], arg);
+    } else if (arg.startsWith('--seconds=')) {
+      options.seconds = parseCount(arg.slice('--seconds='.length), '--seconds');
+    } else if (arg === '-n' || arg === '--name') {
+      options.infoItems.push({ type: 'name' });
+    } else if (arg === '-w' || arg === '--with-name') {
+      index += 1;
+      options.inputName = expandWildcardName(requireValue(args[index], arg));
+    } else if (arg.startsWith('--with-name=')) {
+      options.inputName = expandWildcardName(requireValue(arg.slice('--with-name='.length), '--with-name'));
     } else {
       throw new Error(`Unknown option "${arg}".`);
     }
@@ -351,7 +714,11 @@ function requireValue(value, option) {
 }
 
 function shouldUseColor(io) {
-  return io.env.NO_COLOR === undefined;
+  // FORCE_COLOR=1 always wins, even if NO_COLOR is set or TERM is dumb.
+  if (io.env.FORCE_COLOR && io.env.FORCE_COLOR !== '0') return true;
+  if (io.env.NO_COLOR !== undefined) return false;
+  if (io.env.TERM === 'dumb') return false;
+  return true;
 }
 
 function toJson(clingon) {

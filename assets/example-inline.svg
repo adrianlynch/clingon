@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="130" viewBox="0 0 300 130" role="img" aria-label="inline --inline clingon">
+  <rect width="300" height="130" rx="8" fill="#f6f8fa"/>
+  <rect x="20" y="18" width="260" height="70" rx="6" fill="#ffffff" stroke="#d0d7de"/>
+  <rect x="94" y="36" width="28" height="28" fill="#794ae4"/>
+  <circle cx="136" cy="50" r="10.08" fill="#3730a3"/>
+  <circle cx="164" cy="50" r="10.08" fill="#3730a3"/>
+  <rect x="178" y="36" width="28" height="28" fill="#794ae4"/>
+  <text x="150" y="114" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" font-weight="400" fill="#24292f">--inline</text>
+</svg>
