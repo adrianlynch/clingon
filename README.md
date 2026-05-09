@@ -271,6 +271,13 @@ Regenerate a specific clingon:
 clingon --with-name orlando-reginald-morris-junior
 ```
 
+Show the clingon name beside the art:
+
+```sh
+clingon --name
+clingon --with-name orlando-reginald-morris-junior --name
+```
+
 Keep the same shape, but choose a new random palette:
 
 ```sh
@@ -287,6 +294,12 @@ Print structured output:
 
 ```sh
 clingon --small --json
+```
+
+Print only the character art, useful in shell startup files (no info panel by default):
+
+```sh
+clingon --tiny
 ```
 
 Show up to five lines of text beside the clingon:
