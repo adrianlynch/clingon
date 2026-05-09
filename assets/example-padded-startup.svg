@@ -1,23 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="430" height="190" viewBox="0 0 430 190" role="img" aria-label="--welcome --date --cwd --git --pad=1 clingon option example">
   <rect width="430" height="190" rx="8" fill="#f6f8fa"/>
   <rect x="20" y="18" width="390" height="132" rx="6" fill="#1f2328" stroke="#0d1117"/>
-  <rect x="62" y="52" width="16" height="16" fill="#e83232"/>
-  <rect x="78" y="52" width="16" height="16" fill="#e83232"/>
-  <rect x="94" y="52" width="16" height="16" fill="#e83232"/>
-  <rect x="110" y="52" width="16" height="16" fill="#e83232"/>
-  <rect x="62" y="68" width="16" height="16" fill="#e83232"/>
-  <rect x="78" y="68" width="8" height="16" fill="#160203"/>
-  <rect x="86" y="68" width="8" height="16" fill="#e83232"/>
-  <rect x="94" y="68" width="8" height="16" fill="#e83232"/>
-  <rect x="102" y="68" width="8" height="16" fill="#160203"/>
-  <rect x="110" y="68" width="16" height="16" fill="#e83232"/>
-  <rect x="62" y="84" width="16" height="16" fill="#e83232"/>
-  <rect x="78" y="84" width="16" height="16" fill="#e83232"/>
-  <rect x="94" y="84" width="16" height="16" fill="#160203"/>
-  <rect x="110" y="84" width="16" height="16" fill="#e83232"/>
-  <rect x="62" y="100" width="16" height="16" fill="#160203"/>
-  <rect x="110" y="100" width="16" height="16" fill="#160203"/>
-  <text x="160" y="58" text-anchor="start" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" font-weight="700" fill="#e83232">Konbanwa</text>
+  <rect x="62" y="52" width="16" height="16" fill="#ff7f22"/>
+  <rect x="78" y="52" width="16" height="16" fill="#ff7f22"/>
+  <rect x="94" y="52" width="16" height="16" fill="#ff7f22"/>
+  <rect x="110" y="52" width="16" height="16" fill="#ff7f22"/>
+  <rect x="62" y="68" width="16" height="16" fill="#ff7f22"/>
+  <rect x="78" y="68" width="8" height="16" fill="#7c2d12"/>
+  <rect x="86" y="68" width="8" height="16" fill="#ff7f22"/>
+  <rect x="94" y="68" width="8" height="16" fill="#ff7f22"/>
+  <rect x="102" y="68" width="8" height="16" fill="#7c2d12"/>
+  <rect x="110" y="68" width="16" height="16" fill="#ff7f22"/>
+  <rect x="62" y="84" width="16" height="16" fill="#ff7f22"/>
+  <rect x="78" y="84" width="16" height="16" fill="#ff7f22"/>
+  <rect x="94" y="84" width="16" height="16" fill="#7c2d12"/>
+  <rect x="110" y="84" width="16" height="16" fill="#ff7f22"/>
+  <rect x="62" y="100" width="16" height="16" fill="#7c2d12"/>
+  <rect x="110" y="100" width="16" height="16" fill="#7c2d12"/>
+  <text x="160" y="58" text-anchor="start" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" font-weight="700" fill="#ff7f22">Konbanwa</text>
   <text x="160" y="78" text-anchor="start" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" font-weight="400" fill="#8b949e">Wed, May 6, 2026</text>
   <text x="160" y="98" text-anchor="start" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" font-weight="400" fill="#c9d1d9">~ clingon</text>
   <text x="160" y="118" text-anchor="start" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14" font-weight="400" fill="#c9d1d9">* main</text>

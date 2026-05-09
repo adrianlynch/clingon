@@ -68,29 +68,25 @@ const RHYTHM_NAMES = [
   'frisky', 'calm'
 ];
 
-// Curated to pass WCAG 1.4.11 (3:1 non-text contrast) on the criteria
-// that matter for pixel-art pop: body↔accent (eyes vs body), body↔dark
-// (silhouette boundary), body↔bg-dark and accent↔bg-dark (visibility on
-// terminal). Pattern: 500/600 bodies (mid luminance), 300 accents (high
-// luminance), ultra-dark tinted darks (each palette's hue family pushed
-// below typical dark-terminal luminance so feet read as silhouette
-// against the bg rather than blending with it). 950-class Tailwind shades
-// sat in the dead zone L≈0.02-0.03, which matches typical dark-terminal
-// bg luminance — the legs literally vanished. These ultra-dark variants
-// (L≈0.002-0.005) appear nearly black to the eye but retain a subtle
-// hue, contrasting both with the body (huge luminance gap) and the
-// terminal bg (darker than bg, so visible as silhouette).
-// scripts/check-contrast.js audits this in detail.
+// Vibrant complementary palettes — body and accent are saturated colors
+// at similar luminance, contrasting by hue rather than brightness. This
+// gives the classic 80s-arcade pop ("flat color blast") that defines the
+// project's visual identity. The trade-off: WCAG 1.4.11 body↔accent
+// contrast often falls well below 3:1, so eyes read as different-colored
+// regions rather than as luminance-distinct pop-out elements. Run
+// `npm run check:contrast` to see the full audit. The compromise was an
+// explicit aesthetic call — we tried strict WCAG re-curation and found
+// the resulting "deep body + pale accent" palettes lost the punch this
+// project is built around.
 const PALETTES = [
-  ['#8b5cf6', '#fde047', '#0a0816'], // violet  / yellow / ultra-dark indigo
-  ['#dc2626', '#67e8f9', '#160203'], // red     / cyan   / ultra-dark red
-  ['#db2777', '#bef264', '#170410'], // pink    / lime   / ultra-dark pink
-  ['#2563eb', '#fcd34d', '#020617'], // blue    / amber  / near-black
-  ['#c026d3', '#67e8f9', '#160218'], // fuchsia / cyan   / ultra-dark fuchsia
-  ['#c2410c', '#7dd3fc', '#170703'], // orange  / sky    / ultra-dark orange
-  ['#a855f7', '#bbf7d0', '#0e0218'], // purple  / mint   / ultra-dark purple
-  ['#e11d48', '#a3e635', '#170307'], // rose    / lime   / ultra-dark rose
-  ['#059669', '#fef08a', '#021711']  // emerald / pale yellow / ultra-dark emerald
+  ['#0891b2', '#c026d3', '#155e75'],
+  ['#f97316', '#22c55e', '#7c2d12'],
+  ['#8b5cf6', '#facc15', '#3730a3'],
+  ['#ef4444', '#14b8a6', '#7f1d1d'],
+  ['#0ea5e9', '#eab308', '#0f172a'],
+  ['#84cc16', '#ec4899', '#365314'],
+  ['#f43f5e', '#38bdf8', '#881337'],
+  ['#10b981', '#a855f7', '#064e3b']
 ];
 
 export function nameLists() {
